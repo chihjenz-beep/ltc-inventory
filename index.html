@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>平安家園 — 活動物品手帳</title>
+<meta name="theme-color" content="#ede8df">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="平安家園庫存">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="平安家園長照站活動物品庫存管理系統">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --ink:#1c1410;
+  --ink-light:#3d2e22;
+  --ink-faint:#6b5a4e;
+  --paper:#f7f3ec;
+  --paper-warm:#ede8df;
+  --paper-deep:#e2dbd0;
+  --gold:#b5832a;
+  --gold-light:#d4a853;
+  --gold-pale:#f0e2c0;
+  --red-seal:#8b2020;
+  --teal:#2a6b5e;
+  --teal-light:#e0efeb;
+  --sage:#5a7a5e;
+  --sage-light:#e8f0e9;
+  --indigo:#2e3d6b;
+  --indigo-light:#e4e7f2;
+  --rust:#7a3a1e;
+  --rust-light:#f0e4dc;
+  --plum:#5e2a5a;
+  --plum-light:#ede0ec;
+  --border:#c8bfaf;
+  --border-light:#ddd6c8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Noto Sans TC',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(180,160,120,0.08) 27px,rgba(180,160,120,0.08) 28px),
+    repeating-linear-gradient(90deg,transparent,transparent 27px,rgba(180,160,120,0.04) 27px,rgba(180,160,120,0.04) 28px);
+}
+.app{display:flex;height:100vh;max-width:1100px;margin:0 auto;position:relative}
+
+/* === SIDEBAR === */
+.sb{
+  width:160px;flex-shrink:0;
+  background:var(--paper-warm);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+.sb::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(180,150,100,0.06) 18px,rgba(180,150,100,0.06) 19px);
+  pointer-events:none;
+}
+.sb-hd{
+  padding:22px 16px 18px;
+  border-bottom:1px solid var(--border);
+  position:relative;
+}
+.sb-hd::after{
+  content:'';position:absolute;bottom:-1px;left:16px;right:16px;
+  height:2px;background:linear-gradient(90deg,var(--gold),transparent);
+}
+.sb-title{
+  font-family:'Noto Serif TC',serif;
+  font-size:15px;font-weight:700;
+  color:var(--ink);letter-spacing:0.05em;
+  line-height:1.3;
+}
+.sb-sub{
+  font-size:10px;color:var(--gold);
+  margin-top:4px;letter-spacing:0.12em;
+}
+.seal{
+  width:28px;height:28px;border-radius:3px;
+  background:var(--red-seal);
+  display:flex;align-items:center;justify-content:center;
+  margin-top:10px;
+  font-family:'Noto Serif TC',serif;
+  font-size:10px;color:#fff;font-weight:700;
+  letter-spacing:0;transform:rotate(-3deg);
+  box-shadow:1px 1px 0 rgba(0,0,0,0.3);
+}
+.nsh{
+  font-size:9px;color:var(--gold);
+  padding:14px 16px 4px;
+  letter-spacing:0.18em;text-transform:uppercase;
+}
+.nav{
+  padding:9px 16px;font-size:12px;
+  cursor:pointer;color:var(--ink-faint);
+  position:relative;
+  transition:color 0.2s;
+  letter-spacing:0.03em;
+  border-left:2px solid transparent;
+}
+.nav:hover{color:var(--ink);background:rgba(181,131,42,0.06)}
+.nav.on{
+  color:var(--ink);font-weight:500;
+  border-left:2px solid var(--gold);
+  background:rgba(181,131,42,0.08);
+}
+.nav.on::before{
+  content:'◆';position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  font-size:6px;color:var(--gold);
+}
+.sb-foot{
+  padding:14px 16px;border-top:1px solid var(--border-light);
+  margin-top:auto;
+}
+.sb-foot-txt{font-size:10px;color:var(--gold);letter-spacing:0.1em}
+.sb-foot-ver{font-size:9px;color:var(--ink-faint);margin-top:2px}
+
+/* === MAIN === */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+
+.topbar{
+  padding:12px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  background:var(--paper-warm);
+  position:relative;
+}
+.topbar::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;
+  height:1px;background:linear-gradient(90deg,var(--gold),transparent 60%);
+}
+.tb-t{
+  font-family:'Noto Serif TC',serif;
+  font-size:16px;font-weight:500;
+  color:var(--ink);flex:1;
+  letter-spacing:0.08em;
+}
+.tb-dot{color:var(--gold);margin-right:6px;font-size:12px}
+.srch-wrap{
+  position:relative;display:flex;align-items:center;
+}
+.srch-wrap input{
+  border:1px solid var(--border);
+  border-radius:0;
+  padding:5px 10px 5px 28px;
+  font-size:11px;font-family:'Noto Sans TC',sans-serif;
+  background:var(--paper);color:var(--ink);
+  width:140px;outline:none;
+  transition:border-color 0.2s;
+}
+.srch-wrap input:focus{border-color:var(--gold)}
+.srch-icon{position:absolute;left:8px;color:var(--ink-faint);font-size:11px;pointer-events:none}
+.scan-btn{
+  background:var(--ink);color:var(--paper);
+  border:none;border-radius:0;
+  padding:6px 14px;font-size:11px;
+  font-family:'Noto Sans TC',sans-serif;
+  cursor:pointer;letter-spacing:0.08em;
+  transition:background 0.2s;
+}
+.scan-btn:hover{background:var(--gold)}
+
+/* === BODY === */
+.body{flex:1;overflow-y:auto;padding:20px}
+.body::-webkit-scrollbar{width:4px}
+.body::-webkit-scrollbar-track{background:var(--paper-warm)}
+.body::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* === STATS === */
+.sts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.st{
+  background:var(--paper-warm);
+  border:1px solid var(--border-light);
+  padding:12px 14px;
+  position:relative;overflow:hidden;
+}
+.st::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--gold)}
+.st-l{font-size:9px;color:var(--gold);letter-spacing:0.15em;margin-bottom:5px}
+.st-v{font-family:'Noto Serif TC',serif;font-size:22px;font-weight:700;color:var(--ink)}
+.st-v.warn{color:var(--rust)}
+.st-v.info{color:var(--indigo)}
+.st-v.danger{color:var(--red-seal)}
+
+/* === TABLE === */
+.sep{
+  font-family:'Noto Serif TC',serif;
+  font-size:13px;font-weight:500;
+  color:var(--ink);margin:18px 0 10px;
+  display:flex;align-items:center;gap:8px;
+  padding-bottom:6px;
+  border-bottom:1px solid var(--border-light);
+  position:relative;
+}
+.sep::before{content:'◈';color:var(--gold);font-size:11px}
+.sep-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border-light),transparent)}
+
+.tbl{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;margin-bottom:4px}
+.tbl th{
+  text-align:left;padding:6px 8px;
+  border-bottom:1px solid var(--border);
+  font-weight:500;color:var(--ink-faint);
+  font-size:10px;letter-spacing:0.08em;
+  background:var(--paper-warm);
+}
+.tbl td{
+  padding:7px 8px;
+  border-bottom:1px solid var(--border-light);
+  color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  vertical-align:middle;
+}
+.tbl tr:hover td{background:rgba(181,131,42,0.04)}
+
+/* === BADGES === */
+.b{display:inline-block;font-size:10px;padding:1px 8px;font-weight:500;letter-spacing:0.04em}
+.b-ok{background:var(--sage-light);color:var(--sage);border:1px solid rgba(90,122,94,0.25)}
+.b-w{background:var(--rust-light);color:var(--rust);border:1px solid rgba(122,58,30,0.25)}
+.b-d{background:rgba(139,32,32,0.1);color:var(--red-seal);border:1px solid rgba(139,32,32,0.3)}
+.b-c{background:var(--teal-light);color:var(--teal);border:1px solid rgba(42,107,94,0.25)}
+.b-n{background:var(--indigo-light);color:var(--indigo);border:1px solid rgba(46,61,107,0.25)}
+.b-br{background:var(--gold-pale);color:var(--gold);border:1px solid rgba(181,131,42,0.35)}
+.b-u{background:var(--sage-light);color:var(--sage);border:1px solid rgba(90,122,94,0.25)}
+.b-in{background:var(--sage-light);color:var(--sage);border:1px solid rgba(90,122,94,0.25)}
+.b-rt{background:var(--paper-deep);color:var(--ink-faint);border:1px solid var(--border-light)}
+.b-od{background:rgba(139,32,32,0.1);color:var(--red-seal);border:1px solid rgba(139,32,32,0.3)}
+.lb{
+  display:inline-block;font-size:10px;padding:1px 8px;
+  background:var(--paper-deep);color:var(--ink-faint);
+  border:1px solid var(--border-light);
+  letter-spacing:0.02em;
+}
+.cat-cog{background:rgba(181,131,42,0.12);color:#7a5a1a;border:1px solid rgba(181,131,42,0.3)}
+.cat-ex{background:var(--teal-light);color:var(--teal);border:1px solid rgba(42,107,94,0.25)}
+.cat-adl{background:var(--indigo-light);color:var(--indigo);border:1px solid rgba(46,61,107,0.25)}
+.cat-art{background:var(--plum-light);color:var(--plum);border:1px solid rgba(94,42,90,0.25)}
+.cat-sen{background:rgba(181,131,42,0.1);color:#5a3a10;border:1px solid rgba(181,131,42,0.2)}
+.cat-med{background:rgba(139,32,32,0.08);color:var(--red-seal);border:1px solid rgba(139,32,32,0.2)}
+
+/* === ALERT === */
+.oa{
+  background:rgba(139,32,32,0.07);
+  border-left:3px solid var(--red-seal);
+  padding:8px 12px;font-size:11px;color:var(--red-seal);
+  margin-bottom:14px;letter-spacing:0.02em;
+}
+
+/* === FORMS === */
+.fl{font-size:11px;color:var(--ink-faint);display:block;margin-bottom:4px;letter-spacing:0.04em}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.cb{
+  background:var(--paper-warm);
+  border:1px solid var(--border-light);
+  border-left:3px solid var(--gold);
+  padding:10px 12px;margin-bottom:12px;font-size:12px;
+}
+.ci{display:flex;justify-content:space-between;padding:3px 0;gap:8px}
+.ci span:first-child{color:var(--ink-faint);flex-shrink:0}
+.ci span:last-child{color:var(--ink);text-align:right}
+input[type=text],input[type=number],input[type=date],select{
+  border:1px solid var(--border);border-radius:0;
+  padding:7px 10px;font-size:11px;
+  font-family:'Noto Sans TC',sans-serif;
+  background:var(--paper);color:var(--ink);
+  outline:none;width:100%;
+  transition:border-color 0.2s;
+}
+input:focus,select:focus{border-color:var(--gold)}
+button{
+  border:1px solid var(--border);border-radius:0;
+  padding:7px 14px;font-size:11px;
+  font-family:'Noto Sans TC',sans-serif;
+  background:transparent;color:var(--ink);cursor:pointer;
+  letter-spacing:0.04em;transition:all 0.2s;
+}
+button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn-primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn-primary:hover{background:var(--gold);border-color:var(--gold)}
+.row-btn{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+
+/* === SCAN/STEP UI === */
+.tg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.tc{
+  border:1px solid var(--border);
+  padding:16px;text-align:center;cursor:pointer;
+  background:var(--paper-warm);
+  transition:all 0.2s;position:relative;overflow:hidden;
+}
+.tc::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform 0.2s}
+.tc:hover{border-color:var(--gold);background:var(--gold-pale)}
+.tc:hover::before{transform:scaleX(1)}
+.ss{
+  border:1px dashed var(--border);
+  padding:16px;text-align:center;
+  margin-bottom:12px;cursor:pointer;
+  background:var(--paper-warm);
+  transition:all 0.2s;
+}
+.ss:hover{border-color:var(--gold);background:var(--gold-pale)}
+.item-card{
+  border:1px solid var(--border-light);
+  padding:8px 10px;cursor:pointer;
+  background:var(--paper);
+  transition:all 0.15s;
+}
+.item-card:hover{border-color:var(--gold);background:var(--gold-pale);transform:translateY(-1px)}
+.success-wrap{text-align:center;padding:40px 20px}
+.success-stamp{
+  width:70px;height:70px;
+  border-radius:50%;border:3px solid var(--sage);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;
+  font-family:'Noto Serif TC',serif;
+  font-size:28px;color:var(--sage);
+}
+
+/* === AI BAR === */
+.ai-bar{
+  padding:8px 20px;
+  border-top:1px solid var(--border);
+  display:flex;gap:8px;align-items:center;
+  background:var(--paper-warm);
+}
+.ai-bar input{
+  flex:1;border:1px solid var(--border);border-radius:0;
+  padding:6px 10px;font-size:11px;
+  background:var(--paper);color:var(--ink);outline:none;
+  font-family:'Noto Sans TC',sans-serif;
+}
+.ai-bar input:focus{border-color:var(--gold)}
+.ai-bar button{font-size:11px;padding:6px 14px;white-space:nowrap}
+.ai-resp{
+  padding:8px 20px 0;
+  font-size:12px;color:var(--ink-faint);
+  background:var(--paper-warm);
+  border-top:1px solid var(--border-light);
+  line-height:1.7;
+}
+
+/* === QR GRID === */
+.qr-card{
+  border:1px solid var(--border-light);
+  padding:12px;text-align:center;
+  background:var(--paper);
+  position:relative;overflow:hidden;
+}
+.qr-card::after{
+  content:'';position:absolute;top:0;right:0;
+  width:0;height:0;
+  border-style:solid;border-width:0 12px 12px 0;
+  border-color:transparent var(--border-light) transparent transparent;
+}
+
+/* === LOC BUILDER === */
+.loc-box{
+  background:var(--paper-warm);border:1px solid var(--border-light);
+  border-left:3px solid var(--gold-light);
+  padding:12px;margin-bottom:10px;
+}
+
+/* Scrollbar */
+.body::-webkit-scrollbar{width:3px}
+.body::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* Step header */
+.step-hd{
+  font-family:'Noto Serif TC',serif;
+  font-size:13px;color:var(--ink);
+  margin-bottom:12px;letter-spacing:0.06em;
+  display:flex;align-items:center;gap:8px;
+}
+.step-hd::before{
+  content:attr(data-step);
+  width:22px;height:22px;border:1px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--gold);flex-shrink:0;
+}
+
+/* ── MOBILE BOTTOM NAV ──────────────────────────────────────────────── */
+.mob-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--paper-warm);
+  border-top:1px solid var(--border);
+  z-index:200;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.mob-nav-inner{display:flex;align-items:stretch}
+.mob-nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:8px 2px 6px;
+  cursor:pointer;color:var(--ink-faint);
+  font-size:9px;letter-spacing:0.06em;
+  border:none;background:none;font-family:'Noto Sans TC',sans-serif;
+  position:relative;transition:color 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.mob-nav-btn .ico{font-size:18px;margin-bottom:2px;line-height:1}
+.mob-nav-btn.on{color:var(--gold)}
+.mob-nav-btn.on::after{
+  content:'';position:absolute;top:0;left:20%;right:20%;
+  height:2px;background:var(--gold);
+}
+.mob-topbar-menu{
+  display:none;
+  background:none;border:none;cursor:pointer;
+  padding:8px;color:var(--ink);font-size:20px;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ── MOBILE SLIDE DRAWER ────────────────────────────────────────────── */
+.drawer-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(28,20,16,0.45);z-index:300;
+}
+.drawer-overlay.open{display:block}
+.drawer{
+  position:fixed;left:0;top:0;bottom:0;width:220px;
+  background:var(--paper-warm);border-right:1px solid var(--border);
+  z-index:400;transform:translateX(-100%);
+  transition:transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+}
+.drawer.open{transform:translateX(0)}
+
+/* ── RESPONSIVE OVERRIDES ───────────────────────────────────────────── */
+@media (max-width: 640px){
+  html,body{overflow:auto}
+  .app{flex-direction:column;height:auto;min-height:100dvh}
+  .sb{display:none}          /* hide desktop sidebar */
+  .mob-nav{display:flex}
+  .mob-topbar-menu{display:flex;align-items:center;justify-content:center}
+  .scan-btn{display:none}    /* hide desktop scan button on mobile */
+
+  .main{height:auto;min-height:calc(100dvh - 58px)}
+  .topbar{padding:10px 14px}
+  .tb-t{font-size:14px}
+  .srch-wrap input{width:100px}
+
+  .body{padding:12px;padding-bottom:80px}
+
+  /* stats 2-col on mobile */
+  .sts{grid-template-columns:1fr 1fr;gap:8px}
+  .st-v{font-size:18px}
+
+  /* tables → scroll on mobile */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl{min-width:500px}
+
+  /* forms full-width on mobile */
+  .fr{grid-template-columns:1fr}
+
+  /* QR grid 2-col on mobile */
+  .qr-grid-mobile{grid-template-columns:repeat(2,1fr) !important}
+
+  /* step cards stacked */
+  .tg{grid-template-columns:1fr 1fr}
+
+  /* item grid 1-col */
+  .item-grid-mobile{grid-template-columns:1fr !important}
+
+  /* AI bar compact */
+  .ai-bar{padding:6px 12px}
+  .ai-bar input{font-size:12px}
+  .ai-bar button{padding:6px 10px;font-size:11px}
+  .ai-resp{padding:6px 12px 0;font-size:11px}
+
+  /* modal full-screen on mobile */
+  #qrModal > div{width:calc(100vw - 32px) !important;max-width:340px}
+}
+
+@media (max-width: 400px){
+  .sts{grid-template-columns:1fr 1fr}
+  .tg{grid-template-columns:1fr}
+  .fr{grid-template-columns:1fr}
+}
+
+/* Touch-friendly tap targets */
+@media (pointer:coarse){
+  .nav,.mob-nav-btn,.tc,.item-card,.nav-item{min-height:44px}
+  input,select,button{min-height:40px}
+  .tbl td{padding:9px 8px}
+}
+
+/* Safe area for notch phones */
+.ai-bar{padding-bottom:max(8px, env(safe-area-inset-bottom))}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- MOBILE DRAWER OVERLAY -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+  <!-- MOBILE SLIDE DRAWER -->
+  <div class="drawer" id="drawer">
+    <div class="sb-hd" style="padding:18px 16px 14px">
+      <div class="sb-title">平安家園</div>
+      <div class="sb-sub">活 動 物 品 手 帳</div>
+      <div class="seal">庫存</div>
+    </div>
+    <div style="flex:1">
+      <div class="nsh">選 單</div>
+      <div class="nav on" id="drNav0" onclick="go('inv',this);closeDrawer()">庫 存 總 覽</div>
+      <div class="nav" id="drNav1" onclick="go('scan',this);closeDrawer()">掃 描 出 入 庫</div>
+      <div class="nav" id="drNav2" onclick="go('borrow',this);closeDrawer()">借 用 管 理</div>
+      <div class="nav" id="drNav3" onclick="go('qr',this);closeDrawer()">品 項 QR Code</div>
+      <div class="nav" id="drNav4" onclick="go('loc',this);closeDrawer()">位 置 管 理</div>
+      <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-foot-txt">Powered by Claude</div>
+      <div class="sb-foot-ver">平安家園長照站 · 2025</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR (desktop) -->
+  <div class="sb">
+    <div class="sb-hd">
+      <div class="sb-title">平安家園</div>
+      <div class="sb-sub">活 動 物 品 手 帳</div>
+      <div class="seal">庫存</div>
+    </div>
+    <div style="flex:1">
+      <div class="nsh">選 單</div>
+      <div class="nav on" onclick="go('inv',this)">庫 存 總 覽</div>
+      <div class="nav" onclick="go('scan',this)">掃 描 出 入 庫</div>
+      <div class="nav" onclick="go('borrow',this)">借 用 管 理</div>
+      <div class="nav" onclick="go('qr',this)">品 項 QR Code</div>
+      <div class="nav" onclick="go('loc',this)">位 置 管 理</div>
+      <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
+    </div>
+    <div class="sb-foot">
+      <div class="sb-foot-txt">Powered by Claude</div>
+      <div class="sb-foot-ver">平安家園長照站 · 2025</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="mob-topbar-menu" onclick="openDrawer()" aria-label="選單">☰</button>
+      <div class="tb-t"><span class="tb-dot">◈</span><span id="pgt">庫存總覽</span></div>
+      <div class="srch-wrap" id="srchWrap" style="display:none">
+        <span class="srch-icon">🔍</span>
+        <input type="text" id="srch" placeholder="搜尋品項或類別…" oninput="pgInv()">
+      </div>
+      <button class="scan-btn" onclick="go('scan',null)">掃 描 出 入 庫</button>
+    </div>
+
+    <div id="aiRespWrap" class="ai-resp" style="display:none">
+      <span id="aiRespTxt"></span>
+    </div>
+
+    <div class="body" id="pg"></div>
+
+    <div class="ai-bar">
+      <input type="text" id="aiq" placeholder="詢問 Claude AI — 例：認知訓練類有哪些可借用？" onkeydown="if(event.key==='Enter')askAI()">
+      <button onclick="askAI()">詢 問 AI ↗</button>
+    </div>
+  </div>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mob-nav" aria-label="底部導覽">
+    <div class="mob-nav-inner">
+      <button class="mob-nav-btn on" id="mnBtn0" onclick="go('inv',this)" aria-label="庫存總覽">
+        <span class="ico">📋</span>總覽
+      </button>
+      <button class="mob-nav-btn" id="mnBtn1" onclick="go('scan',this)" aria-label="掃描出入庫">
+        <span class="ico">📷</span>掃描
+      </button>
+      <button class="mob-nav-btn" id="mnBtn2" onclick="go('borrow',this)" aria-label="借用管理">
+        <span class="ico">📤</span>借用
+      </button>
+      <button class="mob-nav-btn" id="mnBtn3" onclick="go('qr',this)" aria-label="QR Code">
+        <span class="ico">⬛</span>QR碼
+      </button>
+      <button class="mob-nav-btn" id="mnBtn4" onclick="go('rep',this)" aria-label="異動紀錄">
+        <span class="ico">📝</span>紀錄
+      </button>
+    </div>
+  </nav>
+
+</div>
+
+<script>
+const ROOMS=['活動室A','活動室B','庫房1','庫房2'];
+const RACKS=['置物架1','置物架2','鐵架1','鐵架2','收納櫃1','收納櫃2'];
+const LEVS=['第一層','第二層','第三層','第四層','第五層'];
+const PC=['日常活動','課程使用','個別訓練','團體活動','其他'];
+const PN=['認知訓練課','運動復健課','團體活動','個別借用','其他'];
+
+const CAT_META={
+  '認知訓練':{cls:'cat-cog',label:'認知訓練'},
+  '運動復健':{cls:'cat-ex',label:'運動復健'},
+  '生活自理訓練':{cls:'cat-adl',label:'生活自理'},
+  '創作活動':{cls:'cat-art',label:'創作活動'},
+  '感官刺激':{cls:'cat-sen',label:'感官刺激'},
+  '醫療設備':{cls:'cat-med',label:'醫療設備'},
+};
+
+const ls=l=>(!l||(!l.r&&!l.k&&!l.lv))?'—':[l.r,l.k,l.lv].filter(Boolean).join(' › ');
+const tdy=()=>new Date().toLocaleDateString('zh-TW');
+const ntm=()=>new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+const iso=()=>new Date().toISOString().slice(0,10);
+const ovd=d=>d&&new Date(d)<new Date(iso());
+const cb=cat=>{const m=CAT_META[cat];return m?`<span class="b ${m.cls}" style="font-size:10px;padding:1px 7px">${m.label}</span>`:cat};
+
+let inv=[
+  {id:1, nm:'拼圖',          con:false,cat:'認知訓練',   u:'份',qty:30,min:5, loc:{r:'活動室A',k:'置物架1',lv:'第一層'}},
+  {id:2, nm:'麻將',          con:false,cat:'認知訓練',   u:'份',qty:30,min:5, loc:{r:'活動室A',k:'置物架1',lv:'第二層'}},
+  {id:3, nm:'撲克牌',        con:false,cat:'認知訓練',   u:'份',qty:30,min:5, loc:{r:'活動室A',k:'置物架1',lv:'第三層'}},
+  {id:4, nm:'懷舊遊戲',      con:false,cat:'認知訓練',   u:'份',qty:30,min:5, loc:{r:'活動室A',k:'置物架2',lv:'第一層'}},
+  {id:5, nm:'配對遊戲',      con:false,cat:'認知訓練',   u:'份',qty:30,min:5, loc:{r:'活動室A',k:'置物架2',lv:'第二層'}},
+  {id:6, nm:'形狀分類盒',    con:false,cat:'認知訓練',   u:'份',qty:30,min:5, loc:{r:'活動室A',k:'置物架2',lv:'第三層'}},
+  {id:7, nm:'積木',          con:false,cat:'運動復健',   u:'份',qty:30,min:5, loc:{r:'活動室B',k:'鐵架1',  lv:'第一層'}},
+  {id:8, nm:'穿線板',        con:false,cat:'運動復健',   u:'份',qty:30,min:5, loc:{r:'活動室B',k:'鐵架1',  lv:'第二層'}},
+  {id:9, nm:'彈力帶',        con:false,cat:'運動復健',   u:'份',qty:30,min:5, loc:{r:'活動室B',k:'鐵架1',  lv:'第三層'}},
+  {id:10,nm:'軟球',          con:false,cat:'運動復健',   u:'份',qty:30,min:5, loc:{r:'活動室B',k:'鐵架2',  lv:'第一層'}},
+  {id:11,nm:'沙包',          con:false,cat:'運動復健',   u:'份',qty:30,min:5, loc:{r:'活動室B',k:'鐵架2',  lv:'第二層'}},
+  {id:12,nm:'瑜珈墊',        con:false,cat:'運動復健',   u:'份',qty:30,min:3, loc:{r:'活動室B',k:'鐵架2',  lv:'第三層'}},
+  {id:13,nm:'抗力球',        con:false,cat:'運動復健',   u:'份',qty:30,min:3, loc:{r:'活動室B',k:'鐵架2',  lv:'第四層'}},
+  {id:14,nm:'拉鍊練習板',    con:false,cat:'生活自理訓練',u:'份',qty:30,min:5, loc:{r:'活動室A',k:'收納櫃1',lv:'第一層'}},
+  {id:15,nm:'黏土',          con:true, cat:'創作活動',   u:'份',qty:30,min:10,loc:{r:'庫房1',  k:'收納櫃1',lv:'第一層'}},
+  {id:16,nm:'彩繪工具',      con:true, cat:'創作活動',   u:'份',qty:30,min:10,loc:{r:'庫房1',  k:'收納櫃1',lv:'第二層'}},
+  {id:17,nm:'編織材料',      con:true, cat:'創作活動',   u:'份',qty:30,min:10,loc:{r:'庫房1',  k:'收納櫃2',lv:'第一層'}},
+  {id:18,nm:'拼貼紙',        con:true, cat:'創作活動',   u:'份',qty:30,min:10,loc:{r:'庫房1',  k:'收納櫃2',lv:'第二層'}},
+  {id:19,nm:'蝶谷巴特材料包',con:true, cat:'創作活動',   u:'份',qty:30,min:10,loc:{r:'庫房1',  k:'收納櫃2',lv:'第三層'}},
+  {id:20,nm:'精油',          con:true, cat:'感官刺激',   u:'份',qty:30,min:10,loc:{r:'庫房2',  k:'置物架1',lv:'第一層'}},
+  {id:21,nm:'額溫槍',        con:false,cat:'醫療設備',   u:'份',qty:30,min:3, loc:{r:'庫房2',  k:'收納櫃1',lv:'第一層'}},
+];
+let logs=[],brws=[],bseq=1;
+let ss=0,sd={item:null,op:'',qty:1,user:'',pur:'',due:''};
+
+const stc=i=>{const r=i.qty/i.min;return r<0.5?'b-d':r<1?'b-w':'b-ok'};
+const stl=i=>{const s=stc(i);return s==='b-d'?'危 急':s==='b-w'?'偏 低':'正 常'};
+
+function pgInv(){
+  const q=(document.getElementById('srch').value||'').toLowerCase();
+  const items=inv.filter(i=>i.nm.toLowerCase().includes(q)||i.cat.includes(q)||ls(i.loc).includes(q));
+  const low=inv.filter(i=>stc(i)!=='b-ok').length;
+  const ac=brws.filter(b=>!b.ret).length;
+  const od2=brws.filter(b=>!b.ret&&ovd(b.due)).length;
+
+  function rows(arr){return arr.map(i=>{
+    const bq=brws.filter(b=>b.iid===i.id&&!b.ret).reduce((s,b)=>s+b.qty,0);
+    return `<tr>
+      <td style="font-family:'Noto Serif TC',serif">${i.nm}</td>
+      <td>${cb(i.cat)}</td>
+      <td><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 6px">${i.con?'消 耗':'非消耗'}</span></td>
+      <td style="font-family:'Noto Serif TC',serif;font-size:13px">${i.qty}</td>
+      <td><span class="b ${stc(i)}">${stl(i)}</span></td>
+      <td>${bq>0?`<span class="b b-br">${bq}</span>`:'—'}</td>
+      <td><span class="lb">${ls(i.loc)}</span></td>
+    </tr>`;
+  }).join('')}
+
+  let h=`<div class="sts">
+    <div class="st"><div class="st-l">品 項 總 數</div><div class="st-v">${inv.length}</div></div>
+    <div class="st"><div class="st-l">庫 存 偏 低</div><div class="st-v warn">${low}</div></div>
+    <div class="st"><div class="st-l">借 用 中</div><div class="st-v info">${ac}</div></div>
+    <div class="st"><div class="st-l">逾 期 未 還</div><div class="st-v danger">${od2}</div></div>
+  </div>`;
+  if(od2>0)h+=`<div class="oa">⚠ 注意：${od2} 筆借用已逾期未歸還，請查看「借用管理」頁面。</div>`;
+
+  Object.keys(CAT_META).forEach(cat=>{
+    const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
+    const m=CAT_META[cat];
+    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr>
+      <th style="width:19%">品 項</th><th style="width:13%">類 別</th>
+      <th style="width:11%">性 質</th><th style="width:7%">數 量</th>
+      <th style="width:9%">狀 態</th><th style="width:9%">借 出</th>
+      <th style="width:32%">儲 存 位 置</th>
+    </tr></thead><tbody>${rows(ci)}</tbody></table></div>`;
+  });
+  document.getElementById('pg').innerHTML=h;
+}
+
+function pgBorrow(){
+  const act=brws.filter(b=>!b.ret),done=brws.filter(b=>b.ret),od2=act.filter(b=>ovd(b.due));
+  let h='';
+  if(od2.length)h+=`<div class="oa">⚠ 逾期未還：${od2.length} 筆，請盡快聯絡借用人員。</div>`;
+  h+=`<div class="sep"><div class="sep-line"></div>借用中（${act.length} 筆）<div class="sep-line"></div></div>`;
+  if(!act.length)h+='<div style="font-size:12px;color:#6b5a4e;padding:16px 0;text-align:center;letter-spacing:0.08em">目 前 無 借 用 紀 錄</div>';
+  else{
+    h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:18%">品 項</th><th style="width:8%">數 量</th><th style="width:13%">借 用 人</th><th style="width:13%">用 途</th><th style="width:11%">借 出 日</th><th style="width:14%">預 定 歸 還</th><th style="width:23%">操 作</th></tr></thead><tbody>`;
+    act.forEach(b=>{const it=inv.find(i=>i.id===b.iid),isOD=ovd(b.due);h+=`<tr>
+      <td style="font-family:'Noto Serif TC',serif">${b.nm}</td>
+      <td>${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td>${b.date}</td>
+      <td><span class="${isOD?'b b-od':''}" style="${isOD?'':'color:#6b5a4e'}">${b.due||'—'}${isOD?' ⚠':''}</span></td>
+      <td><button onclick="doRet(${b.id})" style="font-size:10px;padding:4px 10px">歸 還</button></td>
+    </tr>`;});
+    h+='</tbody></table>';
+  }
+  if(done.length){
+    h+=`<div class="sep" style="margin-top:20px"><div class="sep-line"></div>已歸還（${done.length} 筆）<div class="sep-line"></div></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:20%">品 項</th><th style="width:9%">數 量</th><th style="width:13%">借 用 人</th><th style="width:13%">用 途</th><th style="width:13%">借 出 日</th><th style="width:13%">歸 還 日</th><th style="width:19%">狀 態</th></tr></thead><tbody>`;
+    [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);h+=`<tr><td style="font-family:'Noto Serif TC',serif">${b.nm}</td><td>${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td>${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
+    h+='</tbody></table>';
+  }
+  document.getElementById('pg').innerHTML=h;
+}
+
+function doRet(id){
+  const b=brws.find(x=>x.id===id);if(!b)return;
+  b.ret=true;b.retD=tdy();
+  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
+  logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,pur:b.pur,due:'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
+  pgBorrow();
+}
+
+function pgScan(){ss=0;sd={item:null,op:'',qty:1,user:'',pur:'',due:''};step()}
+function step(){
+  const pg=document.getElementById('pg');
+  if(ss===0){
+    let grid='';
+    Object.keys(CAT_META).forEach(cat=>{
+      const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
+      const m=CAT_META[cat];
+      grid+=`<div style="margin-bottom:14px">
+        <div style="font-size:10px;color:#6b5a4e;letter-spacing:0.12em;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <span class="b ${m.cls}" style="font-size:9px;padding:1px 6px">${m.label}</span>${cat}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+          ${ci.map(i=>`<div onclick="selI(${i.id})" class="item-card">
+            <div style="font-family:'Noto Serif TC',serif;font-size:12px;color:#1c1410;margin-bottom:2px">${i.nm}</div>
+            <div style="font-size:10px;color:#6b5a4e">庫存：<span style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410">${i.qty}</span> ${i.u}　<span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    });
+    pg.innerHTML=`
+      <div class="step-hd" data-step="一">選 擇 品 項</div>
+      <div class="ss" onclick="sim()">
+        <div style="font-size:13px;font-family:'Noto Serif TC',serif;color:#1c1410;margin-bottom:3px;letter-spacing:0.08em">點 擊 模 擬 掃 描 QR Code</div>
+        <div style="font-size:10px;color:#6b5a4e;letter-spacing:0.04em">實際部署時使用相機掃描品項上的 QR Code</div>
+      </div>
+      <div style="font-size:10px;color:#b5832a;letter-spacing:0.1em;margin-bottom:8px">或 依 類 別 選 擇</div>
+      <div style="max-height:340px;overflow-y:auto">${grid}</div>`;
+  } else if(ss===1){
+    const i=sd.item;
+    const ops=i.con?[
+      {op:'入庫',ic:'↓',sub:'補充材料入庫'},
+      {op:'領用',ic:'↑',sub:'消耗性取用'}
+    ]:[
+      {op:'入庫',ic:'↓',sub:'歸還或補充'},
+      {op:'借用',ic:'↗',sub:'需填預定歸還日'}
+    ];
+    pg.innerHTML=`
+      <div class="step-hd" data-step="二">選 擇 操 作 類 型</div>
+      <div class="cb">
+        <div class="ci"><span>品 項</span><span style="font-family:'Noto Serif TC',serif">${i.nm}</span></div>
+        <div class="ci"><span>類 別</span><span>${cb(i.cat)}</span></div>
+        <div class="ci"><span>性 質</span><span><span class="b ${i.con?'b-c':'b-n'}">${i.con?'消耗品':'非消耗品'}</span></span></div>
+        <div class="ci"><span>目前庫存</span><span style="font-family:'Noto Serif TC',serif;font-size:14px">${i.qty} ${i.u}</span></div>
+        <div class="ci"><span>位 置</span><span><span class="lb">${ls(i.loc)}</span></span></div>
+      </div>
+      <div class="tg">${ops.map(o=>`<div class="tc" onclick="selO('${o.op}')">
+        <div style="font-family:'Noto Serif TC',serif;font-size:28px;color:#b5832a;margin-bottom:6px">${o.ic}</div>
+        <div style="font-size:14px;font-family:'Noto Serif TC',serif;color:#1c1410;letter-spacing:0.1em">${o.op}</div>
+        <div style="font-size:10px;color:#6b5a4e;margin-top:3px">${o.sub}</div>
+      </div>`).join('')}</div>
+      <button onclick="ss=0;step()" style="font-size:11px">← 重 新 選 擇</button>`;
+  } else if(ss===2){
+    const i=sd.item,isBr=sd.op==='借用',isIn=sd.op==='入庫',pList=i.con?PC:PN;
+    const dDue=new Date();dDue.setDate(dDue.getDate()+7);
+    pg.innerHTML=`
+      <div class="step-hd" data-step="三">填 寫 資 料</div>
+      <div class="cb">
+        <div class="ci"><span>品 項</span><span style="font-family:'Noto Serif TC',serif">${i.nm}</span></div>
+        <div class="ci"><span>操 作</span><span><span class="b ${isBr?'b-br':isIn?'b-in':'b-u'}">${sd.op}</span></span></div>
+        <div class="ci"><span>目前庫存</span><span style="font-family:'Noto Serif TC',serif;font-size:14px">${i.qty} ${i.u}</span></div>
+        <div class="ci"><span>位 置</span><span><span class="lb">${ls(i.loc)}</span></span></div>
+      </div>
+      <div class="fr">
+        <div><label class="fl">${isBr?'借用':'領用'} 人員姓名</label><input type="text" id="sU" placeholder="請輸入姓名"></div>
+        <div><label class="fl">數量（${i.u}）</label><input type="number" id="sQ" min="1" value="1"></div>
+      </div>
+      <div class="fr">
+        <div><label class="fl">出庫用途</label><select id="sP">${pList.map(p=>`<option>${p}</option>`).join('')}</select></div>
+        ${isBr?`<div><label class="fl">預定歸還日</label><input type="date" id="sD" value="${dDue.toISOString().slice(0,10)}" min="${iso()}"></div>`:'<div></div>'}
+      </div>
+      <div style="margin-bottom:10px"><label class="fl">備 註（選填）</label><input type="text" id="sN" placeholder="補充說明"></div>
+      <div class="row-btn">
+        <button onclick="ss=1;step()">← 上 一 步</button>
+        <button class="btn-primary" onclick="cfm()">確 認 ${sd.op}</button>
+      </div>
+      <div id="er" style="font-size:11px;color:#8b2020;margin-top:8px;letter-spacing:0.04em"></div>`;
+  } else if(ss===3){
+    const i=sd.item,isBr=sd.op==='借用';
+    pg.innerHTML=`<div class="success-wrap">
+      <div class="success-stamp">✓</div>
+      <div style="font-family:'Noto Serif TC',serif;font-size:18px;letter-spacing:0.15em;color:#1c1410;margin-bottom:8px">${sd.op} 完 成</div>
+      <div style="width:40px;height:1px;background:#b5832a;margin:0 auto 12px"></div>
+      <div style="font-size:12px;color:#6b5a4e;line-height:2;letter-spacing:0.05em">
+        ${i.nm}　×　${sd.qty} ${i.u}<br>
+        ${isBr?'借用':'領用'}人：${sd.user}　用途：${sd.pur}<br>
+        ${isBr?`預定歸還日：${sd.due}<br>`:''}
+        目前庫存：<span style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410">${i.qty}</span> ${i.u}
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:20px">
+        <button onclick="pgScan()">繼 續 掃 描</button>
+        <button class="btn-primary" onclick="go(${isBr?"'borrow'":"'rep'"},null)">${isBr?'借用管理':'查看紀錄'}</button>
+      </div>
+    </div>`;
+  }
+}
+function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
+function selI(id){sd.item=inv.find(i=>i.id===id);ss=1;step()}
+function selO(op){sd.op=op;ss=2;step()}
+function cfm(){
+  const u=(document.getElementById('sU').value||'').trim(),q=parseInt(document.getElementById('sQ').value)||0,pur=document.getElementById('sP').value,due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'',er=document.getElementById('er');
+  if(!u){er.textContent='請填寫人員姓名';return}
+  if(q<=0){er.textContent='數量須大於 0';return}
+  const it=sd.item;
+  if(sd.op!=='入庫'&&q>it.qty){er.textContent=`庫存不足，目前僅剩 ${it.qty} ${it.u}`;return}
+  if(sd.op==='入庫')it.qty+=q;else it.qty-=q;
+  sd.qty=q;sd.user=u;sd.pur=pur;sd.due=due;
+  if(sd.op==='借用')brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
+  logs.push({type:sd.op,nm:it.nm,qty:q,user:u,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()});
+  ss=3;step();
+}
+
+// ── QR Page ────────────────────────────────────────────────────────────────
+const CAT_HEX={
+  '認知訓練':'#b8852a','運動復健':'#2a6b5e','生活自理訓練':'#2e3d6b',
+  '創作活動':'#5e2a5a','感官刺激':'#7f4c0f','醫療設備':'#8b2020'
+};
+const CAT_LIGHT={
+  '認知訓練':'#faeeda','運動復健':'#e1f5ee','生活自理訓練':'#e4e7f2',
+  '創作活動':'#ede0ec','感官刺激':'#f5e8d5','醫療設備':'#fcebeb'
+};
+
+function pgQR(){
+  let h=`
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-size:11px;color:#6b5a4e;letter-spacing:0.06em;line-height:1.8">
+      依類別顯示各品項專屬 QR Code。點擊任意卡片可預覽並列印。
+    </div>
+    <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap;flex-shrink:0;margin-left:12px">
+      列 印 全 部 21 張 ↗
+    </button>
+  </div>`;
+
+  Object.keys(CAT_META).forEach(cat=>{
+    const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
+    const m=CAT_META[cat];
+    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px" class="qr-grid-mobile">`;
+    ci.forEach(i=>{
+      const catCol=CAT_HEX[cat]||'#888';
+      h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(28,20,16,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
+          <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
+        </div>
+        <div id="qr${i.id}" style="margin:0 auto 6px;width:64px;height:64px"></div>
+        <div style="font-family:'Noto Serif TC',serif;font-size:11px;color:#1c1410;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${i.nm}</div>
+        <div style="font-size:9px;color:#6b5a4e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${ls(i.loc)}</div>
+        <div style="text-align:center;margin-top:5px">
+          <span style="font-size:9px;background:${CAT_LIGHT[cat]||'#f5f5f0'};color:${catCol};padding:1px 6px;border-radius:10px;border:1px solid ${catCol}40">${i.con?'消耗品':'非消耗品'}</span>
+        </div>
+      </div>`;
+    });
+    h+='</div>';
+  });
+
+  document.getElementById('pg').innerHTML=h;
+  inv.forEach(i=>{
+    try{new QRCode(document.getElementById('qr'+i.id),{
+      text:`ITEM:${i.id}:${i.nm}:${i.cat}:${i.con?'消耗品':'非消耗品'}:${ls(i.loc)}`,
+      width:64,height:64,colorDark:'#1c1410',colorLight:'#f7f3ec',
+      correctLevel:QRCode.CorrectLevel.M
+    })}catch(e){}
+  });
+}
+
+// ── Print single card preview ──────────────────────────────────────────────
+function previewCard(id){
+  const item=inv.find(i=>i.id===id);if(!item)return;
+  const catCol=CAT_HEX[item.cat]||'#888';
+  const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+  const nature=item.con?'消耗品':'非消耗品';
+
+  // Build preview modal
+  const overlay=document.createElement('div');
+  overlay.id='qrModal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.55);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+
+  overlay.innerHTML=`
+  <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:320px;box-shadow:0 12px 40px rgba(28,20,16,0.25)">
+    <!-- Modal header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #ddd6c8">
+      <span style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">標 籤 卡 預 覽</span>
+      <button onclick="document.getElementById('qrModal').remove()" style="border:none;background:none;font-size:16px;color:#6b5a4e;cursor:pointer;padding:0 4px">✕</button>
+    </div>
+
+    <!-- Card preview -->
+    <div style="padding:20px;display:flex;justify-content:center">
+      <div id="printCardWrap" style="width:200px;background:#f7f3ec;border:1px solid #c8bfaf;border-radius:4px;overflow:hidden;box-shadow:0 2px 8px rgba(28,20,16,0.1)">
+        <!-- colour bar -->
+        <div style="background:${catCol};padding:8px 0;text-align:center">
+          <span style="font-size:11px;color:#fff;letter-spacing:0.12em">${item.cat}</span>
+        </div>
+        <!-- QR -->
+        <div style="display:flex;justify-content:center;padding:14px 14px 8px">
+          <div id="modalQR" style="width:120px;height:120px"></div>
+        </div>
+        <!-- gold rule -->
+        <div style="height:1px;background:linear-gradient(90deg,transparent,${catCol},transparent);margin:0 16px 10px"></div>
+        <!-- name -->
+        <div style="text-align:center;font-family:'Noto Serif TC',serif;font-size:16px;color:#1c1410;margin-bottom:6px;letter-spacing:0.06em">${item.nm}</div>
+        <!-- nature badge -->
+        <div style="text-align:center;margin-bottom:8px">
+          <span style="font-size:10px;background:${catLight};color:${catCol};padding:2px 10px;border-radius:10px;border:1px solid ${catCol}50">${nature}</span>
+        </div>
+        <!-- location -->
+        <div style="text-align:center;font-size:10px;color:#6b5a4e;margin-bottom:10px;padding:0 10px;line-height:1.5">${ls(item.loc)}</div>
+        <!-- id -->
+        <div style="text-align:right;padding:0 10px 8px;font-size:10px;color:${catCol}">#${String(item.id).padStart(2,'0')}</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="padding:10px 14px 14px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #ddd6c8">
+      <button onclick="document.getElementById('qrModal').remove()" style="font-size:11px;padding:6px 14px">取 消</button>
+      <button class="btn-primary" onclick="printSingleCard(${item.id})" style="font-size:11px;padding:6px 16px">列 印 此 張 ↗</button>
+    </div>
+  </div>`;
+
+  document.body.appendChild(overlay);
+
+  // Render QR in modal
+  setTimeout(()=>{
+    const el=document.getElementById('modalQR');
+    if(el){
+      try{new QRCode(el,{
+        text:`ITEM:${item.id}:${item.nm}:${item.cat}:${nature}:${ls(item.loc)}`,
+        width:120,height:120,colorDark:'#1c1410',colorLight:'#f7f3ec',
+        correctLevel:QRCode.CorrectLevel.M
+      })}catch(e){}
+    }
+  },50);
+}
+
+// ── Print helpers ──────────────────────────────────────────────────────────
+function buildPrintCard(item, qrDataUrl){
+  const catCol=CAT_HEX[item.cat]||'#888';
+  const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+  const nature=item.con?'消耗品':'非消耗品';
+  return `
+  <div class="card">
+    <div class="card-bar" style="background:${catCol}">${item.cat}</div>
+    <div class="card-qr"><img src="${qrDataUrl}" width="100" height="100"></div>
+    <div class="card-rule" style="background:linear-gradient(90deg,transparent,${catCol},transparent)"></div>
+    <div class="card-name">${item.nm}</div>
+    <div class="card-badge" style="background:${catLight};color:${catCol};border:1px solid ${catCol}50">${nature}</div>
+    <div class="card-loc">${ls(item.loc)}</div>
+    <div class="card-id" style="color:${catCol}">#${String(item.id).padStart(2,'0')}</div>
+  </div>`;
+}
+
+function getQRDataUrl(item, size){
+  return new Promise(resolve=>{
+    const tmp=document.createElement('div');
+    tmp.style.cssText='position:absolute;left:-9999px;top:-9999px';
+    document.body.appendChild(tmp);
+    try{
+      new QRCode(tmp,{
+        text:`ITEM:${item.id}:${item.nm}:${item.cat}:${item.con?'消耗品':'非消耗品'}:${ls(item.loc)}`,
+        width:size,height:size,colorDark:'#1c1410',colorLight:'#f7f3ec',
+        correctLevel:QRCode.CorrectLevel.M
+      });
+      setTimeout(()=>{
+        const img=tmp.querySelector('img')||tmp.querySelector('canvas');
+        const url=img?(img.tagName==='IMG'?img.src:img.toDataURL()):'';
+        tmp.remove();
+        resolve(url);
+      },100);
+    }catch(e){tmp.remove();resolve('')}
+  });
+}
+
+async function printSingleCard(id){
+  const item=inv.find(i=>i.id===id);if(!item)return;
+  const url=await getQRDataUrl(item,200);
+  const catCol=CAT_HEX[item.cat]||'#888';
+  const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+  const nature=item.con?'消耗品':'非消耗品';
+  const w=window.open('','_blank','width=400,height=550');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Noto Sans TC',sans-serif}
+    .card{width:220px;background:#f7f3ec;border:1px solid #c8bfaf;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1)}
+    .bar{background:${catCol};padding:10px 0;text-align:center;color:#fff;font-size:13px;letter-spacing:0.12em}
+    .qr{display:flex;justify-content:center;padding:16px 16px 10px}
+    .rule{height:1px;background:linear-gradient(90deg,transparent,${catCol},transparent);margin:0 18px 12px}
+    .name{text-align:center;font-family:'Noto Serif TC',serif;font-size:18px;color:#1c1410;margin-bottom:8px;letter-spacing:0.06em}
+    .badge{display:inline-block;font-size:11px;background:${catLight};color:${catCol};padding:2px 12px;border-radius:10px;border:1px solid ${catCol}50}
+    .badge-wrap{text-align:center;margin-bottom:10px}
+    .loc{text-align:center;font-size:11px;color:#6b5a4e;margin-bottom:10px;padding:0 14px;line-height:1.6}
+    .id{text-align:right;padding:0 12px 10px;font-size:11px;color:${catCol}}
+    @media print{body{background:#fff}.card{box-shadow:none;border:1px solid #ccc}}
+  </style></head><body>
+  <div class="card">
+    <div class="bar">${item.cat}</div>
+    <div class="qr"><img src="${url}" width="140" height="140"></div>
+    <div class="rule"></div>
+    <div class="name">${item.nm}</div>
+    <div class="badge-wrap"><span class="badge">${nature}</span></div>
+    <div class="loc">${ls(item.loc)}</div>
+    <div class="id">#${String(item.id).padStart(2,'0')}</div>
+  </div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+async function printAllQR(){
+  const btn=document.querySelector('button.btn-primary');
+  if(btn){btn.textContent='產生中…';btn.disabled=true}
+
+  // Collect all QR data URLs
+  const cards=await Promise.all(inv.map(async item=>{
+    const url=await getQRDataUrl(item,160);
+    return {item,url};
+  }));
+
+  if(btn){btn.textContent='列 印 全 部 21 張 ↗';btn.disabled=false}
+
+  const w=window.open('','_blank','width=900,height=700');
+  let cardsHtml=cards.map(({item,url})=>{
+    const catCol=CAT_HEX[item.cat]||'#888';
+    const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+    const nature=item.con?'消耗品':'非消耗品';
+    return `<div class="card">
+      <div class="bar" style="background:${catCol}">${item.cat}</div>
+      <div class="qr"><img src="${url}" width="90" height="90"></div>
+      <div class="rule" style="background:linear-gradient(90deg,transparent,${catCol},transparent)"></div>
+      <div class="name">${item.nm}</div>
+      <div class="bwrap"><span class="badge" style="background:${catLight};color:${catCol};border:1px solid ${catCol}50">${nature}</span></div>
+      <div class="loc">${ls(item.loc)}</div>
+      <div class="id" style="color:${catCol}">#${String(item.id).padStart(2,'0')}</div>
+    </div>`;
+  }).join('');
+
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#f5f5f0;font-family:'Noto Sans TC',sans-serif;padding:14mm}
+    h1{font-family:'Noto Serif TC',serif;font-size:14px;color:#b5832a;letter-spacing:0.12em;margin-bottom:10px;border-bottom:1px solid #b5832a;padding-bottom:6px}
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .card{background:#f7f3ec;border:1px solid #c8bfaf;border-radius:3px;overflow:hidden;break-inside:avoid}
+    .bar{padding:6px 0;text-align:center;color:#fff;font-size:10px;letter-spacing:0.1em}
+    .qr{display:flex;justify-content:center;padding:10px 10px 6px}
+    .rule{height:1px;margin:0 12px 7px}
+    .name{text-align:center;font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;margin-bottom:5px}
+    .bwrap{text-align:center;margin-bottom:5px}
+    .badge{display:inline-block;font-size:9px;padding:1px 8px;border-radius:10px}
+    .loc{text-align:center;font-size:8.5px;color:#6b5a4e;margin-bottom:6px;padding:0 8px;line-height:1.5}
+    .id{text-align:right;padding:0 8px 6px;font-size:9px}
+    @media print{
+      body{background:#fff;padding:10mm}
+      .grid{gap:5px}
+      @page{size:A4;margin:10mm}
+    }
+  </style></head><body>
+  <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 21 張）</h1>
+  <div class="grid">${cardsHtml}</div>
+  <script>window.onload=()=>{setTimeout(()=>window.print(),600)}<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+function locBld(px,loc){
+  const rv=loc&&loc.r?loc.r:'',rkv=loc&&loc.k?loc.k:'',lv=loc&&loc.lv?loc.lv:'';
+  return `<div class="loc-box">
+    <div style="font-size:10px;color:#b5832a;letter-spacing:0.12em;margin-bottom:8px">儲 存 位 置</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div><label class="fl">場 所</label><select id="${px}R" onchange="upP('${px}')"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div><label class="fl">架 位</label><select id="${px}K" onchange="upP('${px}')"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div><label class="fl">層 數</label><select id="${px}L" onchange="upP('${px}')"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+    </div>
+    <div style="font-size:11px;color:#1c1410;margin-top:8px;padding:5px 8px;background:#f7f3ec;border:1px solid #ddd6c8;letter-spacing:0.04em" id="${px}Pv">${ls(loc)||'尚 未 設 定'}</div>
+  </div>`;
+}
+function upP(p){const r=document.getElementById(p+'R').value,k=document.getElementById(p+'K').value,lv=document.getElementById(p+'L').value;document.getElementById(p+'Pv').textContent=[r,k,lv].filter(Boolean).join(' › ')||'尚未設定';}
+function gLoc(p){return{r:document.getElementById(p+'R').value,k:document.getElementById(p+'K').value,lv:document.getElementById(p+'L').value}}
+
+function pgLoc(){
+  let h=`<div style="font-size:11px;color:#6b5a4e;letter-spacing:0.06em;margin-bottom:16px">點擊「編輯位置」修改品項的儲存位置設定。</div>`;
+  Object.keys(CAT_META).forEach(cat=>{
+    const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
+    const m=CAT_META[cat];
+    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
+    <table class="tbl" style="margin-bottom:10px"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
+    ${ci.map(i=>`<tr><td style="font-family:'Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px">編 輯 位 置</button></td></tr>`).join('')}
+    </tbody></table></div>`;
+  });
+  h+='<div id="lF" style="margin-top:12px"></div>';
+  document.getElementById('pg').innerHTML=h;
+}
+function oLE(id){
+  const it=inv.find(i=>i.id===id);
+  document.getElementById('lF').innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;border-left:3px solid #b5832a;padding:14px;margin-top:4px">
+      <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
+      ${locBld('e',it.loc)}
+      <div class="row-btn" style="margin-top:8px">
+        <button onclick="document.getElementById('lF').innerHTML=''">取 消</button>
+        <button class="btn-primary" onclick="sLE(${id})">儲 存</button>
+      </div>
+    </div>`;
+  upP('e');document.getElementById('lF').scrollIntoView({behavior:'smooth'});
+}
+function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');document.getElementById('lF').innerHTML='';pgLoc();}
+
+function pgRep(){
+  let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
+    <th style="width:10%">時 間</th><th style="width:9%">操 作</th>
+    <th style="width:17%">品 項</th><th style="width:7%">數 量</th>
+    <th style="width:11%">人 員</th><th style="width:11%">用 途</th>
+    <th style="width:11%">歸 還 日</th><th style="width:24%">位 置</th>
+  </tr></thead><tbody>`;
+  if(!logs.length)h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">尚 無 異 動 紀 錄</td></tr>`;
+  else[...logs].reverse().forEach(l=>{
+    const cls=l.type==='入庫'?'b-in':l.type==='借用'?'b-br':l.type==='歸還'?'b-rt':'b-u';
+    h+=`<tr><td style="color:#6b5a4e">${l.time}</td><td><span class="b ${cls}">${l.type}</span></td>
+    <td style="font-family:'Noto Serif TC',serif">${l.nm}</td><td>${l.qty}</td>
+    <td>${l.user||'—'}</td><td>${l.pur||'—'}</td><td>${l.due||'—'}</td>
+    <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('pg').innerHTML=h;
+}
+
+const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep};
+const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄'};
+// Mobile nav mapping: pg → bottom-nav button index (only 5 tabs; loc maps to borrow tab)
+const MOB_IDX={inv:0,scan:1,borrow:2,qr:3,loc:2,rep:4};
+const DSK_IDX={inv:0,scan:1,borrow:2,qr:3,loc:4,rep:5};
+
+function go(pg,el){
+  // Desktop sidebar
+  document.querySelectorAll('.sb .nav,.drawer .nav').forEach(n=>n.classList.remove('on'));
+  if(el&&el.closest('.sb')){el.classList.add('on')}
+  else if(el&&el.closest('.drawer')){el.classList.add('on')}
+  else{
+    const di=DSK_IDX[pg]??0;
+    document.querySelectorAll('.sb .nav')[di]?.classList.add('on');
+    document.querySelectorAll('.drawer .nav')[di]?.classList.add('on');
+  }
+  // Mobile bottom nav
+  document.querySelectorAll('.mob-nav-btn').forEach(b=>b.classList.remove('on'));
+  const mi=MOB_IDX[pg]??0;
+  document.querySelectorAll('.mob-nav-btn')[mi]?.classList.add('on');
+
+  document.getElementById('pgt').textContent=ttmap[pg]||pg;
+  document.getElementById('srchWrap').style.display=pg==='inv'?'flex':'none';
+  // Scroll to top on page change (mobile)
+  const body=document.getElementById('pg');
+  if(body)body.scrollTop=0;
+  (pgmap[pg]||pgInv)();
+}
+
+// ── Drawer ────────────────────────────────────────────────────────────────
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+// Swipe-to-close drawer
+(()=>{
+  let sx=0;
+  document.getElementById('drawer').addEventListener('touchstart',e=>{sx=e.touches[0].clientX},{passive:true});
+  document.getElementById('drawer').addEventListener('touchend',e=>{
+    if(e.changedTouches[0].clientX - sx < -50) closeDrawer();
+  },{passive:true});
+})();
+
+async function askAI(){
+  const q=document.getElementById('aiq').value.trim();if(!q)return;
+  const wrap=document.getElementById('aiRespWrap'),txt=document.getElementById('aiRespTxt');
+  wrap.style.display='block';txt.style.color='#6b5a4e';txt.style.fontStyle='italic';txt.textContent='Claude 思考中…';
+  const snap=inv.map(i=>`${i.nm}（${i.cat}，${i.con?'消耗品':'非消耗品'}）：${i.qty}${i.u}，位置：${ls(i.loc)}`).join('；');
+  const bsnap=brws.filter(b=>!b.ret).map(b=>`${b.nm} ${b.qty}，借用人：${b.user}，預定歸還：${b.due||'未設定'}${ovd(b.due)?'【逾期】':''}`).join('；')||'無';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`你是長照站活動物品庫存助理。庫存：${snap}。借用中：${bsnap}。請用繁體中文簡短回答（2-3句）：${q}`}]})});
+    const d=await r.json();
+    txt.style.fontStyle='normal';txt.style.color='#1c1410';
+    txt.textContent=d.content.map(c=>c.text||'').join('');
+  }catch(e){txt.textContent='查詢失敗，請稍後再試。'}
+  document.getElementById('aiq').value='';
+}
+
+go('inv',null);
+</script>
+</body>
+</html>
