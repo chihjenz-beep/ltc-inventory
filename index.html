@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
 :root{
   --ink:#1c1410;
@@ -482,7 +483,66 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .fr{grid-template-columns:1fr}
 }
 
-/* Touch-friendly tap targets */
+/* === CAMERA SCANNER === */
+.cam-overlay{
+  position:fixed;inset:0;background:rgba(28,20,16,0.88);
+  z-index:2000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.cam-box{
+  position:relative;width:min(320px,85vw);
+  background:#000;border:2px solid var(--gold);
+}
+.cam-box video{width:100%;display:block;max-height:320px;object-fit:cover}
+.cam-corner{position:absolute;width:20px;height:20px;border-color:var(--gold);border-style:solid}
+.cam-corner.tl{top:-2px;left:-2px;border-width:2px 0 0 2px}
+.cam-corner.tr{top:-2px;right:-2px;border-width:2px 2px 0 0}
+.cam-corner.bl{bottom:-2px;left:-2px;border-width:0 0 2px 2px}
+.cam-corner.br{bottom:-2px;right:-2px;border-width:0 2px 2px 0}
+.cam-scan-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  animation:scanline 2s ease-in-out infinite;
+}
+@keyframes scanline{0%{top:10%}50%{top:85%}100%{top:10%}}
+.cam-label{
+  margin-top:14px;font-family:'Noto Serif TC',serif;
+  font-size:13px;color:var(--paper);letter-spacing:0.12em;
+  text-align:center;
+}
+.cam-hint{font-size:10px;color:var(--gold);margin-top:6px;letter-spacing:0.08em}
+.cam-close{
+  margin-top:18px;padding:8px 28px;
+  font-size:12px;font-family:'Noto Sans TC',sans-serif;
+  background:transparent;border:1px solid var(--border);
+  color:var(--paper);cursor:pointer;letter-spacing:0.08em;
+}
+.cam-close:hover{background:var(--gold);border-color:var(--gold);color:#fff}
+.cam-result{
+  margin-top:12px;font-size:11px;color:var(--gold);
+  letter-spacing:0.06em;min-height:18px;text-align:center;
+}
+
+/* === RESET CONFIRM === */
+.reset-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:7px 20px;
+  background:rgba(139,32,32,0.07);
+  border-top:1px solid rgba(139,32,32,0.15);
+  font-size:10px;color:var(--red-seal);letter-spacing:0.06em;
+}
+.reset-bar button{
+  font-size:10px;padding:3px 10px;
+  border-color:rgba(139,32,32,0.4);color:var(--red-seal);
+  margin-left:auto;
+}
+.reset-bar button:hover{background:var(--red-seal);border-color:var(--red-seal);color:#fff}
+/* storage badge */
+.stor-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:9px;color:var(--sage);letter-spacing:0.08em;
+}
+.stor-dot{width:6px;height:6px;border-radius:50%;background:var(--sage)}
 @media (pointer:coarse){
   .nav,.mob-nav-btn,.tc,.item-card,.nav-item{min-height:44px}
   input,select,button{min-height:40px}
@@ -516,8 +576,10 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
     </div>
     <div class="sb-foot">
-      <div class="sb-foot-txt">Powered by Claude</div>
+      <div class="stor-badge"><span class="stor-dot"></span>資料已同步</div>
+      <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">平安家園長照站 · 2025</div>
+      <button onclick="confirmReset()" style="margin-top:8px;font-size:9px;padding:3px 10px;border-color:rgba(139,32,32,0.35);color:var(--red-seal)">重 設 系 統</button>
     </div>
   </div>
 
@@ -538,8 +600,10 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
     </div>
     <div class="sb-foot">
-      <div class="sb-foot-txt">Powered by Claude</div>
+      <div class="stor-badge"><span class="stor-dot"></span>資料已同步</div>
+      <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">平安家園長照站 · 2025</div>
+      <button onclick="confirmReset()" style="margin-top:8px;font-size:9px;padding:3px 10px;border-color:rgba(139,32,32,0.35);color:var(--red-seal)">重 設 系 統</button>
     </div>
   </div>
 
@@ -552,7 +616,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
         <span class="srch-icon">🔍</span>
         <input type="text" id="srch" placeholder="搜尋品項或類別…" oninput="pgInv()">
       </div>
-      <button class="scan-btn" onclick="go('scan',null)">掃 描 出 入 庫</button>
+      <button class="scan-btn" onclick="go('scan',null);setTimeout(openCam,150)">📷 掃 描 出 入 庫</button>
     </div>
 
     <div id="aiRespWrap" class="ai-resp" style="display:none">
@@ -573,7 +637,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <button class="mob-nav-btn on" id="mnBtn0" onclick="go('inv',this)" aria-label="庫存總覽">
         <span class="ico">📋</span>總覽
       </button>
-      <button class="mob-nav-btn" id="mnBtn1" onclick="go('scan',this)" aria-label="掃描出入庫">
+      <button class="mob-nav-btn" id="mnBtn1" onclick="go('scan',this);setTimeout(openCam,150)" aria-label="掃描出入庫">
         <span class="ico">📷</span>掃描
       </button>
       <button class="mob-nav-btn" id="mnBtn2" onclick="go('borrow',this)" aria-label="借用管理">
@@ -591,6 +655,57 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 </div>
 
 <script>
+// ── LocalStorage keys ─────────────────────────────────────────────────────
+const LS_INV  = 'pahome_inv';
+const LS_LOGS = 'pahome_logs';
+const LS_BRWS = 'pahome_brws';
+const LS_BSEQ = 'pahome_bseq';
+
+function lsSave(){
+  try{
+    localStorage.setItem(LS_INV,  JSON.stringify(inv));
+    localStorage.setItem(LS_LOGS, JSON.stringify(logs));
+    localStorage.setItem(LS_BRWS, JSON.stringify(brws));
+    localStorage.setItem(LS_BSEQ, String(bseq));
+  }catch(e){console.warn('localStorage write failed',e)}
+}
+function lsLoad(){
+  try{
+    const si=localStorage.getItem(LS_INV);
+    const sl=localStorage.getItem(LS_LOGS);
+    const sb=localStorage.getItem(LS_BRWS);
+    const sq=localStorage.getItem(LS_BSEQ);
+    if(si)inv=JSON.parse(si);
+    if(sl)logs=JSON.parse(sl);
+    if(sb)brws=JSON.parse(sb);
+    if(sq)bseq=parseInt(sq)||1;
+  }catch(e){console.warn('localStorage read failed',e)}
+}
+function confirmReset(){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.7);z-index:3000;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;border-left:4px solid #8b2020;padding:24px 28px;max-width:340px;width:90%">
+      <div style="font-family:'Noto Serif TC',serif;font-size:15px;color:#1c1410;margin-bottom:8px;letter-spacing:0.08em">確認重設系統？</div>
+      <div style="font-size:12px;color:#6b5a4e;line-height:1.8;margin-bottom:18px">
+        將清除所有異動紀錄、借用記錄，並將庫存數量還原為初始值。<br>
+        <span style="color:#8b2020;font-size:11px">此操作無法復原。</span>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="this.closest('[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
+        <button onclick="doReset();this.closest('[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px;background:#8b2020;color:#fff;border-color:#8b2020">確 認 重 設</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+function doReset(){
+  localStorage.removeItem(LS_INV);
+  localStorage.removeItem(LS_LOGS);
+  localStorage.removeItem(LS_BRWS);
+  localStorage.removeItem(LS_BSEQ);
+  location.reload();
+}
+
 const ROOMS=['活動室A','活動室B','庫房1','庫房2'];
 const RACKS=['置物架1','置物架2','鐵架1','鐵架2','收納櫃1','收納櫃2'];
 const LEVS=['第一層','第二層','第三層','第四層','第五層'];
@@ -638,6 +753,9 @@ let inv=[
 ];
 let logs=[],brws=[],bseq=1;
 let ss=0,sd={item:null,op:'',qty:1,user:'',pur:'',due:''};
+
+// Load persisted data (overrides defaults if present)
+lsLoad();
 
 const stc=i=>{const r=i.qty/i.min;return r<0.5?'b-d':r<1?'b-w':'b-ok'};
 const stl=i=>{const s=stc(i);return s==='b-d'?'危 急':s==='b-w'?'偏 低':'正 常'};
@@ -714,6 +832,7 @@ function doRet(id){
   b.ret=true;b.retD=tdy();
   const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
   logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,pur:b.pur,due:'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
+  lsSave();
   pgBorrow();
 }
 
@@ -739,9 +858,10 @@ function step(){
     });
     pg.innerHTML=`
       <div class="step-hd" data-step="一">選 擇 品 項</div>
-      <div class="ss" onclick="sim()">
-        <div style="font-size:13px;font-family:'Noto Serif TC',serif;color:#1c1410;margin-bottom:3px;letter-spacing:0.08em">點 擊 模 擬 掃 描 QR Code</div>
-        <div style="font-size:10px;color:#6b5a4e;letter-spacing:0.04em">實際部署時使用相機掃描品項上的 QR Code</div>
+      <div class="ss" onclick="openCam()" style="border-color:var(--gold);background:var(--gold-pale)">
+        <div style="font-size:22px;margin-bottom:6px">📷</div>
+        <div style="font-size:13px;font-family:'Noto Serif TC',serif;color:#1c1410;margin-bottom:3px;letter-spacing:0.08em">點 擊 開 啟 相 機 掃 描</div>
+        <div style="font-size:10px;color:#6b5a4e;letter-spacing:0.04em">對準品項上的 QR Code 即可自動辨識</div>
       </div>
       <div style="font-size:10px;color:#b5832a;letter-spacing:0.1em;margin-bottom:8px">或 依 類 別 選 擇</div>
       <div style="max-height:340px;overflow-y:auto">${grid}</div>`;
@@ -813,6 +933,108 @@ function step(){
     </div>`;
   }
 }
+// ── Camera QR Scanner ──────────────────────────────────────────────────────
+let camStream=null,camAnim=null;
+
+function openCam(){
+  // Build overlay
+  const overlay=document.createElement('div');
+  overlay.className='cam-overlay';
+  overlay.id='camOverlay';
+  overlay.innerHTML=`
+    <div class="cam-box" id="camBox">
+      <video id="camVid" autoplay muted playsinline style="width:100%;display:block;max-height:320px;object-fit:cover"></video>
+      <canvas id="camCanvas" style="display:none"></canvas>
+      <div class="cam-scan-line"></div>
+      <div class="cam-corner tl"></div><div class="cam-corner tr"></div>
+      <div class="cam-corner bl"></div><div class="cam-corner br"></div>
+    </div>
+    <div class="cam-label">將 QR Code 對準框內</div>
+    <div class="cam-hint">系統將自動辨識並跳轉</div>
+    <div class="cam-result" id="camResult">掃描中…</div>
+    <button class="cam-close" onclick="closeCam()">關 閉 相 機</button>`;
+  document.body.appendChild(overlay);
+
+  navigator.mediaDevices.getUserMedia({
+    video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+  }).then(stream=>{
+    camStream=stream;
+    const vid=document.getElementById('camVid');
+    vid.srcObject=stream;
+    vid.play();
+    vid.addEventListener('loadedmetadata',()=>startScanLoop(vid));
+  }).catch(err=>{
+    const r=document.getElementById('camResult');
+    if(r){
+      if(err.name==='NotAllowedError')r.textContent='⚠ 請允許相機權限後重試';
+      else if(err.name==='NotFoundError')r.textContent='⚠ 找不到相機裝置';
+      else r.textContent='⚠ 無法開啟相機：'+err.message;
+    }
+  });
+}
+
+function startScanLoop(vid){
+  const canvas=document.getElementById('camCanvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let lastCode='',lastTime=0;
+
+  function tick(){
+    if(!document.getElementById('camOverlay')){cancelAnimationFrame(camAnim);return}
+    if(vid.readyState===vid.HAVE_ENOUGH_DATA){
+      canvas.width=vid.videoWidth;
+      canvas.height=vid.videoHeight;
+      ctx.drawImage(vid,0,0,canvas.width,canvas.height);
+      const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+      try{
+        const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+        if(code){
+          const now=Date.now();
+          if(code.data!==lastCode||now-lastTime>3000){
+            lastCode=code.data;lastTime=now;
+            handleQRResult(code.data);
+          }
+        }
+      }catch(e){}
+    }
+    camAnim=requestAnimationFrame(tick);
+  }
+  camAnim=requestAnimationFrame(tick);
+}
+
+function handleQRResult(raw){
+  // QR format: ITEM:id:name:cat:nature:location
+  const r=document.getElementById('camResult');
+  const parts=raw.split(':');
+  if(parts.length>=3&&parts[0]==='ITEM'){
+    const id=parseInt(parts[1]);
+    const found=inv.find(i=>i.id===id);
+    if(found){
+      if(r)r.textContent='✓ 掃到：'+found.nm+'　跳轉中…';
+      // Flash border green
+      const box=document.getElementById('camBox');
+      if(box)box.style.borderColor='#2a6b5e';
+      setTimeout(()=>{closeCam();selI(id)},700);
+      return;
+    }
+  }
+  // Try to match by name if id not found
+  const nameMatch=inv.find(i=>raw.includes(i.nm));
+  if(nameMatch){
+    if(r)r.textContent='✓ 掃到：'+nameMatch.nm+'　跳轉中…';
+    setTimeout(()=>{closeCam();selI(nameMatch.id)},700);
+    return;
+  }
+  if(r)r.textContent='⚠ 無法辨識此 QR Code，請重試';
+}
+
+function closeCam(){
+  cancelAnimationFrame(camAnim);
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  const o=document.getElementById('camOverlay');
+  if(o)o.remove();
+}
+
 function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
 function selI(id){sd.item=inv.find(i=>i.id===id);ss=1;step()}
 function selO(op){sd.op=op;ss=2;step()}
@@ -826,6 +1048,7 @@ function cfm(){
   sd.qty=q;sd.user=u;sd.pur=pur;sd.due=due;
   if(sd.op==='借用')brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
   logs.push({type:sd.op,nm:it.nm,qty:q,user:u,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()});
+  lsSave();
   ss=3;step();
 }
 
@@ -1124,7 +1347,7 @@ function oLE(id){
     </div>`;
   upP('e');document.getElementById('lF').scrollIntoView({behavior:'smooth'});
 }
-function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');document.getElementById('lF').innerHTML='';pgLoc();}
+function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');lsSave();document.getElementById('lF').innerHTML='';pgLoc();}
 
 function pgRep(){
   let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
