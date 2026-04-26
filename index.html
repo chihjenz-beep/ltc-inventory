@@ -578,7 +578,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
     <div class="sb-foot">
       <div class="stor-badge"><span class="stor-dot"></span>資料已同步</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
-      <div class="sb-foot-ver">平安家園長照站 · 2025</div>
+      <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
         <button onclick="changePwd()" style="font-size:9px;padding:3px 10px;border-color:rgba(181,131,42,0.4);color:var(--gold)">修 改 密 碼</button>
         <button onclick="confirmReset()" style="font-size:9px;padding:3px 10px;border-color:rgba(139,32,32,0.35);color:var(--red-seal)">重 設 系 統</button>
@@ -605,7 +605,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
     <div class="sb-foot">
       <div class="stor-badge" id="syncBadge"><span class="stor-dot"></span>連線中…</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
-      <div class="sb-foot-ver">平安家園長照站 · 2025</div>
+      <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
         <button onclick="changePwd()" style="font-size:9px;padding:3px 10px;border-color:rgba(181,131,42,0.4);color:var(--gold)">修 改 密 碼</button>
         <button onclick="confirmReset()" style="font-size:9px;padding:3px 10px;border-color:rgba(139,32,32,0.35);color:var(--red-seal)">重 設 系 統</button>
@@ -788,8 +788,6 @@ async function doReset(){
 }
 
 // ── Password guard ─────────────────────────────────────────────────────────
-const LS_PWD='pahome_pwd';
-function getPwd(){return localStorage.getItem(LS_PWD)||'0000';}
 
 // withAuth(onSuccess, title, hint)
 // Shows password modal; calls onSuccess() if correct.
@@ -1619,24 +1617,11 @@ async function askAI(){
   document.getElementById('aiq').value='';
 }
 
-// ── Startup: load from Google Sheets then render ──────────────────────────
-(async()=>{
-  // Show loading overlay
-  const loadEl=document.createElement('div');
-  loadEl.id='loadOverlay';
-  loadEl.style.cssText='position:fixed;inset:0;background:var(--paper);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px';
-  loadEl.innerHTML=`
-    <div style="font-family:'Noto Serif TC',serif;font-size:22px;color:var(--ink);letter-spacing:0.2em">平安家園</div>
-    <div style="font-size:11px;color:var(--ink-faint);letter-spacing:0.15em">活 動 物 品 手 帳</div>
-    <div style="width:40px;height:1px;background:var(--gold);margin:4px 0"></div>
-    <div style="font-size:11px;color:var(--gold);letter-spacing:0.1em" id="loadMsg">連線中…</div>`;
-  document.body.appendChild(loadEl);
+// ── Startup: render immediately with defaults, then refresh from Sheets ───
+go('inv', null);   // 立即顯示預設畫面，不等待網路
 
-  await gasLoad();
-
-  loadEl.remove();
-  go('inv',null);
-})();
+// 背景從 Google Sheets 載入，完成後靜默刷新當前頁
+gasLoad().then(()=>{ go('inv', null); });
 </script>
 </body>
 </html>
