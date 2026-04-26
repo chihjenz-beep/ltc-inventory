@@ -1075,7 +1075,7 @@ function pgBorrow(){
   h+=`<div class="sep"><div class="sep-line"></div>借用中（${act.length} 筆）<div class="sep-line"></div></div>`;
   if(!act.length)h+='<div style="font-size:12px;color:#6b5a4e;padding:16px 0;text-align:center;letter-spacing:0.08em">目 前 無 借 用 紀 錄</div>';
   else{
-    h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:18%">品 項</th><th style="width:8%">數 量</th><th style="width:13%">借 用 人</th><th style="width:13%">用 途</th><th style="width:11%">借 出 日</th><th style="width:14%">預 定 歸 還</th><th style="width:23%">操 作</th></tr></thead><tbody>`;
+    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:520px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:17%">品 項</th><th style="width:7%">數量</th><th style="width:12%">借用人</th><th style="width:12%">用途</th><th style="width:14%">借 出 日</th><th style="width:16%">預定歸還</th><th style="width:22%">操 作</th></tr></thead><tbody>`;
     act.forEach(b=>{const it=inv.find(i=>i.id===b.iid),isOD=ovd(b.due);h+=`<tr>
       <td style="font-family:'Noto Serif TC',serif">${b.nm}</td>
       <td>${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td>${b.date}</td>
@@ -1086,7 +1086,7 @@ function pgBorrow(){
   }
   if(done.length){
     h+=`<div class="sep" style="margin-top:20px"><div class="sep-line"></div>已歸還（${done.length} 筆）<div class="sep-line"></div></div>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:20%">品 項</th><th style="width:9%">數 量</th><th style="width:13%">借 用 人</th><th style="width:13%">用 途</th><th style="width:13%">借 出 日</th><th style="width:13%">歸 還 日</th><th style="width:19%">狀 態</th></tr></thead><tbody>`;
+    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:500px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:18%">品 項</th><th style="width:8%">數量</th><th style="width:13%">借用人</th><th style="width:13%">用途</th><th style="width:14%">借 出 日</th><th style="width:14%">歸 還 日</th><th style="width:20%">狀 態</th></tr></thead><tbody>`;
     [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);h+=`<tr><td style="font-family:'Noto Serif TC',serif">${b.nm}</td><td>${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td>${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
     h+='</tbody></table>';
   }
