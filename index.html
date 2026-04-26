@@ -1575,15 +1575,15 @@ function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');gasSave();document.getElem
 
 function pgRep(){
   let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:10%">時 間</th><th style="width:9%">操 作</th>
-    <th style="width:17%">品 項</th><th style="width:7%">數 量</th>
-    <th style="width:11%">人 員</th><th style="width:11%">用 途</th>
-    <th style="width:11%">歸 還 日</th><th style="width:24%">位 置</th>
+    <th style="width:16%">時 間</th><th style="width:9%">操 作</th>
+    <th style="width:15%">品 項</th><th style="width:7%">數 量</th>
+    <th style="width:10%">人 員</th><th style="width:10%">用 途</th>
+    <th style="width:10%">歸 還 日</th><th style="width:23%">位 置</th>
   </tr></thead><tbody>`;
   if(!logs.length)h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">尚 無 異 動 紀 錄</td></tr>`;
   else[...logs].reverse().forEach(l=>{
     const cls=l.type==='入庫'?'b-in':l.type==='借用'?'b-br':l.type==='歸還'?'b-rt':'b-u';
-    h+=`<tr><td style="color:#6b5a4e">${l.time}</td><td><span class="b ${cls}">${l.type}</span></td>
+    h+=`<tr><td style="color:#6b5a4e">${l.date||''}${l.time?' '+l.time:''}</td><td><span class="b ${cls}">${l.type}</span></td>
     <td style="font-family:'Noto Serif TC',serif">${l.nm}</td><td>${l.qty}</td>
     <td>${l.user||'—'}</td><td>${l.pur||'—'}</td><td>${l.due||'—'}</td>
     <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
