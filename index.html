@@ -603,7 +603,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
     </div>
     <div class="sb-foot">
-      <div class="stor-badge"><span class="stor-dot"></span>資料已同步</div>
+      <div class="stor-badge" id="syncBadge"><span class="stor-dot"></span>連線中…</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">平安家園長照站 · 2025</div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
@@ -661,32 +661,103 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 </div>
 
 <script>
-// ── LocalStorage keys ─────────────────────────────────────────────────────
-const LS_INV  = 'pahome_inv';
-const LS_LOGS = 'pahome_logs';
-const LS_BRWS = 'pahome_brws';
-const LS_BSEQ = 'pahome_bseq';
+// ── Google Apps Script 後端 ───────────────────────────────────────────────
+const GAS_URL='https://script.google.com/macros/s/AKfycbxVtFo8o958SXsE8AEOk8bFRx4Y3tC1gupwS3Wzvrb03ZJ8dcrXur1lVprsUG8j1zfY/exec';
 
-function lsSave(){
-  try{
-    localStorage.setItem(LS_INV,  JSON.stringify(inv));
-    localStorage.setItem(LS_LOGS, JSON.stringify(logs));
-    localStorage.setItem(LS_BRWS, JSON.stringify(brws));
-    localStorage.setItem(LS_BSEQ, String(bseq));
-  }catch(e){console.warn('localStorage write failed',e)}
+// 密碼仍用 localStorage（純本機管理，不需共享）
+const LS_PWD='pahome_pwd';
+function getPwd(){return localStorage.getItem(LS_PWD)||'0000';}
+
+// ── 儲存狀態提示 ──────────────────────────────────────────────────────────
+function showSaving(){
+  let el=document.getElementById('syncBadge');
+  if(el){el.textContent='⏳ 儲存中…';el.style.color='var(--gold)';}
 }
-function lsLoad(){
-  try{
-    const si=localStorage.getItem(LS_INV);
-    const sl=localStorage.getItem(LS_LOGS);
-    const sb=localStorage.getItem(LS_BRWS);
-    const sq=localStorage.getItem(LS_BSEQ);
-    if(si)inv=JSON.parse(si);
-    if(sl)logs=JSON.parse(sl);
-    if(sb)brws=JSON.parse(sb);
-    if(sq)bseq=parseInt(sq)||1;
-  }catch(e){console.warn('localStorage read failed',e)}
+function showSaved(){
+  let el=document.getElementById('syncBadge');
+  if(el){el.textContent='✓ 已同步';el.style.color='var(--sage)';}
 }
+function showSaveErr(){
+  let el=document.getElementById('syncBadge');
+  if(el){el.textContent='⚠ 同步失敗';el.style.color='var(--red-seal)';}
+}
+
+// ── 從 Google Sheets 讀取 ────────────────────────────────────────────────
+async function gasLoad(){
+  try{
+    const r=await fetch(GAS_URL+'?action=getAll');
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.error);
+
+    // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
+    if(d.data.inv && d.data.inv.length>0){
+      inv=d.data.inv.map(row=>({
+        ...row,
+        id:   Number(row.id),
+        qty:  Number(row.qty),
+        min:  Number(row.min),
+        con:  row.con===true||row.con==='true'||row.con==='TRUE',
+        loc:  typeof row.loc==='string'?JSON.parse(row.loc):row.loc||{}
+      }));
+    } else {
+      // 首次：把預設值寫入 Sheets
+      await gasSave();
+    }
+
+    if(d.data.logs && d.data.logs.length>0){
+      logs=d.data.logs.map(row=>({
+        ...row,
+        qty: Number(row.qty)
+      }));
+    }
+
+    if(d.data.brws && d.data.brws.length>0){
+      brws=d.data.brws.map(row=>({
+        ...row,
+        id:  Number(row.id),
+        iid: Number(row.iid),
+        qty: Number(row.qty),
+        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE'
+      }));
+      // rebuild bseq
+      bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
+    }
+
+    showSaved();
+  }catch(e){
+    console.error('gasLoad error',e);
+    showSaveErr();
+    // 載入失敗仍可使用預設值，但提示用戶
+    const badge=document.getElementById('syncBadge');
+    if(badge)badge.title='無法連線到 Google Sheets，目前使用本機預設值';
+  }
+}
+
+// ── 寫回 Google Sheets ───────────────────────────────────────────────────
+async function gasSave(){
+  showSaving();
+  try{
+    const body={
+      action:'saveAll',
+      data:{
+        inv:  inv.map(i=>({...i, loc:JSON.stringify(i.loc)})),
+        logs: logs,
+        brws: brws
+      }
+    };
+    const r=await fetch(GAS_URL,{
+      method:'POST',
+      body:JSON.stringify(body)
+    });
+    const d=await r.json();
+    if(!d.ok) throw new Error(d.error);
+    showSaved();
+  }catch(e){
+    console.error('gasSave error',e);
+    showSaveErr();
+  }
+}
+
 function confirmReset(){
   withAuth(()=>{
     const overlay=document.createElement('div');
@@ -706,11 +777,13 @@ function confirmReset(){
     document.body.appendChild(overlay);
   }, '重設系統', '重設後所有紀錄將清除，此操作無法復原');
 }
-function doReset(){
-  localStorage.removeItem(LS_INV);
-  localStorage.removeItem(LS_LOGS);
-  localStorage.removeItem(LS_BRWS);
-  localStorage.removeItem(LS_BSEQ);
+async function doReset(){
+  // 還原預設庫存數量
+  inv.forEach(i=>{ i.qty=30; });
+  logs=[];
+  brws=[];
+  bseq=1;
+  await gasSave();
   location.reload();
 }
 
@@ -865,9 +938,6 @@ let inv=[
 let logs=[],brws=[],bseq=1;
 let ss=0,sd={item:null,op:'',qty:1,user:'',pur:'',due:''};
 
-// Load persisted data (overrides defaults if present)
-lsLoad();
-
 const stc=i=>{if(i.qty<5)return i.qty===0?'b-d':'b-w';return 'b-ok'};
 const stl=i=>{const s=stc(i);return s==='b-d'?'危 急':s==='b-w'?'偏 低':'正 常'};
 
@@ -942,7 +1012,7 @@ function doRet(id){
   b.ret=true;b.retD=tdy();
   const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
   logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,pur:b.pur,due:'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
-  lsSave();
+  gasSave();
   pgBorrow();
 }
 
@@ -1163,7 +1233,7 @@ function cfm(){
   sd.qty=q;sd.user=u;sd.pur=pur;sd.due=due;
   if(sd.op==='借用')brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
   logs.push({type:sd.op,nm:it.nm,qty:q,user:u,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()});
-  lsSave();
+  gasSave();
   ss=3;step();
 }
 
@@ -1464,7 +1534,7 @@ function oLE(id){
     upP('e');document.getElementById('lF').scrollIntoView({behavior:'smooth'});
   }, '編輯位置', '位置設定需要管理員驗證');
 }
-function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');lsSave();document.getElementById('lF').innerHTML='';pgLoc();}
+function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');gasSave();document.getElementById('lF').innerHTML='';pgLoc();}
 
 function pgRep(){
   let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
@@ -1549,7 +1619,24 @@ async function askAI(){
   document.getElementById('aiq').value='';
 }
 
-go('inv',null);
+// ── Startup: load from Google Sheets then render ──────────────────────────
+(async()=>{
+  // Show loading overlay
+  const loadEl=document.createElement('div');
+  loadEl.id='loadOverlay';
+  loadEl.style.cssText='position:fixed;inset:0;background:var(--paper);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px';
+  loadEl.innerHTML=`
+    <div style="font-family:'Noto Serif TC',serif;font-size:22px;color:var(--ink);letter-spacing:0.2em">平安家園</div>
+    <div style="font-size:11px;color:var(--ink-faint);letter-spacing:0.15em">活 動 物 品 手 帳</div>
+    <div style="width:40px;height:1px;background:var(--gold);margin:4px 0"></div>
+    <div style="font-size:11px;color:var(--gold);letter-spacing:0.1em" id="loadMsg">連線中…</div>`;
+  document.body.appendChild(loadEl);
+
+  await gasLoad();
+
+  loadEl.remove();
+  go('inv',null);
+})();
 </script>
 </body>
 </html>
