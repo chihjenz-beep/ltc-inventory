@@ -682,6 +682,13 @@ function _sheetSerial(val){
 }
 function fixSheetDate(val){
   if(!val && val !== 0) return '';
+  // ISO datetime 字串（如 "2026-04-25T16:00:00.000Z"）→ 只取日期部分
+  if(typeof val === 'string'){
+    const iso = val.trim();
+    if(iso.length >= 10) return iso.slice(0,10);
+    return iso;
+  }
+  // Sheets 數字序列
   if(typeof val === 'number'){
     const ms = (Math.floor(val) - 25569) * 86400000;
     const d = new Date(ms);
@@ -693,7 +700,16 @@ function fixSheetDate(val){
   return String(val);
 }
 function fixSheetTime(dateVal, timeVal){
-  // Case 1: timeVal 是小數（0.xxx = 當天時間比例）
+  // Case 1: dateVal 是 ISO datetime 字串 → 從中提取本地時間
+  if(typeof dateVal === 'string' && dateVal.includes('T')){
+    const d = new Date(dateVal);
+    if(!isNaN(d)){
+      const h = String(d.getHours()).padStart(2,'0');
+      const mn = String(d.getMinutes()).padStart(2,'0');
+      return h+':'+mn;
+    }
+  }
+  // Case 2: timeVal 是小數（0.xxx = 當天時間比例）
   if(typeof timeVal === 'number'){
     const frac = timeVal % 1;
     const totalSec = Math.round(frac * 86400);
@@ -701,9 +717,9 @@ function fixSheetTime(dateVal, timeVal){
     const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
     return h+':'+mn;
   }
-  // Case 2: timeVal 是字串，直接用
+  // Case 3: timeVal 是字串，直接用
   if(timeVal) return String(timeVal);
-  // Case 3: dateVal 本身帶小數（datetime serial）
+  // Case 4: dateVal 本身帶小數（datetime serial）
   if(typeof dateVal === 'number' && dateVal % 1 !== 0){
     const frac = dateVal % 1;
     const totalSec = Math.round(frac * 86400);
@@ -717,34 +733,38 @@ function fixSheetTime(dateVal, timeVal){
 // ── GAS CORS 修正：用 JSONP 方式讀取資料 ────────────────────────────────────
 // GAS 的 GET 請求會經過 Google redirect，導致 CORS header 遺失
 // JSONP 透過動態注入 <script> 標籤繞過此限制
-function jsonpGet(url){
+function jsonpGet(url, timeout=12000){
   return new Promise((resolve,reject)=>{
-    const cb='_gasCallback_'+Date.now();
+    const cb='_gasCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
-    script.src=url+'&callback='+cb;
-    script.onerror=()=>{
-      delete window[cb];
-      document.head.removeChild(script);
-      reject(new Error('JSONP 載入失敗'));
-    };
-    const timer=setTimeout(()=>{
-      delete window[cb];
-      if(script.parentNode) document.head.removeChild(script);
-      reject(new Error('JSONP 逾時'));
-    },15000);
-    window[cb]=(data)=>{
+    let settled=false;
+    function cleanup(){
+      settled=true;
       clearTimeout(timer);
       delete window[cb];
-      if(script.parentNode) document.head.removeChild(script);
-      resolve(data);
-    };
+      try{if(script.parentNode)document.head.removeChild(script);}catch(e){}
+    }
+    script.onerror=()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 載入失敗')); };
+    const timer=setTimeout(()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 逾時')); },timeout);
+    window[cb]=(data)=>{ if(settled)return; cleanup(); resolve(data); };
+    script.src=url+'&callback='+cb;
     document.head.appendChild(script);
   });
 }
 
+// JSONP 含自動重試（最多 retry 次）
+async function jsonpGetWithRetry(url, retries=2, timeout=10000){
+  let lastErr;
+  for(let i=0;i<=retries;i++){
+    try{ return await jsonpGet(url, timeout); }
+    catch(e){ lastErr=e; if(i<retries) await new Promise(r=>setTimeout(r,1500*(i+1))); }
+  }
+  throw lastErr;
+}
+
 async function gasLoad(){
   try{
-    const d=await jsonpGet(GAS_URL+'?action=getAll');
+    const d=await jsonpGetWithRetry(GAS_URL+'?action=getAll');
     if(!d.ok) throw new Error(d.error);
 
     // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
@@ -796,28 +816,32 @@ async function gasLoad(){
   }
 }
 
-// ── 寫回 Google Sheets ───────────────────────────────────────────────────
+// ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
 async function gasSave(){
   showSaving();
+  const makePayload=()=>({
+    inv:  inv.map(i=>({...i, loc:JSON.stringify(i.loc)})),
+    logs: logs,
+    brws: brws
+  });
+  // 方法一：JSONP GET（與 gasLoad 相同機制，相容所有手機瀏覽器）
+  // 注意：GAS 端的 doGet 需處理 action=saveAll&data=...
   try{
-    const body={
-      action:'saveAll',
-      data:{
-        inv:  inv.map(i=>({...i, loc:JSON.stringify(i.loc)})),
-        logs: logs,
-        brws: brws
-      }
-    };
-    // GAS CORS 修正：使用 no-cors 傳送，GAS 仍會收到並寫入 Sheets
-    // no-cors 模式無法讀取回應，但寫入為 fire-and-forget 可接受
+    const encoded=encodeURIComponent(JSON.stringify(makePayload()));
+    await jsonpGetWithRetry(GAS_URL+'?action=saveAll&data='+encoded);
+    showSaved();return;
+  }catch(e){ console.warn('gasSave JSONP failed, trying POST',e); }
+  // 方法二：no-cors POST 備援（部分環境 JSONP 被擋時使用）
+  try{
     await fetch(GAS_URL,{
       method:'POST',
       mode:'no-cors',
-      body:JSON.stringify(body)
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'saveAll',data:makePayload()})
     });
     showSaved();
-  }catch(e){
-    console.error('gasSave error',e);
+  }catch(e2){
+    console.error('gasSave all methods failed',e2);
     showSaveErr();
   }
 }
