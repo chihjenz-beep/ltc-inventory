@@ -1220,9 +1220,12 @@ function openCam(){
     <button class="cam-close" onclick="closeCam()">關 閉 相 機</button>`;
   document.body.appendChild(overlay);
 
-  navigator.mediaDevices.getUserMedia({
-    video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
-  }).then(stream=>{
+  // Android Chrome：降低解析度請求，提升辨識速度與相容性
+  const constraints={video:{
+    facingMode:{ideal:'environment'},
+    width:{ideal:640},height:{ideal:480}
+  }};
+  navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
     camStream=stream;
     const vid=document.getElementById('camVid');
     vid.srcObject=stream;
@@ -1243,16 +1246,24 @@ function startScanLoop(vid){
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
   let lastCode='',lastTime=0;
+  let scanning=false; // 防止重疊執行
+  let scanW=0,scanH=0; // 只在尺寸改變時重設 canvas
 
   function tick(){
     if(!document.getElementById('camOverlay')){cancelAnimationFrame(camAnim);return}
-    if(vid.readyState===vid.HAVE_ENOUGH_DATA){
-      canvas.width=vid.videoWidth;
-      canvas.height=vid.videoHeight;
+    if(vid.readyState===vid.HAVE_ENOUGH_DATA && !scanning){
+      scanning=true;
+      // 只在尺寸改變時才重設（避免每幀重設造成 Android 效能問題）
+      if(canvas.width!==vid.videoWidth||canvas.height!==vid.videoHeight){
+        canvas.width=vid.videoWidth;
+        canvas.height=vid.videoHeight;
+        scanW=vid.videoWidth;scanH=vid.videoHeight;
+      }
       ctx.drawImage(vid,0,0,canvas.width,canvas.height);
       const img=ctx.getImageData(0,0,canvas.width,canvas.height);
       try{
-        const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+        // attemptBoth：同時嘗試正色與反色，提升 Android 辨識率
+        const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'});
         if(code){
           const now=Date.now();
           if(code.data!==lastCode||now-lastTime>3000){
@@ -1261,10 +1272,12 @@ function startScanLoop(vid){
           }
         }
       }catch(e){}
+      scanning=false;
     }
-    camAnim=requestAnimationFrame(tick);
+    // 用 setTimeout 限速（約 10fps），避免 Android 低階裝置過熱或卡頓
+    camAnim=setTimeout(()=>requestAnimationFrame(tick),100);
   }
-  camAnim=requestAnimationFrame(tick);
+  camAnim=setTimeout(()=>requestAnimationFrame(tick),100);
 }
 
 function handleQRResult(raw){
@@ -1294,7 +1307,10 @@ function handleQRResult(raw){
 }
 
 function closeCam(){
+  // camAnim 可能是 setTimeout id 或 rAF id，兩者都取消
   cancelAnimationFrame(camAnim);
+  clearTimeout(camAnim);
+  camAnim=null;
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
   const o=document.getElementById('camOverlay');
   if(o)o.remove();
