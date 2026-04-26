@@ -708,6 +708,47 @@ function showSaveErr(){
 }
 
 // ── 從 Google Sheets 讀取 ────────────────────────────────────────────────
+// ── Sheets 日期序列轉換工具 ─────────────────────────────────────────────────
+// Google Sheets 儲存日期為「從 1899-12-30 起算的天數」序列數
+// 需轉換為人可讀字串，避免顯示 1899-xx-xx
+function sheetSerialToDate(serial){
+  // serial: 例如 45784 → 2025-xx-xx
+  const d=new Date((serial-25569)*86400*1000);
+  return d;
+}
+function fixSheetDate(val){
+  if(!val && val!==0) return '';
+  if(typeof val==='number'){
+    const d=sheetSerialToDate(val);
+    return d.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'-');
+  }
+  return String(val);
+}
+function fixSheetTime(dateVal, timeVal){
+  // timeVal from Sheets may be a decimal fraction of a day (e.g. 0.5625 = 13:30)
+  // or a full serial (date+time combined as float)
+  if(timeVal!==undefined && timeVal!==null && timeVal!==''){
+    if(typeof timeVal==='number'){
+      // If it's a full datetime serial (>1), extract time portion
+      const frac = timeVal % 1;
+      const totalMin=Math.round(frac*1440);
+      const h=Math.floor(totalMin/60).toString().padStart(2,'0');
+      const m=(totalMin%60).toString().padStart(2,'0');
+      return `${h}:${m}`;
+    }
+    return String(timeVal);
+  }
+  // fallback: parse from dateVal if it's a float serial
+  if(typeof dateVal==='number' && dateVal%1!==0){
+    const frac=dateVal%1;
+    const totalMin=Math.round(frac*1440);
+    const h=Math.floor(totalMin/60).toString().padStart(2,'0');
+    const m=(totalMin%60).toString().padStart(2,'0');
+    return `${h}:${m}`;
+  }
+  return String(timeVal||'');
+}
+
 async function gasLoad(){
   try{
     const r=await fetch(GAS_URL+'?action=getAll');
@@ -732,7 +773,9 @@ async function gasLoad(){
     if(d.data.logs && d.data.logs.length>0){
       logs=d.data.logs.map(row=>({
         ...row,
-        qty: Number(row.qty)
+        qty:  Number(row.qty),
+        date: fixSheetDate(row.date),
+        time: fixSheetTime(row.date, row.time)
       }));
     }
 
@@ -742,7 +785,8 @@ async function gasLoad(){
         id:  Number(row.id),
         iid: Number(row.iid),
         qty: Number(row.qty),
-        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE'
+        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE',
+        due: fixSheetDate(row.due)
       }));
       // rebuild bseq
       bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
