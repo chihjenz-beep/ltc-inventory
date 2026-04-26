@@ -714,10 +714,37 @@ function fixSheetTime(dateVal, timeVal){
   return '';
 }
 
+// ── GAS CORS 修正：用 JSONP 方式讀取資料 ────────────────────────────────────
+// GAS 的 GET 請求會經過 Google redirect，導致 CORS header 遺失
+// JSONP 透過動態注入 <script> 標籤繞過此限制
+function jsonpGet(url){
+  return new Promise((resolve,reject)=>{
+    const cb='_gasCallback_'+Date.now();
+    const script=document.createElement('script');
+    script.src=url+'&callback='+cb;
+    script.onerror=()=>{
+      delete window[cb];
+      document.head.removeChild(script);
+      reject(new Error('JSONP 載入失敗'));
+    };
+    const timer=setTimeout(()=>{
+      delete window[cb];
+      if(script.parentNode) document.head.removeChild(script);
+      reject(new Error('JSONP 逾時'));
+    },15000);
+    window[cb]=(data)=>{
+      clearTimeout(timer);
+      delete window[cb];
+      if(script.parentNode) document.head.removeChild(script);
+      resolve(data);
+    };
+    document.head.appendChild(script);
+  });
+}
+
 async function gasLoad(){
   try{
-    const r=await fetch(GAS_URL+'?action=getAll');
-    const d=await r.json();
+    const d=await jsonpGet(GAS_URL+'?action=getAll');
     if(!d.ok) throw new Error(d.error);
 
     // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
@@ -781,12 +808,13 @@ async function gasSave(){
         brws: brws
       }
     };
-    const r=await fetch(GAS_URL,{
+    // GAS CORS 修正：使用 no-cors 傳送，GAS 仍會收到並寫入 Sheets
+    // no-cors 模式無法讀取回應，但寫入為 fire-and-forget 可接受
+    await fetch(GAS_URL,{
       method:'POST',
+      mode:'no-cors',
       body:JSON.stringify(body)
     });
-    const d=await r.json();
-    if(!d.ok) throw new Error(d.error);
     showSaved();
   }catch(e){
     console.error('gasSave error',e);
