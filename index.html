@@ -322,27 +322,6 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 }
 
 /* === AI BAR === */
-.ai-bar{
-  padding:8px 20px;
-  border-top:1px solid var(--border);
-  display:flex;gap:8px;align-items:center;
-  background:var(--paper-warm);
-}
-.ai-bar input{
-  flex:1;border:1px solid var(--border);border-radius:0;
-  padding:6px 10px;font-size:11px;
-  background:var(--paper);color:var(--ink);outline:none;
-  font-family:'Noto Sans TC',sans-serif;
-}
-.ai-bar input:focus{border-color:var(--gold)}
-.ai-bar button{font-size:11px;padding:6px 14px;white-space:nowrap}
-.ai-resp{
-  padding:8px 20px 0;
-  font-size:12px;color:var(--ink-faint);
-  background:var(--paper-warm);
-  border-top:1px solid var(--border-light);
-  line-height:1.7;
-}
 
 /* === QR GRID === */
 .qr-card{
@@ -468,11 +447,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .item-grid-mobile{grid-template-columns:1fr !important}
 
   /* AI bar compact */
-  .ai-bar{padding:6px 12px}
-  .ai-bar input{font-size:12px}
-  .ai-bar button{padding:6px 10px;font-size:11px}
-  .ai-resp{padding:6px 12px 0;font-size:11px}
-
+        
   /* modal full-screen on mobile */
   #qrModal > div{width:calc(100vw - 32px) !important;max-width:340px}
 }
@@ -550,7 +525,6 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 }
 
 /* Safe area for notch phones */
-.ai-bar{padding-bottom:max(8px, env(safe-area-inset-bottom))}
 </style>
 </head>
 <body>
@@ -624,18 +598,8 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       </div>
       <button class="scan-btn" onclick="go('scan',null);setTimeout(openCam,150)">📷 掃 描 出 入 庫</button>
     </div>
-
-    <div id="aiRespWrap" class="ai-resp" style="display:none">
-      <span id="aiRespTxt"></span>
-    </div>
-
-    <div class="body" id="pg"></div>
-
-    <div class="ai-bar">
-      <input type="text" id="aiq" placeholder="詢問 Claude AI — 例：認知訓練類有哪些可借用？" onkeydown="if(event.key==='Enter')askAI()">
-      <button onclick="askAI()">詢 問 AI ↗</button>
-    </div>
-  </div>
+<div class="body" id="pg"></div>
+</div>
 
   <!-- MOBILE BOTTOM NAV -->
   <nav class="mob-nav" aria-label="底部導覽">
@@ -708,47 +672,6 @@ function showSaveErr(){
 }
 
 // ── 從 Google Sheets 讀取 ────────────────────────────────────────────────
-// ── Sheets 日期序列轉換工具 ─────────────────────────────────────────────────
-// Google Sheets 儲存日期為「從 1899-12-30 起算的天數」序列數
-// 需轉換為人可讀字串，避免顯示 1899-xx-xx
-function sheetSerialToDate(serial){
-  // serial: 例如 45784 → 2025-xx-xx
-  const d=new Date((serial-25569)*86400*1000);
-  return d;
-}
-function fixSheetDate(val){
-  if(!val && val!==0) return '';
-  if(typeof val==='number'){
-    const d=sheetSerialToDate(val);
-    return d.toLocaleDateString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\//g,'-');
-  }
-  return String(val);
-}
-function fixSheetTime(dateVal, timeVal){
-  // timeVal from Sheets may be a decimal fraction of a day (e.g. 0.5625 = 13:30)
-  // or a full serial (date+time combined as float)
-  if(timeVal!==undefined && timeVal!==null && timeVal!==''){
-    if(typeof timeVal==='number'){
-      // If it's a full datetime serial (>1), extract time portion
-      const frac = timeVal % 1;
-      const totalMin=Math.round(frac*1440);
-      const h=Math.floor(totalMin/60).toString().padStart(2,'0');
-      const m=(totalMin%60).toString().padStart(2,'0');
-      return `${h}:${m}`;
-    }
-    return String(timeVal);
-  }
-  // fallback: parse from dateVal if it's a float serial
-  if(typeof dateVal==='number' && dateVal%1!==0){
-    const frac=dateVal%1;
-    const totalMin=Math.round(frac*1440);
-    const h=Math.floor(totalMin/60).toString().padStart(2,'0');
-    const m=(totalMin%60).toString().padStart(2,'0');
-    return `${h}:${m}`;
-  }
-  return String(timeVal||'');
-}
-
 async function gasLoad(){
   try{
     const r=await fetch(GAS_URL+'?action=getAll');
@@ -773,9 +696,7 @@ async function gasLoad(){
     if(d.data.logs && d.data.logs.length>0){
       logs=d.data.logs.map(row=>({
         ...row,
-        qty:  Number(row.qty),
-        date: fixSheetDate(row.date),
-        time: fixSheetTime(row.date, row.time)
+        qty: Number(row.qty)
       }));
     }
 
@@ -785,8 +706,7 @@ async function gasLoad(){
         id:  Number(row.id),
         iid: Number(row.iid),
         qty: Number(row.qty),
-        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE',
-        due: fixSheetDate(row.due)
+        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE'
       }));
       // rebuild bseq
       bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
@@ -1646,32 +1566,6 @@ function closeDrawer(){
   },{passive:true});
 })();
 
-async function askAI(){
-  const q=document.getElementById('aiq').value.trim();if(!q)return;
-  const wrap=document.getElementById('aiRespWrap'),txt=document.getElementById('aiRespTxt');
-  wrap.style.display='block';txt.style.color='#6b5a4e';txt.style.fontStyle='italic';txt.textContent='Claude 思考中…';
-  const snap=inv.map(i=>`${i.nm}（${i.cat}，${i.con?'消耗品':'非消耗品'}）：${i.qty}${i.u}，位置：${ls(i.loc)}`).join('；');
-  const bsnap=brws.filter(b=>!b.ret).map(b=>`${b.nm} ${b.qty}，借用人：${b.user}，預定歸還：${b.due||'未設定'}${ovd(b.due)?'【逾期】':''}`).join('；')||'無';
-  try{
-    // ── 透過 GAS 代理轉發，避免 API Key 暴露於前端 ──
-    const r=await fetch(GAS_URL,{
-      method:'POST',
-      body:JSON.stringify({
-        action:'askClaude',
-        prompt:`你是長照站活動物品庫存助理。庫存：${snap}。借用中：${bsnap}。請用繁體中文簡短回答（2-3句）：${q}`
-      })
-    });
-    const d=await r.json();
-    txt.style.fontStyle='normal';txt.style.color='#1c1410';
-    if(d.ok){
-      txt.textContent=d.reply;
-    } else {
-      txt.style.color='#8b2020';
-      txt.textContent='查詢失敗：'+(d.error||'請稍後再試');
-    }
-  }catch(e){txt.style.color='#8b2020';txt.textContent='連線失敗，請稍後再試。'}
-  document.getElementById('aiq').value='';
-}
 
 // ── Startup: render immediately with defaults, then refresh from Sheets ───
 // 檢查 URL 參數：手機掃描 QR Code 後帶入 ?item=ID，直接跳出入庫流程
