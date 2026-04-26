@@ -672,6 +672,48 @@ function showSaveErr(){
 }
 
 // ── 從 Google Sheets 讀取 ────────────────────────────────────────────────
+// ── Sheets 日期序列轉換 ──────────────────────────────────────────────────────
+// Google Sheets 日期底層為「從 1899-12-30 起算的天數」序列數
+// 整數部分 = 日期，小數部分 = 時間（0.5 = 12:00）
+function _sheetSerial(val){
+  // val 可能是純整數日期、帶小數的日期時間、或字串
+  if(typeof val !== 'number') return null;
+  return val;
+}
+function fixSheetDate(val){
+  if(!val && val !== 0) return '';
+  if(typeof val === 'number'){
+    const ms = (Math.floor(val) - 25569) * 86400000;
+    const d = new Date(ms);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth()+1).padStart(2,'0');
+    const day = String(d.getUTCDate()).padStart(2,'0');
+    return y+'-'+m+'-'+day;
+  }
+  return String(val);
+}
+function fixSheetTime(dateVal, timeVal){
+  // Case 1: timeVal 是小數（0.xxx = 當天時間比例）
+  if(typeof timeVal === 'number'){
+    const frac = timeVal % 1;
+    const totalSec = Math.round(frac * 86400);
+    const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
+    const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
+    return h+':'+mn;
+  }
+  // Case 2: timeVal 是字串，直接用
+  if(timeVal) return String(timeVal);
+  // Case 3: dateVal 本身帶小數（datetime serial）
+  if(typeof dateVal === 'number' && dateVal % 1 !== 0){
+    const frac = dateVal % 1;
+    const totalSec = Math.round(frac * 86400);
+    const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
+    const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
+    return h+':'+mn;
+  }
+  return '';
+}
+
 async function gasLoad(){
   try{
     const r=await fetch(GAS_URL+'?action=getAll');
@@ -696,7 +738,9 @@ async function gasLoad(){
     if(d.data.logs && d.data.logs.length>0){
       logs=d.data.logs.map(row=>({
         ...row,
-        qty: Number(row.qty)
+        qty:  Number(row.qty),
+        date: fixSheetDate(row.date),
+        time: fixSheetTime(row.date, row.time)
       }));
     }
 
@@ -706,7 +750,10 @@ async function gasLoad(){
         id:  Number(row.id),
         iid: Number(row.iid),
         qty: Number(row.qty),
-        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE'
+        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE',
+        due: fixSheetDate(row.due),
+        date: fixSheetDate(row.date),
+        time: fixSheetTime(row.date, row.time)
       }));
       // rebuild bseq
       bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
