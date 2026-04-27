@@ -682,11 +682,18 @@ function _sheetSerial(val){
 }
 function fixSheetDate(val){
   if(!val && val !== 0) return '';
-  // ISO datetime 字串（如 "2026-04-25T16:00:00.000Z"）→ 只取日期部分
+  // ISO datetime 字串（如 "2026-04-25T16:00:00.000Z"）→ 轉為本地時間後取日期
   if(typeof val === 'string'){
-    const iso = val.trim();
-    if(iso.length >= 10) return iso.slice(0,10);
-    return iso;
+    const s = val.trim();
+    if(s.includes('T')||s.includes('Z')){
+      // 含時區資訊：用 Date 解析後取本地日期，避免 UTC 偏移造成日期差一天
+      const d=new Date(s);
+      if(!isNaN(d)){
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      }
+    }
+    if(s.length >= 10) return s.slice(0,10);
+    return s;
   }
   // Sheets 數字序列
   if(typeof val === 'number'){
@@ -992,10 +999,10 @@ const CAT_META={
 };
 
 const ls=l=>(!l||(!l.r&&!l.k&&!l.lv))?'—':[l.r,l.k,l.lv].filter(Boolean).join(' › ');
-const tdy=()=>new Date().toLocaleDateString('zh-TW');
+const tdy=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');};
 const ntm=()=>new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
 const iso=()=>new Date().toISOString().slice(0,10);
-const ovd=d=>d&&new Date(d)<new Date(iso());
+const ovd=d=>{if(!d)return false;const[y,mo,day]=String(d).slice(0,10).split('-').map(Number);const t=new Date();return new Date(y,mo-1,day)<new Date(t.getFullYear(),t.getMonth(),t.getDate());};
 const cb=cat=>{const m=CAT_META[cat];return m?`<span class="b ${m.cls}" style="font-size:10px;padding:1px 7px">${m.label}</span>`:cat};
 
 let inv=[
