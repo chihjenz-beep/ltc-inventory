@@ -1646,9 +1646,9 @@ function pgRep(){
   </div>`;
 
   let rows=[...logs].reverse();
-  if(curNm)    rows=rows.filter(l=>l.nm===curNm);
-  if(curFrom)  rows=rows.filter(l=>l.date&&l.date>=curFrom);
-  if(curTo)    rows=rows.filter(l=>l.date&&l.date<=curTo);
+  if(curNm)   rows=rows.filter(l=>l.nm===curNm);
+  if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
+  if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
 
   if(curNm||curFrom||curTo){
     const total=rows.length;
@@ -1664,10 +1664,10 @@ function pgRep(){
   }
 
   h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:15%">時 間</th><th style="width:9%">操 作</th>
+    <th style="width:14%">時 間</th><th style="width:9%">操 作</th>
     <th style="width:15%">品 項</th><th style="width:10%">數 量</th>
     <th style="width:10%">人 員</th><th style="width:10%">用 途</th>
-    <th style="width:10%">歸 還 日</th><th style="width:21%">位 置</th>
+    <th style="width:10%">歸 還 日</th><th style="width:22%">位 置</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
@@ -1675,12 +1675,16 @@ function pgRep(){
   } else {
     rows.forEach(l=>{
       const cls=l.type==='入庫'?'b-in':l.type==='借用'?'b-br':l.type==='歸還'?'b-rt':'b-u';
+      // 只取日期部分（前10碼），去除時間
+      const dateOnly=(l.date||'').slice(0,10);
+      const dueOnly =(l.due ||'').slice(0,10);
       h+=`<tr>
-        <td style="color:#6b5a4e;white-space:nowrap;font-size:11px">${l.date||''}${l.time?' '+l.time:''}</td>
+        <td style="color:#6b5a4e">${dateOnly||'—'}</td>
         <td><span class="b ${cls}">${l.type}</span></td>
         <td style="font-family:'Noto Serif TC',serif">${l.nm}</td>
         <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
-        <td>${l.user||'—'}</td><td>${l.pur||'—'}</td><td>${l.due||'—'}</td>
+        <td>${l.user||'—'}</td><td>${l.pur||'—'}</td>
+        <td>${dueOnly||'—'}</td>
         <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
     });
   }
