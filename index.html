@@ -754,8 +754,7 @@ function jsonpGet(url, timeout=12000){
     script.onerror=()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 載入失敗')); };
     const timer=setTimeout(()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 逾時')); },timeout);
     window[cb]=(data)=>{ if(settled)return; cleanup(); resolve(data); };
-    script.crossOrigin='anonymous';  // 不附送 cookie，避免多帳號衝突
-    script.src=url+'&callback='+cb+'&_='+Date.now();  // 防快取
+    script.src=url+'&callback='+cb;
     document.head.appendChild(script);
   });
 }
@@ -844,7 +843,6 @@ async function gasSave(){
     await fetch(GAS_URL,{
       method:'POST',
       mode:'no-cors',
-      credentials:'omit',
       headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'saveAll',data:makePayload()})
     });
@@ -1623,22 +1621,81 @@ function oLE(id){
 function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');gasSave();document.getElementById('lF').innerHTML='';pgLoc();}
 
 function pgRep(){
-  let h=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:16%">時 間</th><th style="width:9%">操 作</th>
-    <th style="width:15%">品 項</th><th style="width:7%">數 量</th>
+  const nms=['（全部品項）',...new Set(logs.map(l=>l.nm).filter(Boolean))];
+  nms.sort((a,b)=>a==='（全部品項）'?-1:a.localeCompare(b,'zh-TW'));
+  const curNm  =window._repNm  ||'';
+  const curFrom=window._repFrom||'';
+  const curTo  =window._repTo  ||'';
+
+  let h=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:14px;padding:12px 14px;background:rgba(180,150,100,0.08);border-radius:4px;border:1px solid rgba(180,150,100,0.2)">
+    <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;flex:1">
+      <label style="font-size:10px;color:#6b5a4e;letter-spacing:0.08em">品　項</label>
+      <select id="repNm" onchange="repFilter()" style="padding:5px 8px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:12px">
+        ${nms.map(n=>`<option value="${n==='（全部品項）'?'':n}" ${(curNm===''&&n==='（全部品項）')||(curNm===n)?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <label style="font-size:10px;color:#6b5a4e;letter-spacing:0.08em">起始日期</label>
+      <input type="date" id="repFrom" value="${curFrom}" onchange="repFilter()" style="padding:5px 8px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:12px">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <label style="font-size:10px;color:#6b5a4e;letter-spacing:0.08em">結束日期</label>
+      <input type="date" id="repTo" value="${curTo}" onchange="repFilter()" style="padding:5px 8px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:12px">
+    </div>
+    <button onclick="repClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
+  </div>`;
+
+  let rows=[...logs].reverse();
+  if(curNm)    rows=rows.filter(l=>l.nm===curNm);
+  if(curFrom)  rows=rows.filter(l=>l.date&&l.date>=curFrom);
+  if(curTo)    rows=rows.filter(l=>l.date&&l.date<=curTo);
+
+  if(curNm||curFrom||curTo){
+    const total=rows.length;
+    const inQ =rows.filter(l=>l.type==='入庫').reduce((s,l)=>s+Number(l.qty),0);
+    const outQ=rows.filter(l=>l.type==='出庫'||l.type==='領用').reduce((s,l)=>s+Number(l.qty),0);
+    const brQ =rows.filter(l=>l.type==='借用').reduce((s,l)=>s+Number(l.qty),0);
+    h+=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:#6b5a4e">
+      <span>共 <b style="color:#1c1410">${total}</b> 筆</span>
+      ${inQ ?`<span>入庫 <b style="color:#2a6b5e">${inQ}</b></span>`:''}
+      ${outQ?`<span>領用 <b style="color:#8b6914">${outQ}</b></span>`:''}
+      ${brQ ?`<span>借用 <b style="color:#8b4513">${brQ}</b></span>`:''}
+    </div>`;
+  }
+
+  h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
+    <th style="width:15%">時 間</th><th style="width:9%">操 作</th>
+    <th style="width:15%">品 項</th><th style="width:10%">數 量</th>
     <th style="width:10%">人 員</th><th style="width:10%">用 途</th>
-    <th style="width:10%">歸 還 日</th><th style="width:23%">位 置</th>
+    <th style="width:10%">歸 還 日</th><th style="width:21%">位 置</th>
   </tr></thead><tbody>`;
-  if(!logs.length)h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">尚 無 異 動 紀 錄</td></tr>`;
-  else[...logs].reverse().forEach(l=>{
-    const cls=l.type==='入庫'?'b-in':l.type==='借用'?'b-br':l.type==='歸還'?'b-rt':'b-u';
-    h+=`<tr><td style="color:#6b5a4e">${l.date||''}</td><td><span class="b ${cls}">${l.type}</span></td>
-    <td style="font-family:'Noto Serif TC',serif">${l.nm}</td><td>${l.qty}</td>
-    <td>${l.user||'—'}</td><td>${l.pur||'—'}</td><td>${l.due||'—'}</td>
-    <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
-  });
-  h+='</tbody></table>';
+
+  if(!rows.length){
+    h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
+  } else {
+    rows.forEach(l=>{
+      const cls=l.type==='入庫'?'b-in':l.type==='借用'?'b-br':l.type==='歸還'?'b-rt':'b-u';
+      h+=`<tr>
+        <td style="color:#6b5a4e;white-space:nowrap;font-size:11px">${l.date||''}${l.time?' '+l.time:''}</td>
+        <td><span class="b ${cls}">${l.type}</span></td>
+        <td style="font-family:'Noto Serif TC',serif">${l.nm}</td>
+        <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
+        <td>${l.user||'—'}</td><td>${l.pur||'—'}</td><td>${l.due||'—'}</td>
+        <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
+    });
+  }
+  h+='</tbody></table></div>';
   document.getElementById('pg').innerHTML=h;
+}
+function repFilter(){
+  window._repNm  =document.getElementById('repNm')?.value||'';
+  window._repFrom=document.getElementById('repFrom')?.value||'';
+  window._repTo  =document.getElementById('repTo')?.value||'';
+  pgRep();
+}
+function repClear(){
+  window._repNm='';window._repFrom='';window._repTo='';
+  pgRep();
 }
 
 const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep};
