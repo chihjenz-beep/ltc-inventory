@@ -431,8 +431,8 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .st-v{font-size:18px}
 
   /* tables → scroll on mobile */
-  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .tbl{min-width:500px}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;-webkit-overflow-scrolling:touch}
+  .tbl{min-width:680px;font-size:12px}
 
   /* forms full-width on mobile */
   .fr{grid-template-columns:1fr}
@@ -1067,8 +1067,8 @@ function pgInv(){
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <div class="tbl-wrap"><table class="tbl"><thead><tr>
       <th style="width:22%">品 項</th>
-      <th style="width:12%">性 質</th><th style="width:8%">數 量</th>
-      <th style="width:10%">狀 態</th><th style="width:10%">借 出</th>
+      <th style="width:12%">性 質</th><th style="width:9%">數 量</th>
+      <th style="width:10%">狀 態</th><th style="width:9%">借 出</th>
       <th style="width:38%">儲 存 位 置</th>
     </tr></thead><tbody>${rows(ci)}</tbody></table></div>`;
   });
@@ -1082,10 +1082,10 @@ function pgBorrow(){
   h+=`<div class="sep"><div class="sep-line"></div>借用中（${act.length} 筆）<div class="sep-line"></div></div>`;
   if(!act.length)h+='<div style="font-size:12px;color:#6b5a4e;padding:16px 0;text-align:center;letter-spacing:0.08em">目 前 無 借 用 紀 錄</div>';
   else{
-    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:520px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:17%">品 項</th><th style="width:7%">數量</th><th style="width:12%">借用人</th><th style="width:12%">用途</th><th style="width:14%">借 出 日</th><th style="width:16%">預定歸還</th><th style="width:22%">操 作</th></tr></thead><tbody>`;
+    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:620px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:14%">品 項</th><th style="width:8%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:15%">借 出 日</th><th style="width:15%">預定歸還</th><th style="width:28%">操 作</th></tr></thead><tbody>`;
     act.forEach(b=>{const it=inv.find(i=>i.id===b.iid),isOD=ovd(b.due);h+=`<tr>
       <td style="font-family:'Noto Serif TC',serif">${b.nm}</td>
-      <td>${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td>${b.date}</td>
+      <td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td>
       <td><span class="${isOD?'b b-od':''}" style="${isOD?'':'color:#6b5a4e'}">${b.due||'—'}${isOD?' ⚠':''}</span></td>
       <td><button onclick="doRet(${b.id})" style="font-size:10px;padding:4px 10px">歸 還</button></td>
     </tr>`;});
@@ -1093,8 +1093,8 @@ function pgBorrow(){
   }
   if(done.length){
     h+=`<div class="sep" style="margin-top:20px"><div class="sep-line"></div>已歸還（${done.length} 筆）<div class="sep-line"></div></div>
-    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:500px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:18%">品 項</th><th style="width:8%">數量</th><th style="width:13%">借用人</th><th style="width:13%">用途</th><th style="width:14%">借 出 日</th><th style="width:14%">歸 還 日</th><th style="width:20%">狀 態</th></tr></thead><tbody>`;
-    [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);h+=`<tr><td style="font-family:'Noto Serif TC',serif">${b.nm}</td><td>${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td>${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
+    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:580px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:16%">品 項</th><th style="width:8%">數量</th><th style="width:11%">借用人</th><th style="width:11%">用途</th><th style="width:15%">借 出 日</th><th style="width:15%">歸 還 日</th><th style="width:24%">狀 態</th></tr></thead><tbody>`;
+    [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);h+=`<tr><td style="font-family:'Noto Serif TC',serif">${b.nm}</td><td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
     h+='</tbody></table>';
   }
   document.getElementById('pg').innerHTML=h;
@@ -1664,10 +1664,10 @@ function pgRep(){
   }
 
   h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:14%">時 間</th><th style="width:9%">操 作</th>
-    <th style="width:15%">品 項</th><th style="width:10%">數 量</th>
-    <th style="width:10%">人 員</th><th style="width:10%">用 途</th>
-    <th style="width:10%">歸 還 日</th><th style="width:22%">位 置</th>
+    <th style="width:15%">時 間</th><th style="width:9%">操 作</th>
+    <th style="width:14%">品 項</th><th style="width:8%">數 量</th>
+    <th style="width:9%">人 員</th><th style="width:9%">用 途</th>
+    <th style="width:13%">歸 還 日</th><th style="width:23%">位 置</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
