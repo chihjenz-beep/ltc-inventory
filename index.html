@@ -597,6 +597,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
         <input type="text" id="srch" placeholder="搜尋品項或類別…" oninput="pgInv()">
       </div>
       <button class="scan-btn" onclick="go('scan',null);setTimeout(openCam,150)">📷 掃 描 出 入 庫</button>
+      <div id="liveClock" style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:500;color:var(--gold);letter-spacing:0.12em;white-space:nowrap;padding-left:10px;flex-shrink:0"></div>
     </div>
 <div class="body" id="pg"></div>
 </div>
@@ -1770,6 +1771,20 @@ function checkURLItem(){
 }
 
 go('inv', null);   // 立即顯示預設畫面，不等待網路
+
+// ── 即時時鐘 ──────────────────────────────────────────────────────────────
+(function startClock(){
+  function tick(){
+    const now=new Date();
+    const hh=String(now.getHours()).padStart(2,'0');
+    const mm=String(now.getMinutes()).padStart(2,'0');
+    const ss=String(now.getSeconds()).padStart(2,'0');
+    const el=document.getElementById('liveClock');
+    if(el) el.textContent=hh+':'+mm+':'+ss;
+  }
+  tick();
+  setInterval(tick,1000);
+})();
 
 // 背景從 Google Sheets 載入，完成後靜默刷新當前頁
 gasLoad().then(()=>{
