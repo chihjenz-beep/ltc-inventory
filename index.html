@@ -14,7 +14,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+// Compatibility shim: makes new QRCode(container, opts) work with the qrcode@1.5 library
+// The new library exposes QRCode.toCanvas / QRCode.toDataURL on the global QRCode object.
+// We wrap it so existing call-sites keep working unchanged.
+(function(){
+  const _QR = window.QRCode; // qrcode@1.5 library
+  window.QRCode = function(container, opts){
+    const text = opts.text;
+    const size = opts.width || 128;
+    // Create a canvas and append to container
+    const canvas = document.createElement('canvas');
+    container.innerHTML = '';
+    container.appendChild(canvas);
+    _QR.toCanvas(canvas, text, {
+      width: size,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark:'#000000', light:'#ffffff' }
+    }, function(err){
+      if(err){
+        container.innerHTML = '<span style="font-size:8px;color:#999">QR錯誤</span>';
+      }
+    });
+  };
+  // Keep static methods accessible
+  window.QRCode.toCanvas   = _QR.toCanvas.bind(_QR);
+  window.QRCode.toDataURL  = _QR.toDataURL.bind(_QR);
+  window.QRCode.CorrectLevel = { L:1, M:0, Q:3, H:2 }; // dummy compat
+})();
+</script>
 <style>
 :root{
   --ink:#1c1410;
@@ -1835,28 +1865,12 @@ function buildPrintCard(item, qrDataUrl){
 }
 
 function getQRDataUrl(item, size){
-  return new Promise((resolve)=>{
-    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
-    const div=document.createElement('div');
-    div.style.cssText='position:fixed;left:-9999px;top:-9999px';
-    document.body.appendChild(div);
-    try{
-      const qr=new QRCode(div,{text:payload,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});
-      // QRCode.js renders synchronously to canvas then converts to img
-      setTimeout(()=>{
-        const canvas=div.querySelector('canvas');
-        const img=div.querySelector('img');
-        let url='';
-        if(canvas) url=canvas.toDataURL('image/png');
-        else if(img) url=img.src;
-        document.body.removeChild(div);
-        resolve(url);
-      },150);
-    }catch(e){
-      if(document.body.contains(div)) document.body.removeChild(div);
-      resolve('');
-    }
-  });
+  const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+  return QRCode.toDataURL(payload,{
+    width:size,margin:1,
+    errorCorrectionLevel:'M',
+    color:{dark:'#000000',light:'#ffffff'}
+  }).catch(()=>'');
 }
 
 async function printSingleCard(id){
