@@ -1722,7 +1722,6 @@ function pgQR(){
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px" class="qr-grid-mobile">`;
     ci.forEach(i=>{
       const catCol=CAT_HEX[cat]||'#888';
-      const qrSrc=QR_B64[i.id]||'';
       h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(28,20,16,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
           <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
@@ -1808,11 +1807,13 @@ function previewCard(id){
 
   document.body.appendChild(overlay);
 
-  // 使用預先內嵌的 base64 圖片
+  // 動態產生 QR Code
   const el=document.getElementById('modalQR');
   if(el){
-    const src=QR_B64[item.id]||'';
-    el.innerHTML=`<img src="${src}" width="120" height="120" style="display:block">`;
+    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    try{
+      new QRCode(el,{text:payload,width:120,height:120,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){ el.innerHTML='<span style="font-size:10px;color:#999">QR產生失敗</span>'; }
   }
 }
 
@@ -1837,20 +1838,22 @@ function getQRDataUrl(item, size){
   return new Promise((resolve)=>{
     const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
     const div=document.createElement('div');
-    div.style.cssText='position:fixed;left:-9999px;top:-9999px;width:'+size+'px;height:'+size+'px';
+    div.style.cssText='position:fixed;left:-9999px;top:-9999px';
     document.body.appendChild(div);
     try{
-      new QRCode(div,{text:payload,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});
+      const qr=new QRCode(div,{text:payload,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});
+      // QRCode.js renders synchronously to canvas then converts to img
       setTimeout(()=>{
-        const img=div.querySelector('img')||div.querySelector('canvas');
+        const canvas=div.querySelector('canvas');
+        const img=div.querySelector('img');
         let url='';
-        if(img && img.tagName==='IMG') url=img.src;
-        else if(img && img.tagName==='CANVAS') url=img.toDataURL('image/png');
+        if(canvas) url=canvas.toDataURL('image/png');
+        else if(img) url=img.src;
         document.body.removeChild(div);
         resolve(url);
-      },80);
+      },150);
     }catch(e){
-      document.body.removeChild(div);
+      if(document.body.contains(div)) document.body.removeChild(div);
       resolve('');
     }
   });
