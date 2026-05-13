@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --ink:#1c1410;
@@ -1300,6 +1301,15 @@ function pgInv(){
     </tr></thead><tbody>${rows(ci)}</tbody></table></div>`;
   });
   document.getElementById('pg').innerHTML=h;
+  // Async fill all QR canvases
+  inv.forEach(item=>{
+    const el=document.getElementById('qrc-'+item.id);
+    if(!el)return;
+    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    try{
+      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+  });
 }
 
 function pgBorrow(){
@@ -1325,6 +1335,15 @@ function pgBorrow(){
     h+='</tbody></table>';
   }
   document.getElementById('pg').innerHTML=h;
+  // Async fill all QR canvases
+  inv.forEach(item=>{
+    const el=document.getElementById('qrc-'+item.id);
+    if(!el)return;
+    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    try{
+      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+  });
 }
 
 function doRet(id){
@@ -1709,7 +1728,7 @@ function pgQR(){
           <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
         </div>
         <div style="margin:0 auto 6px;width:64px;height:64px;display:flex;align-items:center;justify-content:center">
-          <img src="${qrSrc}" width="64" height="64" style="display:block">
+          <div id="qrc-${i.id}" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center"></div>
         </div>
         <div style="font-family:'Noto Serif TC',serif;font-size:11px;color:#1c1410;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${i.nm}</div>
         <div style="font-size:9px;color:#6b5a4e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${ls(i.loc)}</div>
@@ -1722,6 +1741,15 @@ function pgQR(){
   });
 
   document.getElementById('pg').innerHTML=h;
+  // Async fill all QR canvases
+  inv.forEach(item=>{
+    const el=document.getElementById('qrc-'+item.id);
+    if(!el)return;
+    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    try{
+      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+  });
 }
 
 // ── Print single card preview ──────────────────────────────────────────────
@@ -1806,8 +1834,26 @@ function buildPrintCard(item, qrDataUrl){
 }
 
 function getQRDataUrl(item, size){
-  // 直接從預先內嵌的 base64 字典取得，無需動態產生
-  return Promise.resolve(QR_B64[item.id]||'');
+  return new Promise((resolve)=>{
+    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    const div=document.createElement('div');
+    div.style.cssText='position:fixed;left:-9999px;top:-9999px;width:'+size+'px;height:'+size+'px';
+    document.body.appendChild(div);
+    try{
+      new QRCode(div,{text:payload,width:size,height:size,correctLevel:QRCode.CorrectLevel.M});
+      setTimeout(()=>{
+        const img=div.querySelector('img')||div.querySelector('canvas');
+        let url='';
+        if(img && img.tagName==='IMG') url=img.src;
+        else if(img && img.tagName==='CANVAS') url=img.toDataURL('image/png');
+        document.body.removeChild(div);
+        resolve(url);
+      },80);
+    }catch(e){
+      document.body.removeChild(div);
+      resolve('');
+    }
+  });
 }
 
 async function printSingleCard(id){
@@ -1931,6 +1977,15 @@ function pgLoc(){
   });
   h+='<div id="lF" style="margin-top:12px"></div>';
   document.getElementById('pg').innerHTML=h;
+  // Async fill all QR canvases
+  inv.forEach(item=>{
+    const el=document.getElementById('qrc-'+item.id);
+    if(!el)return;
+    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    try{
+      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+  });
 }
 function oLE(id){
   withAuth(()=>{
@@ -2019,6 +2074,15 @@ function pgRep(){
   }
   h+='</tbody></table></div>';
   document.getElementById('pg').innerHTML=h;
+  // Async fill all QR canvases
+  inv.forEach(item=>{
+    const el=document.getElementById('qrc-'+item.id);
+    if(!el)return;
+    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    try{
+      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+  });
 }
 function repFilter(){
   window._repNm  =document.getElementById('repNm')?.value||'';
