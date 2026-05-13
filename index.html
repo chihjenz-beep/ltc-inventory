@@ -775,8 +775,9 @@ async function gasLoad(){
     if(!d.ok) throw new Error(d.error);
 
     // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
+    // 若本機品項數 >= Sheets 品項數，以本機為準並寫回（避免舊資料覆蓋新匯入清單）
     if(d.data.inv && d.data.inv.length>0){
-      inv=d.data.inv.map(row=>({
+      const sheetInv=d.data.inv.map(row=>({
         ...row,
         id:   Number(row.id),
         qty:  Number(row.qty),
@@ -784,6 +785,14 @@ async function gasLoad(){
         con:  row.con===true||row.con==='true'||row.con==='TRUE',
         loc:  typeof row.loc==='string'?JSON.parse(row.loc):row.loc||{}
       }));
+      if(sheetInv.length >= inv.length){
+        // Sheets 資料較新或相同，以 Sheets 為準
+        inv=sheetInv;
+      } else {
+        // 本機品項較多（剛匯入新清單），以本機為準並推送到 Sheets
+        console.log(`本機品項(${inv.length})多於 Sheets(${sheetInv.length})，自動同步至 Sheets`);
+        await gasSave();
+      }
     } else {
       // 首次：把預設值寫入 Sheets
       await gasSave();
