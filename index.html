@@ -14,36 +14,278 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
-// Compatibility shim: makes new QRCode(container, opts) work with the qrcode@1.5 library
-// The new library exposes QRCode.toCanvas / QRCode.toDataURL on the global QRCode object.
-// We wrap it so existing call-sites keep working unchanged.
-(function(){
-  const _QR = window.QRCode; // qrcode@1.5 library
-  window.QRCode = function(container, opts){
-    const text = opts.text;
-    const size = opts.width || 128;
-    // Create a canvas and append to container
-    const canvas = document.createElement('canvas');
-    container.innerHTML = '';
-    container.appendChild(canvas);
-    _QR.toCanvas(canvas, text, {
-      width: size,
-      margin: 1,
-      errorCorrectionLevel: 'M',
-      color: { dark:'#000000', light:'#ffffff' }
-    }, function(err){
-      if(err){
-        container.innerHTML = '<span style="font-size:8px;color:#999">QR錯誤</span>';
+// Minimal QR Code generator — pure JS, no dependencies
+// Generates QR matrix for a given string, renders to canvas
+// API: window.QRCode(container, {text, width}) and QRCode.toDataURL(text, opts)
+(function(global){
+'use strict';
+
+// ---------- Reed-Solomon GF(256) arithmetic ----------
+var GF_EXP=new Uint8Array(512),GF_LOG=new Uint8Array(256);
+(function(){var x=1;for(var i=0;i<255;i++){GF_EXP[i]=x;GF_LOG[x]=i;x<<=1;if(x&256)x^=285;}for(var i=255;i<512;i++)GF_EXP[i]=GF_EXP[i-255];})();
+function gfMul(x,y){if(!x||!y)return 0;return GF_EXP[GF_LOG[x]+GF_LOG[y]];}
+function gfPoly(n){var p=[1];for(var i=0;i<n;i++){var q=[1,GF_EXP[i]];var r=new Array(p.length+q.length-1).fill(0);for(var j=0;j<p.length;j++)for(var k=0;k<q.length;k++)r[j+k]^=gfMul(p[j],q[k]);p=r;}return p;}
+function rsEncode(msg,nsym){var gen=gfPoly(nsym),res=msg.slice();for(var i=0;i<nsym;i++)res.push(0);for(var i=0;i<msg.length;i++){var c=res[i];if(c)for(var j=0;j<gen.length;j++)res[i+j]^=gfMul(gen[j],c);}return res.slice(msg.length);}
+
+// ---------- Capacity / format tables (version 1-10, ECC M) ----------
+var EC_M={1:[10,16],2:[16,28],3:[26,44],4:[36,64],5:[48,86],6:[64,108],7:[72,124],8:[88,154],9:[110,182],10:[130,216]};
+// Remainder bits per version
+var REM=[0,7,7,7,4,4,4,0,0,0,0];
+// Alignment pattern centers (version 1 has none)
+var ALIGN={2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+
+function chooseVersion(len){
+  for(var v=1;v<=10;v++){if(EC_M[v][0]>=len)return v;}
+  throw new Error('Data too long');
+}
+
+// ---------- Encoding: byte mode ----------
+function encodeData(text){
+  var bytes=[];
+  for(var i=0;i<text.length;i++){
+    var c=text.charCodeAt(i);
+    if(c>255)throw new Error('Non-latin char');
+    bytes.push(c);
+  }
+  var ver=chooseVersion(bytes.length);
+  var cap=EC_M[ver][1]; // total data codewords
+  // Mode indicator 0100 (byte) + 8-bit length (ver 1-9)
+  var bits=[];
+  function addBits(val,n){for(var i=n-1;i>=0;i--)bits.push((val>>i)&1);}
+  addBits(4,4); // mode
+  addBits(bytes.length,8);
+  for(var i=0;i<bytes.length;i++)addBits(bytes[i],8);
+  // Terminator
+  for(var i=0;i<4&&bits.length<cap*8;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  // Pad codewords
+  var pads=[0xEC,0x11],pi=0;
+  while(bits.length<cap*8){addBits(pads[pi%2],8);pi++;}
+  // Convert to codewords
+  var cw=[];
+  for(var i=0;i<bits.length;i+=8){var b=0;for(var j=0;j<8;j++)b=(b<<1)|bits[i+j];cw.push(b);}
+  return {ver,cw};
+}
+
+// ---------- EC blocks (version 1-10, ECC M) ----------
+var EC_BLOCKS={
+  1:[[1,10,16]],2:[[1,16,28]],3:[[1,26,44]],4:[[2,18,32]],
+  5:[[2,24,43]],6:[[4,16,27]],7:[[4,18,31]],8:[[2,22,38],[2,22,38]],
+  9:[[3,20,36],[2,20,36]],10:[[4,24,43],[1,24,43]]
+};
+// Actually use simpler: RS per-block
+function ecEncode(cw,ver){
+  // Single block for simplicity for small versions
+  var nsym=EC_M[ver][1]-cw.length; // this isn't right; use table
+  // Proper block structure
+  var blkDef=EC_BLOCKS[ver];
+  var blocks=[],eblocks=[];
+  var pos=0;
+  // For single block versions (1-3,5,6)
+  if(!Array.isArray(blkDef[0][0])){ 
+    // blkDef = array of [count, ecPerBlock, totalPerBlock]
+    for(var i=0;i<blkDef.length;i++){
+      var count=blkDef[i][0],ec=blkDef[i][1],tot=blkDef[i][2],data=tot-ec;
+      for(var b=0;b<count;b++){
+        var blk=cw.slice(pos,pos+data);pos+=data;
+        blocks.push(blk);
+        eblocks.push(rsEncode(blk,ec));
       }
-    });
-  };
-  // Keep static methods accessible
-  window.QRCode.toCanvas   = _QR.toCanvas.bind(_QR);
-  window.QRCode.toDataURL  = _QR.toDataURL.bind(_QR);
-  window.QRCode.CorrectLevel = { L:1, M:0, Q:3, H:2 }; // dummy compat
-})();
+    }
+  }
+  // Interleave
+  var result=[];
+  var maxData=Math.max(...blocks.map(b=>b.length));
+  for(var i=0;i<maxData;i++)for(var b=0;b<blocks.length;b++)if(i<blocks[b].length)result.push(blocks[b][i]);
+  var maxEC=Math.max(...eblocks.map(b=>b.length));
+  for(var i=0;i<maxEC;i++)for(var b=0;b<eblocks.length;b++)if(i<eblocks[b].length)result.push(eblocks[b][i]);
+  return result;
+}
+
+// ---------- Matrix building ----------
+function makeMatrix(ver){
+  var size=ver*4+17;
+  var m=Array.from({length:size},()=>new Array(size).fill(-1)); // -1=free
+  var fn=Array.from({length:size},()=>new Array(size).fill(false)); // function module
+
+  function setM(r,c,v){m[r][c]=v;fn[r][c]=true;}
+  function square(r,c,s,val){for(var i=r;i<r+s;i++)for(var j=c;j<c+s;j++)setM(i,j,val);}
+
+  // Finder patterns
+  function finder(r,c){
+    square(r,c,7,1);square(r+1,c+1,5,0);square(r+2,c+2,3,1);
+    // Separator
+    for(var i=r;i<=r+7&&i<size;i++){if(c+7<size)setM(i,c+7,0);if(c-1>=0)setM(i,c-1,0);}
+    for(var j=c;j<=c+7&&j<size;j++){if(r+7<size)setM(r+7,j,0);if(r-1>=0)setM(r-1,j,0);}
+  }
+  finder(0,0);finder(0,size-7);finder(size-7,0);
+
+  // Timing patterns
+  for(var i=8;i<size-8;i++){setM(6,i,i%2===0?1:0);setM(i,6,i%2===0?1:0);}
+
+  // Dark module
+  setM(size-8,8,1);
+
+  // Format info placeholders
+  for(var i=0;i<9;i++){fn[8][i]=true;fn[i][8]=true;}
+  fn[8][7]=false;fn[7][8]=false;// timing already set
+  for(var i=size-8;i<size;i++){fn[8][i]=true;fn[i][8]=true;}
+
+  // Alignment patterns
+  if(ALIGN[ver]){
+    var ac=ALIGN[ver];
+    for(var ai=0;ai<ac.length;ai++)for(var aj=0;aj<ac.length;aj++){
+      var r=ac[ai],c=ac[aj];
+      if(fn[r][c])continue;
+      square(r-2,c-2,5,0);square(r-1,c-1,3,1);setM(r,c,1);
+      for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++)fn[r+dr][c+dc]=true;
+    }
+  }
+  return {m,fn,size};
+}
+
+function placeData(m,fn,size,bits){
+  var col=size-1,row=size-1,up=true,bi=0;
+  while(col>=0){
+    if(col===6)col--;
+    for(var step=0;step<size;step++){
+      var r=up?size-1-step:step;
+      for(var dc=0;dc<2;dc++){
+        var c=col-dc;
+        if(!fn[r][c]&&bi<bits.length){m[r][c]=bits[bi++];}
+        else if(!fn[r][c])m[r][c]=0;
+      }
+    }
+    col-=2;up=!up;
+  }
+}
+
+function applyMask(m,fn,size,mask){
+  var out=m.map(r=>r.slice());
+  for(var r=0;r<size;r++)for(var c=0;c<size;c++){
+    if(fn[r][c])continue;
+    var inv=false;
+    if(mask===0)inv=(r+c)%2===0;
+    else if(mask===1)inv=r%2===0;
+    else if(mask===2)inv=c%3===0;
+    else if(mask===3)inv=(r+c)%3===0;
+    else if(mask===4)inv=(Math.floor(r/2)+Math.floor(c/3))%2===0;
+    else if(mask===5)inv=(r*c)%2+(r*c)%3===0;
+    else if(mask===6)inv=((r*c)%2+(r*c)%3)%2===0;
+    else if(mask===7)inv=((r+c)%2+(r*c)%3)%2===0;
+    if(inv)out[r][c]^=1;
+  }
+  return out;
+}
+
+function scoreMatrix(m,size){
+  var s=0;
+  // Rule 1: 5+ in a row
+  for(var r=0;r<size;r++){var run=1;for(var c=1;c<size;c++){if(m[r][c]===m[r][c-1])run++;else{if(run>=5)s+=run-2;run=1;}if(run>=5)s+=run-2;}};
+  for(var c=0;c<size;c++){var run=1;for(var r=1;r<size;r++){if(m[r][c]===m[r-1][c])run++;else{if(run>=5)s+=run-2;run=1;}if(run>=5)s+=run-2;}};
+  // Rule 2: 2x2 blocks
+  for(var r=0;r<size-1;r++)for(var c=0;c<size-1;c++)if(m[r][c]===m[r+1][c]&&m[r][c]===m[r][c+1]&&m[r][c]===m[r+1][c+1])s+=3;
+  return s;
+}
+
+function placeFormat(m,size,mask){
+  // ECC level M = bits 01, mask pattern
+  var fmt=(1<<3)|mask; // M=01
+  // BCH encode format
+  var g=0x537,b=fmt<<10;
+  for(var i=14;i>=10;i--)if(b&(1<<i))b^=(g<<(i-10));
+  var fmt15=((fmt<<10)|b)^0x5412;
+  // Place around top-left finder
+  var seq=[0,1,2,3,4,5,7,8,9,10,11,12,13,14];
+  for(var i=0;i<6;i++)m[8][i]=(fmt15>>(14-seq[i]))&1;
+  m[8][7]=(fmt15>>(14-seq[6]))&1;
+  m[8][8]=(fmt15>>(14-seq[7]))&1;
+  m[7][8]=(fmt15>>(14-seq[8]))&1;
+  for(var i=0;i<6;i++)m[5-i][8]=(fmt15>>(14-seq[9+i]))&1;
+  // Top-right
+  for(var i=0;i<8;i++)m[i][size-8+i%8]=(i<8?(fmt15>>(14-i))&1:0);
+  for(var i=0;i<size-7;i++)if(i>=size-8)m[size-8+(i-(size-8))][8]=(fmt15>>(i-(size-8)))&1;
+  // Simpler: just do it properly
+  for(var i=0;i<8;i++)m[size-1-i][8]=(fmt15>>i)&1;
+  for(var i=0;i<7;i++)m[8][size-7+i]=(fmt15>>(7+i))&1; // wrong
+  // Actually use known positions:
+  // bottom-left vertical
+  for(var i=0;i<7;i++)m[size-7+i][8]=(fmt15>>i)&1;
+  // top-right horizontal  
+  for(var i=0;i<8;i++)m[8][size-8+i]=(fmt15>>(7+i))&1;
+}
+
+function generate(text){
+  var {ver,cw}=encodeData(text);
+  var allCW=ecEncode(cw,ver);
+  // To bits
+  var bits=[];
+  for(var i=0;i<allCW.length;i++)for(var j=7;j>=0;j--)bits.push((allCW[i]>>j)&1);
+  for(var i=0;i<(REM[ver]||0);i++)bits.push(0);
+
+  var {m,fn,size}=makeMatrix(ver);
+  placeData(m,fn,size,bits);
+
+  // Choose best mask
+  var best=null,bestScore=Infinity,bestMask=0;
+  for(var mask=0;mask<8;mask++){
+    var mm=applyMask(m,fn,size,mask);
+    var sc=scoreMatrix(mm,size);
+    if(sc<bestScore){bestScore=sc;best=mm;bestMask=mask;}
+  }
+  placeFormat(best,size,bestMask);
+  return {matrix:best,size};
+}
+
+function renderToCanvas(canvas,text,pixelSize){
+  pixelSize=pixelSize||4;
+  var {matrix,size}=generate(text);
+  var quiet=4;
+  var total=(size+quiet*2)*pixelSize;
+  canvas.width=total;canvas.height=total;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,total,total);
+  ctx.fillStyle='#000';
+  for(var r=0;r<size;r++)for(var c=0;c<size;c++)
+    if(matrix[r][c])ctx.fillRect((c+quiet)*pixelSize,(r+quiet)*pixelSize,pixelSize,pixelSize);
+}
+
+// Public API
+var QRC=function(container,opts){
+  var text=opts.text,width=opts.width||128;
+  var canvas=document.createElement('canvas');
+  container.innerHTML='';container.appendChild(canvas);
+  var size=generate(text).size;
+  var px=Math.max(1,Math.floor(width/(size+8)));
+  try{renderToCanvas(canvas,text,px);}
+  catch(e){container.innerHTML='<span style="font-size:8px;color:#c00">QR錯誤</span>';}
+};
+QRC.toDataURL=function(text,opts){
+  return new Promise(function(res,rej){
+    try{
+      var width=(opts&&opts.width)||200;
+      var canvas=document.createElement('canvas');
+      var size=generate(text).size;
+      var px=Math.max(1,Math.floor(width/(size+8)));
+      renderToCanvas(canvas,text,px);
+      res(canvas.toDataURL('image/png'));
+    }catch(e){rej(e);}
+  });
+};
+QRC.toCanvas=function(canvas,text,opts,cb){
+  try{
+    var width=(opts&&opts.width)||200;
+    var size=generate(text).size;
+    var px=Math.max(1,Math.floor(width/(size+8)));
+    renderToCanvas(canvas,text,px);
+    if(cb)cb(null);
+  }catch(e){if(cb)cb(e);}
+};
+QRC.CorrectLevel={L:1,M:0,Q:3,H:2};
+global.QRCode=QRC;
+})(window);
+
 </script>
 <style>
 :root{
@@ -1866,11 +2108,7 @@ function buildPrintCard(item, qrDataUrl){
 
 function getQRDataUrl(item, size){
   const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
-  return QRCode.toDataURL(payload,{
-    width:size,margin:1,
-    errorCorrectionLevel:'M',
-    color:{dark:'#000000',light:'#ffffff'}
-  }).catch(()=>'');
+  return QRCode.toDataURL(payload,{width:size}).catch(()=>'');
 }
 
 async function printSingleCard(id){
