@@ -10928,7 +10928,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
-      <div class="stor-badge" id="syncBadge">🔄 連線中…</div>
+      <div class="stor-badge" id="syncBadge">✓ 已同步</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
     </div>
@@ -10955,7 +10955,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
-      <div class="stor-badge" id="syncBadge">🔄 連線中…</div>
+      <div class="stor-badge" id="syncBadge">✓ 已同步</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
     </div>
@@ -12227,7 +12227,7 @@ function invQuickAction(id){
         🗑 刪 除 此 品 項
       </button>
     </div>
-  </div>\`;
+  </div>`;
   document.body.appendChild(overlay);
 }
 
@@ -12892,9 +12892,10 @@ function checkURLItem(){
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
 if(!checkURLItem()) go('inv', null);
-// 背景連線 Google Sheets
+// 背景連線 Google Sheets（失敗才改 badge，不卡畫面）
 gasLoad().catch(e=>{
   console.warn('gasLoad 失敗', e);
+  _setBadge('📴 離線模式','#6b5a4e');
 });
 </script>
 </body>
