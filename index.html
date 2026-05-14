@@ -1057,7 +1057,20 @@ async function gasLoad(){
       }));
       if(sheetInv.length >= inv.length){
         // Sheets 資料較新或相同，以 Sheets 為準
-        inv=sheetInv;
+        // 但 loc 以本機 HTML 為準（避免 Sheets 舊位置覆蓋已更新的位置）
+        const localLocMap={};
+        inv.forEach(i=>{ localLocMap[i.id]=i.loc; });
+        const locChanged=sheetInv.some(i=>{
+          const ll=localLocMap[i.id];
+          const sl=typeof i.loc==='object'?i.loc:{};
+          return ll&&(ll.r!==sl.r||ll.k!==sl.k||ll.lv!==sl.lv);
+        });
+        inv=sheetInv.map(i=>({
+          ...i,
+          loc: localLocMap[i.id] || i.loc
+        }));
+        // 若本機 loc 與 Sheets 不同，自動推送更新後的位置
+        if(locChanged){ await gasSave(); }
       } else {
         // 本機品項較多（剛匯入新清單），以本機為準並推送到 Sheets
         console.log(`本機品項(${inv.length})多於 Sheets(${sheetInv.length})，自動同步至 Sheets`);
