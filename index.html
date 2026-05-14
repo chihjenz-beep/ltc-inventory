@@ -11720,8 +11720,8 @@ function pgInv(){
           <span id="${catId}_arrow" style="font-size:10px;color:#fff;transition:transform 0.2s">▼</span>
         </div>
       </div>
-      <div id="${catId}" style="background:#fff;border:1px solid rgba(0,0,0,0.07);border-top:none">
-        <table class="tbl" style="margin-bottom:0"><thead>
+      <div id="${catId}" style="background:#fff;border:1px solid rgba(0,0,0,0.07);border-top:none;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="tbl" style="margin-bottom:0;min-width:560px"><thead>
           <tr style="background:${catLight}">
             <th style="width:30%;padding-left:12px;color:${catCol}">品 項</th>
             <th class="inv-col-nat" style="width:9%;color:${catCol}">性 質</th>
@@ -12652,11 +12652,10 @@ async function printAllQR(){
       @page{size:A4;margin:10mm}
     }
   
-/* 庫存表格手機版：隱藏次要欄 */
+/* 庫存表格手機版 */
 @media(max-width:600px){
   .body{padding:10px}
   .sts{grid-template-columns:repeat(2,1fr)}
-  .inv-col-nat,.inv-col-brw{display:none}
   .tbl th,.tbl td{padding:5px 6px;font-size:10px}
   .st-v{font-size:22px}
 }
