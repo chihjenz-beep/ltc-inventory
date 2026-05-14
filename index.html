@@ -1821,28 +1821,30 @@ function startScanLoop(vid){
 }
 
 function handleQRResult(raw){
-  // QR format: ITEM:id:name:cat:nature:location
   const r=document.getElementById('camResult');
-  const parts=raw.split(':');
-  if(parts.length>=3&&parts[0]==='ITEM'){
-    const id=parseInt(parts[1]);
-    const found=inv.find(i=>i.id===id);
-    if(found){
-      if(r)r.textContent='✓ 掃到：'+found.nm+'　跳轉中…';
-      // Flash border green
-      const box=document.getElementById('camBox');
-      if(box)box.style.borderColor='#2a6b5e';
-      setTimeout(()=>{closeCam();selI(id)},700);
-      return;
+  const box=document.getElementById('camBox');
+  function jump(id,nm){
+    if(r)r.textContent='✓ 掃到：'+nm+'　跳轉中…';
+    if(box)box.style.borderColor='#2a6b5e';
+    setTimeout(()=>{closeCam();selI(id)},700);
+  }
+  // 優先嘗試 JSON 格式（系統自產 QR）：{"id":1,"nm":"...","cat":"...","loc":{...}}
+  try{
+    const obj=JSON.parse(raw);
+    if(obj&&obj.id){
+      const found=inv.find(i=>i.id===Number(obj.id));
+      if(found){ jump(found.id,found.nm); return; }
     }
+  }catch(e){}
+  // 相容舊格式 ITEM:id:...
+  const parts=raw.split(':');
+  if(parts.length>=2&&parts[0]==='ITEM'){
+    const found=inv.find(i=>i.id===parseInt(parts[1]));
+    if(found){ jump(found.id,found.nm); return; }
   }
-  // Try to match by name if id not found
+  // 最後嘗試品項名稱比對
   const nameMatch=inv.find(i=>raw.includes(i.nm));
-  if(nameMatch){
-    if(r)r.textContent='✓ 掃到：'+nameMatch.nm+'　跳轉中…';
-    setTimeout(()=>{closeCam();selI(nameMatch.id)},700);
-    return;
-  }
+  if(nameMatch){ jump(nameMatch.id,nameMatch.nm); return; }
   if(r)r.textContent='⚠ 無法辨識此 QR Code，請重試';
 }
 
