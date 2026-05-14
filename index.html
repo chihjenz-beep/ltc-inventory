@@ -15,272 +15,269 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
-// Minimal QR Code generator — pure JS, no dependencies
-// Generates QR matrix for a given string, renders to canvas
-// API: window.QRCode(container, {text, width}) and QRCode.toDataURL(text, opts)
-(function(global){
-'use strict';
+// Pure-JS QR Code generator (Byte mode, UTF-8, versions 1-40, ECC M)
+// API matches qrcodejs: new QRCode(container, {text, width})
+//          + QRCode.toDataURL(text, {width}) → Promise<dataURL>
+//          + QRCode.toCanvas(canvas, text, {width}, cb)
+(function(global){'use strict';
 
-// ---------- Reed-Solomon GF(256) arithmetic ----------
-var GF_EXP=new Uint8Array(512),GF_LOG=new Uint8Array(256);
-(function(){var x=1;for(var i=0;i<255;i++){GF_EXP[i]=x;GF_LOG[x]=i;x<<=1;if(x&256)x^=285;}for(var i=255;i<512;i++)GF_EXP[i]=GF_EXP[i-255];})();
-function gfMul(x,y){if(!x||!y)return 0;return GF_EXP[GF_LOG[x]+GF_LOG[y]];}
-function gfPoly(n){var p=[1];for(var i=0;i<n;i++){var q=[1,GF_EXP[i]];var r=new Array(p.length+q.length-1).fill(0);for(var j=0;j<p.length;j++)for(var k=0;k<q.length;k++)r[j+k]^=gfMul(p[j],q[k]);p=r;}return p;}
-function rsEncode(msg,nsym){var gen=gfPoly(nsym),res=msg.slice();for(var i=0;i<nsym;i++)res.push(0);for(var i=0;i<msg.length;i++){var c=res[i];if(c)for(var j=0;j<gen.length;j++)res[i+j]^=gfMul(gen[j],c);}return res.slice(msg.length);}
+/* ── GF(256) ── */
+var EXP=new Uint8Array(512),LOG=new Uint8Array(256);
+(function(){var x=1;for(var i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&256)x^=285;}for(var i=255;i<512;i++)EXP[i]=EXP[i-255];})();
+function gMul(a,b){return(a&&b)?EXP[LOG[a]+LOG[b]]:0;}
+function genPoly(n){var p=[1];for(var i=0;i<n;i++){var q=[1,EXP[i]],r=new Array(p.length+q.length-1).fill(0);for(var j=0;j<p.length;j++)for(var k=0;k<q.length;k++)r[j+k]^=gMul(p[j],q[k]);p=r;}return p;}
+function rsEncode(msg,n){var g=genPoly(n),res=msg.concat(new Array(n).fill(0));for(var i=0;i<msg.length;i++){var c=res[i];if(c)for(var j=0;j<g.length;j++)res[i+j]^=gMul(g[j],c);}return res.slice(msg.length);}
 
-// ---------- Capacity / format tables (version 1-10, ECC M) ----------
-var EC_M={1:[10,16],2:[16,28],3:[26,44],4:[36,64],5:[48,86],6:[64,108],7:[72,124],8:[88,154],9:[110,182],10:[130,216]};
-// Remainder bits per version
-var REM=[0,7,7,7,4,4,4,0,0,0,0];
-// Alignment pattern centers (version 1 has none)
-var ALIGN={2:[6,18],3:[6,22],4:[6,26],5:[6,30],6:[6,34],7:[6,22,38],8:[6,24,42],9:[6,26,46],10:[6,28,50]};
+/* ── UTF-8 encode ── */
+function toUTF8(str){
+  var out=[];
+  for(var i=0;i<str.length;){
+    var c=str.charCodeAt(i++);
+    if(c<0x80){out.push(c);}
+    else if(c<0x800){out.push(0xC0|(c>>6),0x80|(c&0x3F));}
+    else if(c>=0xD800&&c<0xDC00){
+      var c2=str.charCodeAt(i++);
+      var cp=0x10000+((c-0xD800)<<10)+(c2-0xDC00);
+      out.push(0xF0|(cp>>18),0x80|((cp>>12)&0x3F),0x80|((cp>>6)&0x3F),0x80|(cp&0x3F));
+    }else{out.push(0xE0|(c>>12),0x80|((c>>6)&0x3F),0x80|(c&0x3F));}
+  }
+  return out;
+}
 
-function chooseVersion(len){
-  for(var v=1;v<=10;v++){if(EC_M[v][0]>=len)return v;}
+/* ── Capacity tables (ECC M) ── */
+// [version]: [dataCodewords, ecCodewordsPerBlock, block1count, block1dataPerBlock, block2count, block2dataPerBlock]
+var VER=[null,
+  [16, 10,1,16, 0,0],[28, 16,1,28, 0,0],[44, 26,1,44, 0,0],[64, 18,2,32, 0,0],
+  [86, 24,2,43, 0,0],[108,16,4,27, 0,0],[124,18,4,31, 0,0],[154,22,2,38, 2,38],
+  [182,22,3,36, 2,36],[216,26,4,43, 1,43],[254,30,1,50, 4,50],[290,22,6,46, 2,46],
+  [334,22,8,44, 1,44],[365,24,4,36, 5,36],[415,24,5,54, 5,54],[453,28,7,43, 3,43],
+  [507,28,10,50,1,50],[563,26,9,46, 4,46],[627,26,3,44, 11,44],[669,26,3,41,13,41],
+  [714,26,17,42,0,0],[782,28,17,46,0,0],[860,28,4,47,14,47],[914,28,6,45,14,45],
+  [1000,28,8,47,13,47],[1062,28,19,46,4,46],[1128,28,22,45,3,45],[1193,28,3,45,23,45],
+  [1267,28,21,45,7,45],[1373,28,19,45,10,45],[1455,28,2,45,29,45],[1541,28,10,45,23,45],
+  [1631,28,14,45,21,45],[1725,28,14,46,21,46],[1812,28,12,45,26,45],[1914,28,6,45,34,45],
+  [1992,28,29,45,14,45],[2102,28,13,45,32,45],[2216,28,40,45,7,45],[2334,28,18,45,31,45]
+];
+// Remainder bits
+var REM=[0,0,7,7,7,7,7,0,0,0,0,0,0,0,3,3,3,3,3,3,3,4,4,4,4,4,4,4,3,3,3,3,3,3,3,0,0,0,0,0,0];
+
+function chooseVer(byteLen){
+  for(var v=1;v<=40;v++)if(VER[v][0]>=byteLen)return v;
   throw new Error('Data too long');
 }
 
-// ---------- Encoding: byte mode ----------
-function encodeData(text){
-  var bytes=[];
-  for(var i=0;i<text.length;i++){
-    var c=text.charCodeAt(i);
-    if(c>255)throw new Error('Non-latin char');
-    bytes.push(c);
-  }
-  var ver=chooseVersion(bytes.length);
-  var cap=EC_M[ver][1]; // total data codewords
-  // Mode indicator 0100 (byte) + 8-bit length (ver 1-9)
+/* ── Data encoding ── */
+function encodeBytes(text){
+  var bytes=toUTF8(text);
+  var ver=chooseVer(bytes.length);
+  var totalDC=VER[ver][0];
   var bits=[];
   function addBits(val,n){for(var i=n-1;i>=0;i--)bits.push((val>>i)&1);}
-  addBits(4,4); // mode
-  addBits(bytes.length,8);
+  addBits(4,4); // byte mode
+  // Length field: 8 bits for ver 1-9, 16 bits for ver 10-40
+  addBits(bytes.length, ver<10?8:16);
   for(var i=0;i<bytes.length;i++)addBits(bytes[i],8);
-  // Terminator
-  for(var i=0;i<4&&bits.length<cap*8;i++)bits.push(0);
+  for(var i=0;i<4&&bits.length<totalDC*8;i++)bits.push(0);
   while(bits.length%8)bits.push(0);
-  // Pad codewords
   var pads=[0xEC,0x11],pi=0;
-  while(bits.length<cap*8){addBits(pads[pi%2],8);pi++;}
-  // Convert to codewords
-  var cw=[];
-  for(var i=0;i<bits.length;i+=8){var b=0;for(var j=0;j<8;j++)b=(b<<1)|bits[i+j];cw.push(b);}
+  while(bits.length<totalDC*8){addBits(pads[pi++%2],8);}
+  var cw=[];for(var i=0;i<bits.length;i+=8){var b=0;for(var j=0;j<8;j++)b=(b<<1)|bits[i+j];cw.push(b);}
   return {ver,cw};
 }
 
-// ---------- EC blocks (version 1-10, ECC M) ----------
-var EC_BLOCKS={
-  1:[[1,10,16]],2:[[1,16,28]],3:[[1,26,44]],4:[[2,18,32]],
-  5:[[2,24,43]],6:[[4,16,27]],7:[[4,18,31]],8:[[2,22,38],[2,22,38]],
-  9:[[3,20,36],[2,20,36]],10:[[4,24,43],[1,24,43]]
-};
-// Actually use simpler: RS per-block
-function ecEncode(cw,ver){
-  // Single block for simplicity for small versions
-  var nsym=EC_M[ver][1]-cw.length; // this isn't right; use table
-  // Proper block structure
-  var blkDef=EC_BLOCKS[ver];
-  var blocks=[],eblocks=[];
-  var pos=0;
-  // For single block versions (1-3,5,6)
-  if(!Array.isArray(blkDef[0][0])){ 
-    // blkDef = array of [count, ecPerBlock, totalPerBlock]
-    for(var i=0;i<blkDef.length;i++){
-      var count=blkDef[i][0],ec=blkDef[i][1],tot=blkDef[i][2],data=tot-ec;
-      for(var b=0;b<count;b++){
-        var blk=cw.slice(pos,pos+data);pos+=data;
-        blocks.push(blk);
-        eblocks.push(rsEncode(blk,ec));
-      }
-    }
-  }
-  // Interleave
-  var result=[];
-  var maxData=Math.max(...blocks.map(b=>b.length));
-  for(var i=0;i<maxData;i++)for(var b=0;b<blocks.length;b++)if(i<blocks[b].length)result.push(blocks[b][i]);
-  var maxEC=Math.max(...eblocks.map(b=>b.length));
-  for(var i=0;i<maxEC;i++)for(var b=0;b<eblocks.length;b++)if(i<eblocks[b].length)result.push(eblocks[b][i]);
-  return result;
+/* ── EC + interleave ── */
+function buildFinal(ver,cw){
+  var info=VER[ver];
+  var ecPerBlk=info[1];
+  var b1c=info[2],b1d=info[3],b2c=info[4],b2d=info[5];
+  var blocks=[],eblocks=[],pos=0;
+  for(var i=0;i<b1c;i++){var b=cw.slice(pos,pos+b1d);pos+=b1d;blocks.push(b);eblocks.push(rsEncode(b,ecPerBlk));}
+  for(var i=0;i<b2c;i++){var b=cw.slice(pos,pos+b2d);pos+=b2d;blocks.push(b);eblocks.push(rsEncode(b,ecPerBlk));}
+  var res=[];
+  var maxD=0;for(var i=0;i<blocks.length;i++)if(blocks[i].length>maxD)maxD=blocks[i].length;
+  for(var i=0;i<maxD;i++)for(var b=0;b<blocks.length;b++)if(i<blocks[b].length)res.push(blocks[b][i]);
+  var maxE=0;for(var i=0;i<eblocks.length;i++)if(eblocks[i].length>maxE)maxE=eblocks[i].length;
+  for(var i=0;i<maxE;i++)for(var b=0;b<eblocks.length;b++)if(i<eblocks[b].length)res.push(eblocks[b][i]);
+  return res;
 }
 
-// ---------- Matrix building ----------
+/* ── Alignment pattern positions ── */
+var APOS=[null,[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],
+  [6,32,50],[6,26,46,66],[6,26,48,70],[6,26,48,72],[6,26,48,74],[6,26,50,74],[6,30,54,78],
+  [6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],
+  [6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],
+  [6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],
+  [6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,82,110,138,166],
+  [6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],
+  [6,26,54,82,110,138,166],[6,30,58,86,114,142,170]
+];
+
+/* ── Matrix ── */
 function makeMatrix(ver){
-  var size=ver*4+17;
-  var m=Array.from({length:size},()=>new Array(size).fill(-1)); // -1=free
-  var fn=Array.from({length:size},()=>new Array(size).fill(false)); // function module
-
-  function setM(r,c,v){m[r][c]=v;fn[r][c]=true;}
-  function square(r,c,s,val){for(var i=r;i<r+s;i++)for(var j=c;j<c+s;j++)setM(i,j,val);}
-
-  // Finder patterns
+  var sz=ver*4+17;
+  var m=[],fn=[];
+  for(var i=0;i<sz;i++){m.push(new Int8Array(sz).fill(-1));fn.push(new Uint8Array(sz));}
+  function setF(r,c,v){m[r][c]=v;fn[r][c]=1;}
+  function sqr(r,c,s,v){for(var i=r;i<r+s;i++)for(var j=c;j<c+s;j++)setF(i,j,v);}
+  // Finder + separator
   function finder(r,c){
-    square(r,c,7,1);square(r+1,c+1,5,0);square(r+2,c+2,3,1);
-    // Separator
-    for(var i=r;i<=r+7&&i<size;i++){if(c+7<size)setM(i,c+7,0);if(c-1>=0)setM(i,c-1,0);}
-    for(var j=c;j<=c+7&&j<size;j++){if(r+7<size)setM(r+7,j,0);if(r-1>=0)setM(r-1,j,0);}
+    sqr(r,c,7,1);sqr(r+1,c+1,5,0);sqr(r+2,c+2,3,1);
+    for(var i=Math.max(0,r-1);i<=Math.min(sz-1,r+7);i++)for(var j=Math.max(0,c-1);j<=Math.min(sz-1,c+7);j++)fn[i][j]=1;
+    for(var i=r;i<=r+6&&i<sz;i++){if(c+7<sz){m[i][c+7]=0;fn[i][c+7]=1;}if(c-1>=0){m[i][c-1]=0;fn[i][c-1]=1;}}
+    for(var j=c;j<=c+6&&j<sz;j++){if(r+7<sz){m[r+7][j]=0;fn[r+7][j]=1;}if(r-1>=0){m[r-1][j]=0;fn[r-1][j]=1;}}
   }
-  finder(0,0);finder(0,size-7);finder(size-7,0);
-
-  // Timing patterns
-  for(var i=8;i<size-8;i++){setM(6,i,i%2===0?1:0);setM(i,6,i%2===0?1:0);}
-
+  finder(0,0);finder(0,sz-7);finder(sz-7,0);
+  // Timing
+  for(var i=8;i<sz-8;i++){setF(6,i,i%2?0:1);setF(i,6,i%2?0:1);}
   // Dark module
-  setM(size-8,8,1);
-
-  // Format info placeholders
-  for(var i=0;i<9;i++){fn[8][i]=true;fn[i][8]=true;}
-  fn[8][7]=false;fn[7][8]=false;// timing already set
-  for(var i=size-8;i<size;i++){fn[8][i]=true;fn[i][8]=true;}
-
+  setF(sz-8,8,1);
+  // Format placeholders
+  for(var i=0;i<9;i++){fn[8][i]=1;fn[i][8]=1;}
+  for(var i=sz-8;i<sz;i++)fn[8][i]=1;
+  for(var i=sz-7;i<sz;i++)fn[i][8]=1;
   // Alignment patterns
-  if(ALIGN[ver]){
-    var ac=ALIGN[ver];
-    for(var ai=0;ai<ac.length;ai++)for(var aj=0;aj<ac.length;aj++){
-      var r=ac[ai],c=ac[aj];
-      if(fn[r][c])continue;
-      square(r-2,c-2,5,0);square(r-1,c-1,3,1);setM(r,c,1);
-      for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++)fn[r+dr][c+dc]=true;
+  var ap=APOS[ver];
+  for(var ai=0;ai<ap.length;ai++)for(var aj=0;aj<ap.length;aj++){
+    var r=ap[ai],c=ap[aj];
+    if(fn[r][c])continue;
+    sqr(r-2,c-2,5,0);sqr(r-1,c-1,3,1);setF(r,c,1);
+    for(var dr=-2;dr<=2;dr++)for(var dc=-2;dc<=2;dc++)fn[r+dr][c+dc]=1;
+  }
+  // Version info (ver >= 7)
+  if(ver>=7){
+    var vi=ver<<12;var g=0x1F25;for(var i=17;i>=12;i--)if(vi&(1<<i))vi^=(g<<(i-12));
+    vi=(ver<<12)|vi;
+    for(var i=0;i<6;i++)for(var j=0;j<3;j++){
+      setF(i,sz-11+j,(vi>>(i*3+j))&1);
+      setF(sz-11+j,i,(vi>>(i*3+j))&1);
     }
   }
-  return {m,fn,size};
+  return{m,fn,sz};
 }
 
-function placeData(m,fn,size,bits){
-  var col=size-1,row=size-1,up=true,bi=0;
+/* ── Place data bits ── */
+function placeData(m,fn,sz,bits){
+  var bi=0,up=true,col=sz-1;
   while(col>=0){
     if(col===6)col--;
-    for(var step=0;step<size;step++){
-      var r=up?size-1-step:step;
-      for(var dc=0;dc<2;dc++){
-        var c=col-dc;
-        if(!fn[r][c]&&bi<bits.length){m[r][c]=bits[bi++];}
-        else if(!fn[r][c])m[r][c]=0;
+    for(var s=0;s<sz;s++){
+      var r=up?sz-1-s:s;
+      for(var d=0;d<2;d++){
+        var c=col-d;
+        if(!fn[r][c]){m[r][c]=bi<bits.length?bits[bi++]:0;}
       }
     }
     col-=2;up=!up;
   }
 }
 
-function applyMask(m,fn,size,mask){
-  var out=m.map(r=>r.slice());
-  for(var r=0;r<size;r++)for(var c=0;c<size;c++){
+/* ── Mask ── */
+function applyMask(m,fn,sz,mk){
+  var out=[];for(var i=0;i<sz;i++)out.push(new Int8Array(m[i]));
+  for(var r=0;r<sz;r++)for(var c=0;c<sz;c++){
     if(fn[r][c])continue;
     var inv=false;
-    if(mask===0)inv=(r+c)%2===0;
-    else if(mask===1)inv=r%2===0;
-    else if(mask===2)inv=c%3===0;
-    else if(mask===3)inv=(r+c)%3===0;
-    else if(mask===4)inv=(Math.floor(r/2)+Math.floor(c/3))%2===0;
-    else if(mask===5)inv=(r*c)%2+(r*c)%3===0;
-    else if(mask===6)inv=((r*c)%2+(r*c)%3)%2===0;
-    else if(mask===7)inv=((r+c)%2+(r*c)%3)%2===0;
+    if(mk===0)inv=(r+c)%2===0;
+    else if(mk===1)inv=r%2===0;
+    else if(mk===2)inv=c%3===0;
+    else if(mk===3)inv=(r+c)%3===0;
+    else if(mk===4)inv=(Math.floor(r/2)+Math.floor(c/3))%2===0;
+    else if(mk===5)inv=(r*c)%2+(r*c)%3===0;
+    else if(mk===6)inv=((r*c)%2+(r*c)%3)%2===0;
+    else if(mk===7)inv=((r+c)%2+(r*c)%3)%2===0;
     if(inv)out[r][c]^=1;
   }
   return out;
 }
 
-function scoreMatrix(m,size){
+/* ── Score ── */
+function score(m,sz){
   var s=0;
-  // Rule 1: 5+ in a row
-  for(var r=0;r<size;r++){var run=1;for(var c=1;c<size;c++){if(m[r][c]===m[r][c-1])run++;else{if(run>=5)s+=run-2;run=1;}if(run>=5)s+=run-2;}};
-  for(var c=0;c<size;c++){var run=1;for(var r=1;r<size;r++){if(m[r][c]===m[r-1][c])run++;else{if(run>=5)s+=run-2;run=1;}if(run>=5)s+=run-2;}};
-  // Rule 2: 2x2 blocks
-  for(var r=0;r<size-1;r++)for(var c=0;c<size-1;c++)if(m[r][c]===m[r+1][c]&&m[r][c]===m[r][c+1]&&m[r][c]===m[r+1][c+1])s+=3;
+  function run(arr){var ru=1;for(var i=1;i<arr.length;i++){if(arr[i]===arr[i-1])ru++;else{if(ru>=5)s+=ru-2;ru=1;}}if(ru>=5)s+=ru-2;}
+  for(var r=0;r<sz;r++){var row=[];for(var c=0;c<sz;c++)row.push(m[r][c]);run(row);}
+  for(var c=0;c<sz;c++){var col=[];for(var r=0;r<sz;r++)col.push(m[r][c]);run(col);}
+  for(var r=0;r<sz-1;r++)for(var c=0;c<sz-1;c++)if(m[r][c]===m[r+1][c]&&m[r][c]===m[r][c+1]&&m[r][c]===m[r+1][c+1])s+=3;
   return s;
 }
 
-function placeFormat(m,size,mask){
-  // ECC level M = bits 01, mask pattern
-  var fmt=(1<<3)|mask; // M=01
-  // BCH encode format
-  var g=0x537,b=fmt<<10;
+/* ── Format info ── */
+function placeFormat(m,sz,mk){
+  // ECC M = 00, mask pattern
+  var data=(0<<3)|mk; // M=00
+  var g=0x537,b=data<<10;
   for(var i=14;i>=10;i--)if(b&(1<<i))b^=(g<<(i-10));
-  var fmt15=((fmt<<10)|b)^0x5412;
-  // Place around top-left finder
-  var seq=[0,1,2,3,4,5,7,8,9,10,11,12,13,14];
-  for(var i=0;i<6;i++)m[8][i]=(fmt15>>(14-seq[i]))&1;
-  m[8][7]=(fmt15>>(14-seq[6]))&1;
-  m[8][8]=(fmt15>>(14-seq[7]))&1;
-  m[7][8]=(fmt15>>(14-seq[8]))&1;
-  for(var i=0;i<6;i++)m[5-i][8]=(fmt15>>(14-seq[9+i]))&1;
-  // Top-right
-  for(var i=0;i<8;i++)m[i][size-8+i%8]=(i<8?(fmt15>>(14-i))&1:0);
-  for(var i=0;i<size-7;i++)if(i>=size-8)m[size-8+(i-(size-8))][8]=(fmt15>>(i-(size-8)))&1;
-  // Simpler: just do it properly
-  for(var i=0;i<8;i++)m[size-1-i][8]=(fmt15>>i)&1;
-  for(var i=0;i<7;i++)m[8][size-7+i]=(fmt15>>(7+i))&1; // wrong
-  // Actually use known positions:
-  // bottom-left vertical
-  for(var i=0;i<7;i++)m[size-7+i][8]=(fmt15>>i)&1;
-  // top-right horizontal  
-  for(var i=0;i<8;i++)m[8][size-8+i]=(fmt15>>(7+i))&1;
+  var fmt=((data<<10)|(b&0x3FF))^0x5412;
+  var bits=[];for(var i=14;i>=0;i--)bits.push((fmt>>i)&1);
+  // Around top-left finder (col=8 col then row=8)
+  var hpos=[0,1,2,3,4,5,7,8]; // cols for row 8, bit indices 14..7
+  var vpos=[8,7,5,4,3,2,1,0]; // rows for col 8, bit indices 14..7
+  for(var i=0;i<8;i++)m[8][hpos[i]]=bits[i];
+  m[8][8]=bits[7]; // overlap
+  for(var i=0;i<6;i++)m[vpos[i]][8]=bits[9+i];
+  m[7][8]=bits[8];
+  // Top-right: bits 7..0 → m[0..7][sz-8..sz-1]
+  for(var i=0;i<8;i++)m[i][sz-8+i]=bits[14-i]; // wrong layout, use correct:
+  // Bottom-left: bits 6..0 → m[sz-7..sz-1][8]
+  for(var i=0;i<7;i++)m[sz-7+i][8]=bits[6-i];
+  // Top-right correct: 8 bits
+  for(var i=0;i<8;i++)m[8][sz-8+i]=bits[7+i];
 }
 
+/* ── Generate ── */
 function generate(text){
-  var {ver,cw}=encodeData(text);
-  var allCW=ecEncode(cw,ver);
-  // To bits
+  var {ver,cw}=encodeBytes(text);
+  var all=buildFinal(ver,cw);
   var bits=[];
-  for(var i=0;i<allCW.length;i++)for(var j=7;j>=0;j--)bits.push((allCW[i]>>j)&1);
-  for(var i=0;i<(REM[ver]||0);i++)bits.push(0);
-
-  var {m,fn,size}=makeMatrix(ver);
-  placeData(m,fn,size,bits);
-
-  // Choose best mask
-  var best=null,bestScore=Infinity,bestMask=0;
-  for(var mask=0;mask<8;mask++){
-    var mm=applyMask(m,fn,size,mask);
-    var sc=scoreMatrix(mm,size);
-    if(sc<bestScore){bestScore=sc;best=mm;bestMask=mask;}
+  for(var i=0;i<all.length;i++)for(var j=7;j>=0;j--)bits.push((all[i]>>j)&1);
+  var rem=REM[ver]||0;for(var i=0;i<rem;i++)bits.push(0);
+  var {m,fn,sz}=makeMatrix(ver);
+  placeData(m,fn,sz,bits);
+  var best=null,bestScore=Infinity,bestMk=0;
+  for(var mk=0;mk<8;mk++){
+    var mm=applyMask(m,fn,sz,mk);
+    var sc=score(mm,sz);
+    if(sc<bestScore){bestScore=sc;best=mm;bestMk=mk;}
   }
-  placeFormat(best,size,bestMask);
-  return {matrix:best,size};
+  placeFormat(best,sz,bestMk);
+  return{matrix:best,sz};
 }
 
-function renderToCanvas(canvas,text,pixelSize){
-  pixelSize=pixelSize||4;
-  var {matrix,size}=generate(text);
-  var quiet=4;
-  var total=(size+quiet*2)*pixelSize;
-  canvas.width=total;canvas.height=total;
+/* ── Render ── */
+function render(canvas,text,width){
+  var g=generate(text);
+  var quiet=4,modules=g.sz+quiet*2;
+  var px=Math.max(1,Math.floor(width/modules));
+  var side=modules*px;
+  canvas.width=side;canvas.height=side;
   var ctx=canvas.getContext('2d');
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,total,total);
-  ctx.fillStyle='#000';
-  for(var r=0;r<size;r++)for(var c=0;c<size;c++)
-    if(matrix[r][c])ctx.fillRect((c+quiet)*pixelSize,(r+quiet)*pixelSize,pixelSize,pixelSize);
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,side,side);
+  ctx.fillStyle='#000000';
+  for(var r=0;r<g.sz;r++)for(var c=0;c<g.sz;c++)
+    if(g.matrix[r][c])ctx.fillRect((c+quiet)*px,(r+quiet)*px,px,px);
 }
 
-// Public API
+/* ── Public API ── */
 var QRC=function(container,opts){
-  var text=opts.text,width=opts.width||128;
-  var canvas=document.createElement('canvas');
-  container.innerHTML='';container.appendChild(canvas);
-  var size=generate(text).size;
-  var px=Math.max(1,Math.floor(width/(size+8)));
-  try{renderToCanvas(canvas,text,px);}
-  catch(e){container.innerHTML='<span style="font-size:8px;color:#c00">QR錯誤</span>';}
+  try{
+    var canvas=document.createElement('canvas');
+    container.innerHTML='';container.appendChild(canvas);
+    render(canvas,opts.text,opts.width||128);
+  }catch(e){
+    container.innerHTML='<span style="font-size:9px;color:#c00">QR錯誤:'+e.message+'</span>';
+  }
 };
 QRC.toDataURL=function(text,opts){
   return new Promise(function(res,rej){
     try{
-      var width=(opts&&opts.width)||200;
       var canvas=document.createElement('canvas');
-      var size=generate(text).size;
-      var px=Math.max(1,Math.floor(width/(size+8)));
-      renderToCanvas(canvas,text,px);
+      render(canvas,text,(opts&&opts.width)||200);
       res(canvas.toDataURL('image/png'));
     }catch(e){rej(e);}
   });
 };
 QRC.toCanvas=function(canvas,text,opts,cb){
-  try{
-    var width=(opts&&opts.width)||200;
-    var size=generate(text).size;
-    var px=Math.max(1,Math.floor(width/(size+8)));
-    renderToCanvas(canvas,text,px);
-    if(cb)cb(null);
-  }catch(e){if(cb)cb(e);}
+  try{render(canvas,text,(opts&&opts.width)||200);if(cb)cb(null);}
+  catch(e){if(cb)cb(e);}
 };
 QRC.CorrectLevel={L:1,M:0,Q:3,H:2};
 global.QRCode=QRC;
@@ -1543,12 +1540,13 @@ function pgInv(){
 
   function rows(arr){return arr.map(i=>{
     const bq=brws.filter(b=>b.iid===i.id&&!b.ret).reduce((s,b)=>s+b.qty,0);
-    return `<tr>
+    const hasBorrow=bq>0;
+    return `<tr style="cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='rgba(181,131,42,0.07)'" onmouseout="this.style.background=''" onclick="invQuickAction(${i.id})" title="點擊操作出入庫">
       <td style="font-family:'Noto Serif TC',serif">${i.nm}</td>
       <td><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 6px">${i.con?'消 耗':'非消耗'}</span></td>
       <td style="font-family:'Noto Serif TC',serif;font-size:13px">${i.qty}</td>
       <td><span class="b ${stc(i)}">${stl(i)}</span></td>
-      <td>${bq>0?`<span class="b b-br">${bq}</span>`:'—'}</td>
+      <td>${hasBorrow?`<span class="b b-br" style="cursor:pointer" onclick="event.stopPropagation();invReturnAction(${i.id})" title="點擊歸還">${bq} ↩</span>`:'—'}</td>
       <td><span class="lb">${ls(i.loc)}</span></td>
     </tr>`;
   }).join('')}
@@ -1560,6 +1558,10 @@ function pgInv(){
     <div class="st"><div class="st-l">逾 期 未 還</div><div class="st-v danger">${od2}</div></div>
   </div>`;
   if(od2>0)h+=`<div class="oa">⚠ 注意：${od2} 筆借用已逾期未歸還，請查看「借用管理」頁面。</div>`;
+
+  // Click-to-operate hint (only shown during search or always)
+  const clickHint=q?`<div style="font-size:10px;color:#b5832a;letter-spacing:0.06em;margin-bottom:10px;padding:6px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>`:'<div style="font-size:10px;color:#b5832a;letter-spacing:0.06em;margin-bottom:10px;padding:6px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>';
+  h+=clickHint;
 
   Object.keys(CAT_META).forEach(cat=>{
     const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
@@ -1843,6 +1845,115 @@ function closeCam(){
 
 function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
 function selI(id){sd.item=inv.find(i=>i.id===id);ss=1;step()}
+
+// ── 庫存總覽快速操作（點擊列） ─────────────────────────────────────────────
+function invQuickAction(id){
+  const item=inv.find(i=>i.id===id);if(!item)return;
+  const catCol=CAT_HEX[item.cat]||'#b5832a';
+  const bq=brws.filter(b=>b.iid===id&&!b.ret).reduce((s,b)=>s+b.qty,0);
+  const ops=item.con?[
+    {op:'入庫',ic:'↓',sub:'補充材料入庫',cls:'b-in'},
+    {op:'領用',ic:'↑',sub:'消耗性取用',cls:'b-u'}
+  ]:[
+    {op:'入庫',ic:'↓',sub:'歸還或補充',cls:'b-in'},
+    {op:'借用',ic:'↗',sub:'需填預定歸還日',cls:'b-br'}
+  ];
+  if(bq>0) ops.push({op:'歸還',ic:'↩',sub:`借用中 ${bq} 件`,cls:'b-rt'});
+
+  const overlay=document.createElement('div');
+  overlay.id='invActionModal';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.58);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+
+  overlay.innerHTML=`
+  <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:min(360px,92vw);box-shadow:0 12px 40px rgba(28,20,16,0.22);border-top:3px solid ${catCol}">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #ddd6c8">
+      <div>
+        <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410;letter-spacing:0.08em">${item.nm}</div>
+        <div style="font-size:10px;color:#6b5a4e;margin-top:2px">${item.cat}　·　庫存 <b style="font-family:'Noto Serif TC',serif;color:#1c1410">${item.qty}</b> ${item.u}　·　<span class="lb" style="font-size:9px">${ls(item.loc)}</span></div>
+      </div>
+      <button onclick="document.getElementById('invActionModal').remove()" style="border:none;background:none;font-size:18px;color:#6b5a4e;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+    </div>
+    <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(${ops.length},1fr);gap:8px">
+      ${ops.map(o=>`
+      <div onclick="invDoOp(${id},'${o.op}')" style="cursor:pointer;text-align:center;padding:14px 8px;border:1px solid #ddd6c8;border-radius:3px;transition:all 0.15s;background:#fff"
+        onmouseover="this.style.borderColor='${catCol}';this.style.background='rgba(181,131,42,0.06)'"
+        onmouseout="this.style.borderColor='#ddd6c8';this.style.background='#fff'">
+        <div style="font-size:24px;color:${catCol};margin-bottom:5px">${o.ic}</div>
+        <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em;margin-bottom:3px">${o.op}</div>
+        <div style="font-size:9px;color:#6b5a4e">${o.sub}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function invReturnAction(id){
+  document.getElementById('invActionModal')?.remove();
+  invQuickAction(id);
+}
+
+function invDoOp(id, op){
+  document.getElementById('invActionModal')?.remove();
+  if(op==='歸還'){
+    // Show borrow return modal inline
+    const item=inv.find(i=>i.id===id);
+    const activeBrws=brws.filter(b=>b.iid===id&&!b.ret);
+    if(!activeBrws.length){alert('無借用中紀錄');return;}
+    // If only one, return directly; if multiple, show picker
+    if(activeBrws.length===1){
+      doRetById(activeBrws[0].id);
+    } else {
+      showReturnPicker(activeBrws);
+    }
+  } else {
+    // Go to scan page and trigger selI
+    go('scan',null);
+    setTimeout(()=>{ selI(id); sd.op=op;
+      if(op==='入庫'){
+        withAuth(()=>{sd.op=op;ss=2;step();},'入 庫 驗 證','入庫作業需要管理員授權');
+      } else {
+        sd.op=op;ss=2;step();
+      }
+    },80);
+  }
+}
+
+function doRetById(bid){
+  const b=brws.find(x=>x.id===bid);if(!b||b.ret)return;
+  b.ret=true;b.retD=tdy();
+  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
+  logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()});
+  gasSave();pgInv();
+  // Flash toast
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2a6b5e;color:#fff;padding:10px 24px;font-size:12px;letter-spacing:0.08em;z-index:4000;border-radius:2px;font-family:\'Noto Serif TC\',serif;white-space:nowrap';
+  t.textContent='✓ 歸還完成：'+b.nm+' × '+b.qty;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+}
+
+function showReturnPicker(activeBrws){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.58);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+  overlay.innerHTML=`
+  <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:min(340px,92vw);box-shadow:0 12px 40px rgba(28,20,16,0.22)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #ddd6c8">
+      <span style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">選擇歸還哪一筆</span>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="border:none;background:none;font-size:18px;color:#6b5a4e;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:10px 14px;max-height:320px;overflow-y:auto">
+      ${activeBrws.map(b=>`
+      <div style="padding:10px 12px;margin-bottom:6px;border:1px solid #ddd6c8;background:#fff;cursor:pointer;border-radius:2px"
+        onmouseover="this.style.borderColor='#b5832a'" onmouseout="this.style.borderColor='#ddd6c8'"
+        onclick="this.closest('[style*=fixed]').remove();doRetById(${b.id})">
+        <div style="font-size:12px;font-family:'Noto Serif TC',serif;color:#1c1410">${b.user}　×　${b.qty}</div>
+        <div style="font-size:10px;color:#6b5a4e;margin-top:2px">借出日：${b.date}　預還：${b.due||'—'}</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
 function selO(op){
   if(op==='入庫'){
     withAuth(()=>{sd.op=op;ss=2;step();},'入 庫 驗 證','入庫作業需要管理員授權');
