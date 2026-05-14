@@ -1605,6 +1605,7 @@ function pgInv(){
     <button onclick="toggleAllCat(false)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#6b5a4e;cursor:pointer;letter-spacing:0.04em">全 部 收 合</button>
   </div>`;
 
+  let catIdx=0;
   Object.keys(CAT_META).forEach(cat=>{
     const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
     const catCol=CAT_HEX[cat]||'#b5832a';
@@ -1612,7 +1613,7 @@ function pgInv(){
     const icon=CAT_ICON[cat]||'📁';
     const lowCount=ci.filter(i=>stc(i)!=='b-ok').length;
     const warnBadge=lowCount>0?`<span style="font-size:9px;background:#fff3;color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;border:1px solid #fff5">⚠ ${lowCount}</span>`:'';
-    const catId='cat_'+cat.replace(/[^a-zA-Z0-9]/g,'_');
+    const catId='cat_'+catIdx++;
     h+=`
     <div style="margin-bottom:10px;border-radius:3px;overflow:hidden;box-shadow:0 1px 4px rgba(28,20,16,0.10)">
       <div style="background:${catCol};padding:8px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none"
