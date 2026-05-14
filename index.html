@@ -11130,11 +11130,11 @@ function jsonpGet(url, timeout=12000){
 }
 
 // JSONP 含自動重試（最多 retry 次）
-async function jsonpGetWithRetry(url, retries=2, timeout=10000){
+async function jsonpGetWithRetry(url, retries=1, timeout=6000){
   let lastErr;
   for(let i=0;i<=retries;i++){
     try{ return await jsonpGet(url, timeout); }
-    catch(e){ lastErr=e; if(i<retries) await new Promise(r=>setTimeout(r,1500*(i+1))); }
+    catch(e){ lastErr=e; if(i<retries) await new Promise(r=>setTimeout(r,1000)); }
   }
   throw lastErr;
 }
@@ -11208,10 +11208,10 @@ async function gasLoad(){
     showSaved();
   }catch(e){
     console.error('gasLoad error',e);
-    showSaveErr();
-    // 載入失敗仍可使用預設值，但提示用戶
-    const badge=document.getElementById('syncBadge');
-    if(badge)badge.title='無法連線到 Google Sheets，目前使用本機預設值';
+    _setBadge('📴 離線模式','#6b5a4e');
+    document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
+      el.title='無法連線到 Google Sheets，目前使用本機資料，功能不受影響';
+    });
   }
 }
 
@@ -12894,9 +12894,13 @@ go('inv', null);   // 立即顯示預設畫面，不等待網路
 // 先立即渲染畫面，讓系統可以正常操作
 if(!checkURLItem()) go('inv', null);
 
+// badge 顯示連線中
+_setBadge('🔄 連線中…','var(--gold)');
+
 // 背景靜默連線 Google Sheets（失敗不影響操作）
 gasLoad().catch(e=>{
   console.warn('gasLoad 背景連線失敗', e);
+  _setBadge('📴 離線模式','#6b5a4e');
 });
 </script>
 </body>
