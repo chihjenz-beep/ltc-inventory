@@ -11169,16 +11169,16 @@ async function gasLoad(){
           ...i,
           loc: localLocMap[i.id] || i.loc
         }));
-        // 若本機 loc 與 Sheets 不同，自動推送更新後的位置
-        if(locChanged){ await gasSave(); }
+        // 若本機 loc 與 Sheets 不同，延遲推送（避免卡住 gasLoad 主流程）
+        if(locChanged){ setTimeout(()=>gasSave(), 2000); }
       } else {
         // 本機品項較多（剛匯入新清單），以本機為準並推送到 Sheets
         console.log(`本機品項(${inv.length})多於 Sheets(${sheetInv.length})，自動同步至 Sheets`);
-        await gasSave();
+        setTimeout(()=>gasSave(), 2000);
       }
     } else {
-      // 首次：把預設值寫入 Sheets
-      await gasSave();
+      // 首次：把預設值寫入 Sheets（延遲執行避免卡主流程）
+      setTimeout(()=>gasSave(), 2000);
     }
 
     if(d.data.logs && d.data.logs.length>0){
@@ -12891,8 +12891,12 @@ function checkURLItem(){
 go('inv', null);   // 立即顯示預設畫面，不等待網路
 
 // 背景從 Google Sheets 載入，完成後靜默刷新當前頁
-gasLoad().then(()=>{
-  if(!checkURLItem()) go('inv', null);
+// 先立即渲染畫面，讓系統可以正常操作
+if(!checkURLItem()) go('inv', null);
+
+// 背景靜默連線 Google Sheets（失敗不影響操作）
+gasLoad().catch(e=>{
+  console.warn('gasLoad 背景連線失敗', e);
 });
 </script>
 </body>
