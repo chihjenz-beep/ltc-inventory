@@ -11032,14 +11032,6 @@ const LS_PWD='pahome_pwd';
 function getPwd(){return localStorage.getItem(LS_PWD)||'0000';}
 
 // ── 儲存狀態提示 ──────────────────────────────────────────────────────────
-function _setBadge(txt, color){
-  document.querySelectorAll('#syncBadge,[id="syncBadge"]').forEach(el=>{
-    el.textContent=txt; el.style.color=color;
-  });
-}
-function showSaving(){ _setBadge('⏳ 儲存中…','var(--gold)'); }
-function showSaved(){  _setBadge('✓ 已同步',  'var(--sage)'); }
-function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--red-seal)'); }
 
 // ── 從 Google Sheets 讀取 ────────────────────────────────────────────────
 // ── Sheets 日期序列轉換 ──────────────────────────────────────────────────────
@@ -12891,11 +12883,26 @@ function checkURLItem(){
 go('inv', null);   // 立即顯示預設畫面，不等待網路
 
 // 背景從 Google Sheets 載入，完成後靜默刷新當前頁
+function _setBadge(txt,color){document.querySelectorAll('[id="syncBadge"]').forEach(el=>{el.textContent=txt;el.style.color=color;});}
+function showSaving(){_setBadge('⏳ 儲存中…','var(--gold)');}
+function showSaved(){_setBadge('✓ 已同步','var(--sage)');}
+function showSaveErr(){_setBadge('⚠ 同步失敗','var(--red-seal)');}
+
 // 先立即渲染畫面，讓系統可以正常操作
 if(!checkURLItem()) go('inv', null);
 
+);}
+function showSaving(){_setBadge('⏳ 儲存中…','var(--gold)');}
+function showSaved(){_setBadge('✓ 已同步','var(--sage)');}
+function showSaveErr(){_setBadge('⚠ 同步失敗','var(--red-seal)');}
 // badge 顯示連線中
 _setBadge('🔄 連線中…','var(--gold)');
+
+);
+}
+function showSaving(){ _setBadge('⏳ 儲存中…','var(--gold)'); }
+function showSaved(){  _setBadge('✓ 已同步',  'var(--sage)'); }
+function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--red-seal)'); }
 
 // 背景靜默連線 Google Sheets（失敗不影響操作）
 gasLoad().catch(e=>{
