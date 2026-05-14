@@ -818,6 +818,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" id="drNav3" onclick="go('qr',this);closeDrawer()">品 項 QR Code</div>
       <div class="nav" id="drNav4" onclick="go('loc',this);closeDrawer()">位 置 管 理</div>
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
+      <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
     </div>
     <div class="sb-foot">
       <div class="stor-badge"><span class="stor-dot"></span>資料已同步</div>
@@ -845,6 +846,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('qr',this)">品 項 QR Code</div>
       <div class="nav" onclick="go('loc',this)">位 置 管 理</div>
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
+      <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
     </div>
     <div class="sb-foot">
       <div class="stor-badge" id="syncBadge"><span class="stor-dot"></span>連線中…</div>
@@ -1373,22 +1375,22 @@ let inv=[
   {id:21, nm:'切皂基專用刀', con:false, cat:'手工皂器材料的家', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:22, nm:'鐵盤', con:false, cat:'手工皂器材料的家', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:23, nm:'低吸濕透明皂基（完整）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:24, nm:'低吸濕透明皂基（用過）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:24, nm:'低吸濕透明皂基（用過）', con:true, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:25, nm:'低吸濕白色皂基（完整）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:26, nm:'低吸濕白色皂基（用過）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:26, nm:'低吸濕白色皂基（用過）', con:true, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:27, nm:'植萃慕絲皂基（完整）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:28, nm:'植萃慕絲皂基（用過）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:29, nm:'香茅薄荷皂基（完整）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:30, nm:'香茅薄荷皂基（用過）', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:31, nm:'絲瓜絡', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:32, nm:'台灣檜木粉', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:33, nm:'台灣柴燒紅檜精油', con:false, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:32, nm:'台灣檜木粉', con:true, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'手工皂器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:34, nm:'手工皂模具／擴香石模具', con:false, cat:'手工皂模具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:35, nm:'塑膠花瓣（手工藝器材料）', con:false, cat:'手工藝器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:36, nm:'各色毛根（紅/朱紅/綠/蔚藍/橙/米/黃/蘭花/粉紅/櫻桃/燃橙/深褐）', con:false, cat:'手工藝器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:37, nm:'禮品貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:38, nm:'精油萬用膏貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:39, nm:'洗臉慕斯貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:39, nm:'洗臉慕斯貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:40, nm:'噴嘴頭', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:41, nm:'噴嘴瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:42, nm:'乳霜瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
@@ -1400,7 +1402,7 @@ let inv=[
   {id:48, nm:'編織扇', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:49, nm:'白布畫框', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:50, nm:'漁網袋', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:51, nm:'石膏粉', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:51, nm:'石膏粉', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:52, nm:'玉米模型', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:53, nm:'手作雲朵包材料線（綠/紫/灰/藍/粉橘/粉紅）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
 
@@ -1472,8 +1474,8 @@ let inv=[
   {id:118, nm:'魚型刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:119, nm:'穴式按摩刮痧兩用', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:120, nm:'梳子穴位按摩刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:121, nm:'沉香皂', con:false, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
-  {id:122, nm:'檀香皂', con:false, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:121, nm:'沉香皂', con:true, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:122, nm:'檀香皂', con:true, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:123, nm:'盲盒（創意橡皮抽抽樂）', con:false, cat:'結緣用品類', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:124, nm:'幸運摸彩箱', con:false, cat:'結緣用品類', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:125, nm:'烘焙墊', con:false, cat:'美食／食農各類用具', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
@@ -1483,9 +1485,9 @@ let inv=[
   {id:129, nm:'夾子（耳穴用）', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:130, nm:'多用彈性探穴筆', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:131, nm:'小春日合', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:132, nm:'黃蜂蠟', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:132, nm:'黃蜂蠟', con:true, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:133, nm:'珍珠腐植土', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:134, nm:'蜜蠟', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:134, nm:'蜜蠟', con:true, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:135, nm:'百納川薄荷腦100g', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:136, nm:'蓑衣套裝＋大斗笠', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'未標明', k:'', lv:''}},
   {id:137, nm:'常規斗笠', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'未標明', k:'', lv:''}},
@@ -1505,9 +1507,9 @@ let inv=[
   {id:151, nm:'梵貞黃金玻尿酸面膜', con:false, cat:'面膜系列', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:152, nm:'矽膠刮刀／料理刮刀', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:153, nm:'多功能電熱鍋', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
-  {id:154, nm:'食品級粽模', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
-  {id:155, nm:'餅乾袋', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
-  {id:156, nm:'油力士紙', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:154, nm:'食品級粽模', con:true, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:155, nm:'餅乾袋', con:true, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:156, nm:'油力士紙', con:true, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:157, nm:'金億昇165平蓋', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:158, nm:'SANSUI山水旋風氣炸烤箱配件（轉籠夾/烤雞叉組件有缺/層架/網籃/接油盤/炸籃/烤盤）', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:159, nm:'尚朋堂4人養生電子鍋', con:false, cat:'食農.美食電器用品工具器材', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
@@ -1592,7 +1594,7 @@ function pgInv(){
   inv.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
     if(!el)return;
-    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
@@ -1626,7 +1628,7 @@ function pgBorrow(){
   inv.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
     if(!el)return;
-    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
@@ -1828,22 +1830,28 @@ function handleQRResult(raw){
     if(box)box.style.borderColor='#2a6b5e';
     setTimeout(()=>{closeCam();selI(id)},700);
   }
-  // 優先嘗試 JSON 格式（系統自產 QR）：{"id":1,"nm":"...","cat":"...","loc":{...}}
+  const trimmed=raw.trim();
+  // 主格式：純數字 id（最短最清晰，新版 QR）
+  if(/^\d+$/.test(trimmed)){
+    const found=inv.find(i=>i.id===parseInt(trimmed));
+    if(found){ jump(found.id,found.nm); return; }
+  }
+  // 相容 JSON 格式 {"id":...}
   try{
-    const obj=JSON.parse(raw);
+    const obj=JSON.parse(trimmed);
     if(obj&&obj.id){
       const found=inv.find(i=>i.id===Number(obj.id));
       if(found){ jump(found.id,found.nm); return; }
     }
   }catch(e){}
   // 相容舊格式 ITEM:id:...
-  const parts=raw.split(':');
+  const parts=trimmed.split(':');
   if(parts.length>=2&&parts[0]==='ITEM'){
     const found=inv.find(i=>i.id===parseInt(parts[1]));
     if(found){ jump(found.id,found.nm); return; }
   }
-  // 最後嘗試品項名稱比對
-  const nameMatch=inv.find(i=>raw.includes(i.nm));
+  // 最後備援：品項名稱比對
+  const nameMatch=inv.find(i=>trimmed.includes(i.nm));
   if(nameMatch){ jump(nameMatch.id,nameMatch.nm); return; }
   if(r)r.textContent='⚠ 無法辨識此 QR Code，請重試';
 }
@@ -1859,6 +1867,122 @@ function closeCam(){
 }
 
 function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
+
+// ── 新增品項 ──────────────────────────────────────────────────────────────
+function openAddItem(){
+  withAuth(()=>{
+    const cats=['佈置裝飾', '佈置裝飾材料', '兒盟獎勵結緣器具', '兒盟課程獎勵結緣物品材料', '兒盟課輔用品具', '團體活動健康促進', '場地裝置布置器材', '手工皂器材料的家', '手工皂器材料組', '手工皂模具', '手工藝器材料', '手工藝材料', '手工藝材料－剩餘手作材料', '手工藝－馬賽克系列', '手工藝／佈置裝飾', '手工藝／佈置裝飾材料', '手工藝／佈置裝飾系列', '按摩系列', '按摩系列－耳燭按摩材料', '擴香牌／磚器材料組', '敲打擊／手搖樂器', '桌遊－益智認知－精細動作－藝術創作', '活動場地裝置布置器材', '節慶活動場佈器材', '節慶活動服裝表演器材', '節慶活動表演器材', '節慶表演器材', '節慶表演器材（母親節／父親節）', '節慶表演器材／佈置裝飾材料', '節慶表演服飾類', '節慶表演花飾類', '節慶／活動表演器材', '精油芳療模組－穴位按摩刮痧系列', '結緣品', '結緣用品類', '美食／食農各類用具', '耳穴按摩－耳穴器材料組', '膏類組器材料', '蓑衣套組', '行政用品', '角色.節慶.活動服飾類', '角色扮演服飾類', '角色表演服飾器材', '角色／節慶活動裝飾類', '辦公文具用品', '面膜系列', '食農.美食電器用品工具器材', '食農用具', '食農相關', '食農／美食器具材料', '食農／美食器材料', '食農／美食器材料（B004）', '食農／美食用品具'];
+    const catOpts=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    const overlay=document.createElement('div');
+    overlay.id='addItemOverlay';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.72);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML=`
+      <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;border-left:4px solid var(--gold)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #ddd6c8;background:var(--paper-warm)">
+          <span style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410;letter-spacing:0.1em">＋ 新 增 品 項</span>
+          <button onclick="document.getElementById('addItemOverlay').remove()" style="border:none;background:none;font-size:18px;color:#6b5a4e;cursor:pointer">✕</button>
+        </div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">品 項 名 稱 <span style="color:#8b2020">*</span></label>
+            <input id="aiNm" type="text" placeholder="請輸入品項名稱" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;font-family:'Noto Serif TC',serif;color:#1c1410">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">類 別 <span style="color:#8b2020">*</span></label>
+            <select id="aiCat" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+              <option value="">請選擇類別</option>
+              ${catOpts}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">性 質 <span style="color:#8b2020">*</span></label>
+            <div style="display:flex;gap:12px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+                <input type="radio" name="aiCon" value="false" checked> 非消耗品（借用）
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+                <input type="radio" name="aiCon" value="true"> 消耗品（領用）
+              </label>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量</label>
+            <input id="aiQty" type="number" value="0" min="0" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">存 放 位 置</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div>
+                <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px">庫 房</div>
+                <select id="aiR" style="width:100%;padding:6px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+                  <option value="">—</option>
+                  ${ROOMS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px">鐵 架</div>
+                <select id="aiK" style="width:100%;padding:6px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+                  <option value="">—</option>
+                  ${RACKS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px">層 別</div>
+                <select id="aiLv" style="width:100%;padding:6px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+                  <option value="">—</option>
+                  ${LEVS.map(r=>`<option value="${r}">${r}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div id="aiErr" style="font-size:11px;color:#8b2020;display:none"></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:4px">
+            <button onclick="document.getElementById('addItemOverlay').remove()" style="padding:7px 18px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e">取 消</button>
+            <button onclick="confirmAddItem()" class="btn-primary" style="padding:7px 20px;font-size:12px">確 認 新 增</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  }, '新增品項', '需要管理員授權才能新增品項');
+}
+
+function confirmAddItem(){
+  const nm=document.getElementById('aiNm').value.trim();
+  const cat=document.getElementById('aiCat').value;
+  const con=document.querySelector('input[name="aiCon"]:checked').value==='true';
+  const qty=parseInt(document.getElementById('aiQty').value)||0;
+  const r=document.getElementById('aiR').value;
+  const k=document.getElementById('aiK').value;
+  const lv=document.getElementById('aiLv').value;
+  const err=document.getElementById('aiErr');
+
+  if(!nm){err.textContent='請輸入品項名稱';err.style.display='block';return;}
+  if(!cat){err.textContent='請選擇類別';err.style.display='block';return;}
+  if(inv.find(i=>i.nm===nm)){err.textContent='品項名稱已存在，請使用不同名稱';err.style.display='block';return;}
+  err.style.display='none';
+
+  const newId=inv.reduce((m,i)=>Math.max(m,i.id),0)+1;
+  const newItem={
+    id:newId, nm, con, cat, u:'個', qty, min:1,
+    loc:{r:r||'', k:k||'', lv:lv||''}
+  };
+  inv.push(newItem);
+
+  // 同步至 CAT_META（若為新類別則加入）
+  if(!CAT_META[cat]){
+    const cls=['cat-ok','cat-w','cat-art','cat-med','cat-cog','cat-adl','cat-ex','cat-sen'][Object.keys(CAT_META).length%8];
+    CAT_META[cat]={cls,label:cat};
+  }
+
+  gasSave();
+  document.getElementById('addItemOverlay').remove();
+  go('inv',null);
+  setTimeout(()=>{
+    const srch=document.getElementById('srch');
+    if(srch){srch.value=nm;srch.dispatchEvent(new Event('input'));}
+  },200);
+}
+
 function selI(id){sd.item=inv.find(i=>i.id===id);ss=1;step()}
 
 // ── 庫存總覽快速操作（點擊列） ─────────────────────────────────────────────
@@ -2142,7 +2266,7 @@ function pgQR(){
   inv.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
     if(!el)return;
-    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
@@ -2208,7 +2332,7 @@ function previewCard(id){
   // 動態產生 QR Code
   const el=document.getElementById('modalQR');
   if(el){
-    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:120,height:120,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:10px;color:#999">QR產生失敗</span>'; }
@@ -2233,7 +2357,7 @@ function buildPrintCard(item, qrDataUrl){
 }
 
 function getQRDataUrl(item, size){
-  const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+  const payload=String(item.id);
   return QRCode.toDataURL(payload,{width:size}).catch(()=>'');
 }
 
@@ -2362,7 +2486,7 @@ function pgLoc(){
   inv.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
     if(!el)return;
-    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
@@ -2459,7 +2583,7 @@ function pgRep(){
   inv.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
     if(!el)return;
-    const payload=JSON.stringify({id:item.id,nm:item.nm,cat:item.cat,loc:item.loc});
+    const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
