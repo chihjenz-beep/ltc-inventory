@@ -10928,7 +10928,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
-      <div class="stor-badge" id="syncBadge">載入中…</div>
+      <div class="stor-badge" id="syncBadge">🔄 連線中…</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
     </div>
@@ -10955,7 +10955,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
-      <div class="stor-badge" id="syncBadge">載入中…</div>
+      <div class="stor-badge" id="syncBadge">🔄 連線中…</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
     </div>
@@ -12865,6 +12865,16 @@ function closeDrawer(){
 
 // ── Startup: render immediately with defaults, then refresh from Sheets ───
 // 檢查 URL 參數：手機掃描 QR Code 後帶入 ?item=ID，直接跳出入庫流程
+// ── Badge 工具函數 ──────────────────────────────────────────────────────
+function _setBadge(txt,color){
+  document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
+    el.textContent=txt; el.style.color=color;
+  });
+}
+function showSaving(){ _setBadge('⏳ 儲存中…','var(--gold)'); }
+function showSaved(){  _setBadge('✓ 已同步',  'var(--sage)'); }
+function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--red-seal)'); }
+
 function checkURLItem(){
   const params=new URLSearchParams(window.location.search);
   const itemId=params.get('item');
@@ -12880,34 +12890,11 @@ function checkURLItem(){
   return false;
 }
 
-go('inv', null);   // 立即顯示預設畫面，不等待網路
-
-// 背景從 Google Sheets 載入，完成後靜默刷新當前頁
-function _setBadge(txt,color){document.querySelectorAll('[id="syncBadge"]').forEach(el=>{el.textContent=txt;el.style.color=color;});}
-function showSaving(){_setBadge('⏳ 儲存中…','var(--gold)');}
-function showSaved(){_setBadge('✓ 已同步','var(--sage)');}
-function showSaveErr(){_setBadge('⚠ 同步失敗','var(--red-seal)');}
-
-// 先立即渲染畫面，讓系統可以正常操作
+// ── 啟動 ──────────────────────────────────────────────────────────────────
 if(!checkURLItem()) go('inv', null);
-
-);}
-function showSaving(){_setBadge('⏳ 儲存中…','var(--gold)');}
-function showSaved(){_setBadge('✓ 已同步','var(--sage)');}
-function showSaveErr(){_setBadge('⚠ 同步失敗','var(--red-seal)');}
-// badge 顯示連線中
-_setBadge('🔄 連線中…','var(--gold)');
-
-);
-}
-function showSaving(){ _setBadge('⏳ 儲存中…','var(--gold)'); }
-function showSaved(){  _setBadge('✓ 已同步',  'var(--sage)'); }
-function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--red-seal)'); }
-
-// 背景靜默連線 Google Sheets（失敗不影響操作）
+// 背景連線 Google Sheets
 gasLoad().catch(e=>{
-  console.warn('gasLoad 背景連線失敗', e);
-  _setBadge('📴 離線模式','#6b5a4e');
+  console.warn('gasLoad 失敗', e);
 });
 </script>
 </body>
