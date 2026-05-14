@@ -10928,7 +10928,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
-      <div class="stor-badge"><span class="stor-dot"></span>資料已同步</div>
+      <div class="stor-badge" id="syncBadge">載入中…</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
     </div>
@@ -10955,7 +10955,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
-      <div class="stor-badge" id="syncBadge"><span class="stor-dot"></span>連線中…</div>
+      <div class="stor-badge" id="syncBadge">載入中…</div>
       <div class="sb-foot-txt" style="margin-top:4px">Powered by Claude</div>
       <div class="sb-foot-ver">嘉義縣平安家園多元關懷協會 · 2026</div>
     </div>
@@ -11032,18 +11032,14 @@ const LS_PWD='pahome_pwd';
 function getPwd(){return localStorage.getItem(LS_PWD)||'0000';}
 
 // ── 儲存狀態提示 ──────────────────────────────────────────────────────────
-function showSaving(){
-  let el=document.getElementById('syncBadge');
-  if(el){el.textContent='⏳ 儲存中…';el.style.color='var(--gold)';}
+function _setBadge(txt, color){
+  document.querySelectorAll('#syncBadge,[id="syncBadge"]').forEach(el=>{
+    el.textContent=txt; el.style.color=color;
+  });
 }
-function showSaved(){
-  let el=document.getElementById('syncBadge');
-  if(el){el.textContent='✓ 已同步';el.style.color='var(--sage)';}
-}
-function showSaveErr(){
-  let el=document.getElementById('syncBadge');
-  if(el){el.textContent='⚠ 同步失敗';el.style.color='var(--red-seal)';}
-}
+function showSaving(){ _setBadge('⏳ 儲存中…','var(--gold)'); }
+function showSaved(){  _setBadge('✓ 已同步',  'var(--sage)'); }
+function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--red-seal)'); }
 
 // ── 從 Google Sheets 讀取 ────────────────────────────────────────────────
 // ── Sheets 日期序列轉換 ──────────────────────────────────────────────────────
