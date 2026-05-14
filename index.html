@@ -1551,16 +1551,41 @@ function pgInv(){
   const ac=brws.filter(b=>!b.ret).length;
   const od2=brws.filter(b=>!b.ret&&ovd(b.due)).length;
 
-  function rows(arr){return arr.map(i=>{
+  // 類別圖示對照
+  const CAT_ICON={
+    '佈置裝飾':'🎨','佈置裝飾材料':'🪵','兒盟獎勵結緣器具':'🎁','兒盟課程獎勵結緣物品材料':'📦',
+    '兒盟課輔用品具':'🎒','團體活動健康促進':'🏃','場地裝置布置器材':'🏗️','手工皂器材料的家':'🧼',
+    '手工皂器材料組':'🧴','手工皂模具':'🔲','手工藝器材料':'✂️','手工藝材料':'🧵',
+    '手工藝材料－剩餘手作材料':'🗂️','手工藝－馬賽克系列':'🔷','手工藝／佈置裝飾':'🌸',
+    '手工藝／佈置裝飾材料':'🌿','手工藝／佈置裝飾系列':'💡','按摩系列':'💆',
+    '按摩系列－耳燭按摩材料':'🕯️','擴香牌／磚器材料組':'🌺','敲打擊／手搖樂器':'🥁',
+    '桌遊－益智認知－精細動作－藝術創作':'🎲','活動場地裝置布置器材':'🏟️',
+    '節慶活動場佈器材':'🎪','節慶活動服裝表演器材':'👗','節慶活動表演器材':'🎭',
+    '節慶表演器材':'🎉','節慶表演器材（母親節／父親節）':'💐','節慶表演器材／佈置裝飾材料':'🎊',
+    '節慶表演服飾類':'👘','節慶表演花飾類':'🌹','節慶／活動表演器材':'🎶',
+    '精油芳療模組－穴位按摩刮痧系列':'🫧','結緣品':'🎀','結緣用品類':'🛍️',
+    '美食／食農各類用具':'🍳','耳穴按摩－耳穴器材料組':'👂','膏類組器材料':'🧪',
+    '蓑衣套組':'🌾','行政用品':'📋','角色.節慶.活動服飾類':'🎭','角色扮演服飾類':'🎓',
+    '角色表演服飾器材':'👒','角色／節慶活動裝飾類':'🎠','辦公文具用品':'✏️',
+    '面膜系列':'😮','食農.美食電器用品工具器材':'🔌','食農用具':'🌱','食農相關':'🥬',
+    '食農／美食器具材料':'🥘','食農／美食器材料':'🫕','食農／美食器材料（B004）':'🍱',
+    '食農／美食用品具':'🥄'
+  };
+
+  function rows(arr,catCol){return arr.map(i=>{
     const bq=brws.filter(b=>b.iid===i.id&&!b.ret).reduce((s,b)=>s+b.qty,0);
-    const hasBorrow=bq>0;
-    return `<tr style="cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='rgba(181,131,42,0.07)'" onmouseout="this.style.background=''" onclick="invQuickAction(${i.id})" title="點擊操作出入庫">
-      <td style="font-family:'Noto Serif TC',serif">${i.nm}</td>
-      <td><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 6px">${i.con?'消 耗':'非消耗'}</span></td>
-      <td style="font-family:'Noto Serif TC',serif;font-size:13px">${i.qty}</td>
-      <td><span class="b ${stc(i)}">${stl(i)}</span></td>
-      <td>${hasBorrow?`<span class="b b-br" style="cursor:pointer" onclick="event.stopPropagation();invReturnAction(${i.id})" title="點擊歸還">${bq} ↩</span>`:'—'}</td>
-      <td><span class="lb">${ls(i.loc)}</span></td>
+    const stClass=stc(i);
+    const qtyColor=stClass==='b-d'?'#8b2020':stClass==='b-w'?'#7a3a1e':'#1c1410';
+    return `<tr style="cursor:pointer;transition:background 0.12s"
+      onmouseover="this.style.background='${catCol}18'"
+      onmouseout="this.style.background=''"
+      onclick="invQuickAction(${i.id})" title="點擊操作出入庫">
+      <td style="font-family:'Noto Serif TC',serif;padding-left:12px;border-left:3px solid ${catCol}">${i.nm}</td>
+      <td><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></td>
+      <td style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:700;color:${qtyColor};text-align:center">${i.qty}</td>
+      <td><span class="b ${stClass}" style="font-size:10px">${stl(i)}</span></td>
+      <td>${bq>0?`<span class="b b-br" style="cursor:pointer;font-size:10px" onclick="event.stopPropagation();invReturnAction(${i.id})" title="點擊歸還">${bq}↩</span>`:'—'}</td>
+      <td style="color:#6b5a4e;font-size:11px"><span class="lb" style="font-size:10px">${ls(i.loc)||'—'}</span></td>
     </tr>`;
   }).join('')}
 
@@ -1571,31 +1596,69 @@ function pgInv(){
     <div class="st"><div class="st-l">逾 期 未 還</div><div class="st-v danger">${od2}</div></div>
   </div>`;
   if(od2>0)h+=`<div class="oa">⚠ 注意：${od2} 筆借用已逾期未歸還，請查看「借用管理」頁面。</div>`;
+  h+=`<div style="font-size:10px;color:#b5832a;letter-spacing:0.06em;margin-bottom:14px;padding:5px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>`;
 
-  // Click-to-operate hint (only shown during search or always)
-  const clickHint=q?`<div style="font-size:10px;color:#b5832a;letter-spacing:0.06em;margin-bottom:10px;padding:6px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>`:'<div style="font-size:10px;color:#b5832a;letter-spacing:0.06em;margin-bottom:10px;padding:6px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>';
-  h+=clickHint;
+  // 類別群組
+  const cats=Object.keys(CAT_META).filter(cat=>items.some(i=>i.cat===cat));
+  h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+    <button onclick="toggleAllCat(true)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#6b5a4e;cursor:pointer;letter-spacing:0.04em">全 部 展 開</button>
+    <button onclick="toggleAllCat(false)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#6b5a4e;cursor:pointer;letter-spacing:0.04em">全 部 收 合</button>
+  </div>`;
 
   Object.keys(CAT_META).forEach(cat=>{
     const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
-    const m=CAT_META[cat];
-    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr>
-      <th style="width:22%">品 項</th>
-      <th style="width:12%">性 質</th><th style="width:9%">數 量</th>
-      <th style="width:10%">狀 態</th><th style="width:9%">借 出</th>
-      <th style="width:38%">儲 存 位 置</th>
-    </tr></thead><tbody>${rows(ci)}</tbody></table></div>`;
+    const catCol=CAT_HEX[cat]||'#b5832a';
+    const catLight=CAT_LIGHT[cat]||'#faeeda';
+    const icon=CAT_ICON[cat]||'📁';
+    const lowCount=ci.filter(i=>stc(i)!=='b-ok').length;
+    const warnBadge=lowCount>0?`<span style="font-size:9px;background:#fff3;color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;border:1px solid #fff5">⚠ ${lowCount}</span>`:'';
+    const catId='cat_'+cat.replace(/[^a-zA-Z0-9]/g,'_');
+    h+=`
+    <div style="margin-bottom:10px;border-radius:3px;overflow:hidden;box-shadow:0 1px 4px rgba(28,20,16,0.10)">
+      <div style="background:${catCol};padding:8px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none"
+           onclick="toggleCat('${catId}')">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="font-size:16px;line-height:1">${icon}</span>
+          <span style="font-family:'Noto Serif TC',serif;font-size:12px;color:#fff;letter-spacing:0.08em;font-weight:500">${cat}</span>
+          ${warnBadge}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;color:rgba(255,255,255,0.8)">${ci.length} 項</span>
+          <span id="${catId}_arrow" style="font-size:10px;color:#fff;transition:transform 0.2s">▼</span>
+        </div>
+      </div>
+      <div id="${catId}" style="background:#fff;border:1px solid rgba(0,0,0,0.07);border-top:none">
+        <table class="tbl" style="margin-bottom:0"><thead>
+          <tr style="background:${catLight}">
+            <th style="width:30%;padding-left:12px;color:${catCol}">品 項</th>
+            <th style="width:9%;color:${catCol}">性 質</th>
+            <th style="width:8%;color:${catCol};text-align:center">數 量</th>
+            <th style="width:9%;color:${catCol}">狀 態</th>
+            <th style="width:7%;color:${catCol}">借 出</th>
+            <th style="width:37%;color:${catCol}">儲 存 位 置</th>
+          </tr>
+        </thead><tbody>${rows(ci,catCol)}</tbody></table>
+      </div>
+    </div>`;
   });
   document.getElementById('pg').innerHTML=h;
-  // Async fill all QR canvases
-  inv.forEach(item=>{
-    const el=document.getElementById('qrc-'+item.id);
-    if(!el)return;
-    const payload=String(item.id);
-    try{
-      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+}
+
+function toggleCat(id){
+  const el=document.getElementById(id);
+  const arrow=document.getElementById(id+'_arrow');
+  if(!el)return;
+  const collapsed=el.style.display==='none';
+  el.style.display=collapsed?'':'none';
+  if(arrow)arrow.style.transform=collapsed?'':'rotate(-90deg)';
+}
+function toggleAllCat(open){
+  document.querySelectorAll('[id^="cat_"]').forEach(el=>{
+    if(el.id.endsWith('_arrow'))return;
+    el.style.display=open?'':'none';
+  });
+  document.querySelectorAll('[id$="_arrow"]').forEach(arrow=>{
+    arrow.style.transform=open?'':'rotate(-90deg)';
   });
 }
 
