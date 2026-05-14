@@ -439,7 +439,7 @@ body{
 .scan-btn:hover{background:var(--gold)}
 
 /* === BODY === */
-.body{flex:1;overflow-y:auto;padding:20px}
+.body{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px}
 .body::-webkit-scrollbar{width:4px}
 .body::-webkit-scrollbar-track{background:var(--paper-warm)}
 .body::-webkit-scrollbar-thumb{background:var(--border)}
@@ -1581,7 +1581,7 @@ function pgInv(){
       onmouseout="this.style.background=''"
       onclick="invQuickAction(${i.id})" title="點擊操作出入庫">
       <td style="font-family:'Noto Serif TC',serif;padding-left:12px;border-left:3px solid ${catCol}">${i.nm}</td>
-      <td><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></td>
+      <td class="inv-col-nat"><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></td>
       <td style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:700;color:${qtyColor};text-align:center">${i.qty}</td>
       <td><span class="b ${stClass}" style="font-size:10px">${stl(i)}</span></td>
       <td>${bq>0?`<span class="b b-br" style="cursor:pointer;font-size:10px" onclick="event.stopPropagation();invReturnAction(${i.id})" title="點擊歸還">${bq}↩</span>`:'—'}</td>
@@ -1631,10 +1631,10 @@ function pgInv(){
         <table class="tbl" style="margin-bottom:0"><thead>
           <tr style="background:${catLight}">
             <th style="width:30%;padding-left:12px;color:${catCol}">品 項</th>
-            <th style="width:9%;color:${catCol}">性 質</th>
+            <th class="inv-col-nat" style="width:9%;color:${catCol}">性 質</th>
             <th style="width:8%;color:${catCol};text-align:center">數 量</th>
             <th style="width:9%;color:${catCol}">狀 態</th>
-            <th style="width:7%;color:${catCol}">借 出</th>
+            <th class="inv-col-brw" style="width:7%;color:${catCol}">借 出</th>
             <th style="width:37%;color:${catCol}">儲 存 位 置</th>
           </tr>
         </thead><tbody>${rows(ci,catCol)}</tbody></table>
@@ -2508,7 +2508,16 @@ async function printAllQR(){
       .grid{gap:5px}
       @page{size:A4;margin:10mm}
     }
-  </style></head><body>
+  
+/* 庫存表格手機版：隱藏次要欄 */
+@media(max-width:600px){
+  .body{padding:10px}
+  .sts{grid-template-columns:repeat(2,1fr)}
+  .inv-col-nat,.inv-col-brw{display:none}
+  .tbl th,.tbl td{padding:5px 6px;font-size:10px}
+  .st-v{font-size:22px}
+}
+</style></head><body>
   <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 185 張）</h1>
   <div class="grid">${cardsHtml}</div>
   <script>window.onload=()=>{setTimeout(()=>window.print(),600)}<\/script>
