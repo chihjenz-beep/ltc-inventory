@@ -12023,6 +12023,77 @@ function closeCam(){
 function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
 
 // ── 新增品項 ──────────────────────────────────────────────────────────────
+
+// ── 修改品項數量 ───────────────────────────────────────────────────────────
+function editQty(id){
+  document.getElementById('invActionModal')?.remove();
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  withAuth(()=>{
+    const overlay=document.createElement('div');
+    overlay.id='editQtyOverlay';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML=`
+      <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:320px;border-left:4px solid var(--gold)">
+        <div style="padding:14px 18px;border-bottom:1px solid #ddd6c8">
+          <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">✏ 修 改 數 量</div>
+          <div style="font-size:11px;color:#6b5a4e;margin-top:3px">${item.nm}</div>
+        </div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+          <div style="text-align:center">
+            <div style="font-size:11px;color:#6b5a4e;margin-bottom:8px;letter-spacing:0.06em">目 前 數 量</div>
+            <div style="font-family:'Noto Serif TC',serif;font-size:32px;color:#1c1410;font-weight:700">${item.qty} <span style="font-size:14px;font-weight:400">${item.u}</span></div>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">修 改 為</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button onclick="stepQty(-1)" style="width:36px;height:36px;font-size:20px;border:1px solid #c8b89a;background:#fff;cursor:pointer;line-height:1">−</button>
+              <input id="eqInput" type="number" value="${item.qty}" min="0" style="flex:1;text-align:center;padding:8px;border:1px solid #c8b89a;background:#faf7f2;font-size:18px;font-family:'Noto Serif TC',serif;color:#1c1410">
+              <button onclick="stepQty(1)" style="width:36px;height:36px;font-size:20px;border:1px solid #c8b89a;background:#fff;cursor:pointer;line-height:1">＋</button>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">修 改 原 因</label>
+            <input id="eqNote" type="text" placeholder="例：盤點更正、損耗調整…" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+          </div>
+          <div id="eqErr" style="font-size:11px;color:#8b2020;display:none"></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button onclick="document.getElementById('editQtyOverlay').remove()" style="padding:7px 18px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e">取 消</button>
+            <button onclick="confirmEditQty(${id})" class="btn-primary" style="padding:7px 20px;font-size:12px">確 認 修 改</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('eqInput').focus();
+  },'修改品項數量','需要管理員授權才能直接修改庫存數量');
+}
+
+function stepQty(delta){
+  const inp=document.getElementById('eqInput');
+  if(!inp)return;
+  const v=parseInt(inp.value)||0;
+  inp.value=Math.max(0, v+delta);
+}
+
+function confirmEditQty(id){
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  const newQty=parseInt(document.getElementById('eqInput').value);
+  const note=document.getElementById('eqNote').value.trim()||'數量修改';
+  const err=document.getElementById('eqErr');
+  if(isNaN(newQty)||newQty<0){
+    err.textContent='請輸入有效數量（≥ 0）';
+    err.style.display='block';
+    return;
+  }
+  const oldQty=item.qty;
+  item.qty=newQty;
+  logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'調整',qty:newQty-oldQty,mem:'管理員',note:`${note}（${oldQty}→${newQty}）`});
+  gasSave();
+  document.getElementById('editQtyOverlay').remove();
+  pgInv();
+}
+
 function openAddItem(){
   withAuth(()=>{
     const cats=['佈置裝飾', '佈置裝飾材料', '兒盟獎勵結緣器具', '兒盟課程獎勵結緣物品材料', '兒盟課輔用品具', '團體活動健康促進', '場地裝置布置器材', '手工皂器材料的家', '手工皂器材料組', '手工皂模具', '手工藝器材料', '手工藝材料', '手工藝材料－剩餘手作材料', '手工藝－馬賽克系列', '手工藝／佈置裝飾', '手工藝／佈置裝飾材料', '手工藝／佈置裝飾系列', '按摩系列', '按摩系列－耳燭按摩材料', '擴香牌／磚器材料組', '敲打擊／手搖樂器', '桌遊－益智認知－精細動作－藝術創作', '活動場地裝置布置器材', '節慶活動場佈器材', '節慶活動服裝表演器材', '節慶活動表演器材', '節慶表演器材', '節慶表演器材（母親節／父親節）', '節慶表演器材／佈置裝飾材料', '節慶表演服飾類', '節慶表演花飾類', '節慶／活動表演器材', '精油芳療模組－穴位按摩刮痧系列', '結緣品', '結緣用品類', '美食／食農各類用具', '耳穴按摩－耳穴器材料組', '膏類組器材料', '蓑衣套組', '行政用品', '角色.節慶.活動服飾類', '角色扮演服飾類', '角色表演服飾器材', '角色／節慶活動裝飾類', '辦公文具用品', '面膜系列', '食農.美食電器用品工具器材', '食農用具', '食農相關', '食農／美食器具材料', '食農／美食器材料', '食農／美食器材料（B004）', '食農／美食用品具'];
@@ -12221,10 +12292,14 @@ function invQuickAction(id){
         <div style="font-size:9px;color:#6b5a4e">${o.sub}</div>
       </div>`).join('')}
     </div>
-    <div style="padding:0 16px 14px 16px;border-top:1px solid #ede8e0;margin-top:2px">
-      <button onclick="deleteItem(${id})" style="width:100%;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em;margin-top:10px"
+    <div style="padding:10px 16px 14px 16px;border-top:1px solid #ede8e0;display:flex;gap:8px">
+      <button onclick="editQty(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
+        onmouseover="this.style.background='rgba(181,131,42,0.08)'" onmouseout="this.style.background='transparent'">
+        ✏ 修 改 數 量
+      </button>
+      <button onclick="deleteItem(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(139,32,32,0.06)'" onmouseout="this.style.background='transparent'">
-        🗑 刪 除 此 品 項
+        🗑 刪 除 品 項
       </button>
     </div>
   </div>`;
