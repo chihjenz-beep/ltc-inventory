@@ -11996,7 +11996,9 @@ function openCam(){
   // Android Chrome：降低解析度請求，提升辨識速度與相容性
   const constraints={video:{
     facingMode:{ideal:'environment'},
-    width:{ideal:640},height:{ideal:480}
+    width:{ideal:1280},height:{ideal:720},
+    focusMode:{ideal:'continuous'},
+    advanced:[{focusMode:'continuous'}]
   }};
   navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
     camStream=stream;
@@ -12019,27 +12021,29 @@ function startScanLoop(vid){
   if(!canvas)return;
   const ctx=canvas.getContext('2d');
   let lastCode='',lastTime=0;
-  let scanning=false; // 防止重疊執行
-  let scanW=0,scanH=0; // 只在尺寸改變時重設 canvas
+  let scanning=false;
+
+  // 固定掃描解析度：320x320，只取中央正方形區域
+  const SCAN_SIZE=320;
+  canvas.width=SCAN_SIZE;
+  canvas.height=SCAN_SIZE;
 
   function tick(){
-    if(!document.getElementById('camOverlay')){cancelAnimationFrame(camAnim);return}
+    if(!document.getElementById('camOverlay')){clearTimeout(camAnim);return}
     if(vid.readyState===vid.HAVE_ENOUGH_DATA && !scanning){
       scanning=true;
-      // 只在尺寸改變時才重設（避免每幀重設造成 Android 效能問題）
-      if(canvas.width!==vid.videoWidth||canvas.height!==vid.videoHeight){
-        canvas.width=vid.videoWidth;
-        canvas.height=vid.videoHeight;
-        scanW=vid.videoWidth;scanH=vid.videoHeight;
-      }
-      ctx.drawImage(vid,0,0,canvas.width,canvas.height);
-      const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+      // 取畫面中央正方形（對齊掃描框）
+      const vw=vid.videoWidth,vh=vid.videoHeight;
+      const side=Math.min(vw,vh);
+      const sx=(vw-side)/2, sy=(vh-side)/2;
+      ctx.drawImage(vid, sx, sy, side, side, 0, 0, SCAN_SIZE, SCAN_SIZE);
+      const img=ctx.getImageData(0,0,SCAN_SIZE,SCAN_SIZE);
       try{
-        // attemptBoth：同時嘗試正色與反色，提升 Android 辨識率
-        const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'attemptBoth'});
+        // dontInvert：手機環境一般不需反色，速度提升約 2 倍
+        const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
         if(code){
           const now=Date.now();
-          if(code.data!==lastCode||now-lastTime>3000){
+          if(code.data!==lastCode||now-lastTime>2000){
             lastCode=code.data;lastTime=now;
             handleQRResult(code.data);
           }
@@ -12047,10 +12051,10 @@ function startScanLoop(vid){
       }catch(e){}
       scanning=false;
     }
-    // 用 setTimeout 限速（約 10fps），避免 Android 低階裝置過熱或卡頓
-    camAnim=setTimeout(()=>requestAnimationFrame(tick),100);
+    // 50ms ≈ 20fps，兼顧速度與效能
+    camAnim=setTimeout(tick,50);
   }
-  camAnim=setTimeout(()=>requestAnimationFrame(tick),100);
+  camAnim=setTimeout(tick,50);
 }
 
 function handleQRResult(raw){
