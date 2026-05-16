@@ -10925,6 +10925,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--primary);border-left:2px solid var(--primary-light)">＋ 新 增 品 項</div>
       <div class="nsh" style="margin-top:8px">系 統</div>
       <div class="nav" onclick="changePwd();closeDrawer()" style="color:var(--primary)">修 改 密 碼</div>
+      <div class="nav" onclick="openSyncSettings();closeDrawer()" style="color:var(--gold-light)">⏱ 自動同步</div>
       <div class="nav" onclick="confirmReset();closeDrawer()" style="color:var(--rose)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
@@ -10952,6 +10953,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="openAddItem()" style="color:var(--primary);border-left:2px solid var(--primary-light)">＋ 新 增 品 項</div>
       <div class="nsh" style="margin-top:8px">系 統</div>
       <div class="nav" onclick="changePwd()" style="color:var(--primary)">修 改 密 碼</div>
+      <div class="nav" onclick="openSyncSettings()" style="color:var(--gold-light)">⏱ 自動同步</div>
       <div class="nav" onclick="confirmReset()" style="color:var(--rose)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
@@ -13070,6 +13072,54 @@ function checkURLItem(){
   return false;
 }
 
+// ── 自動同步設定 ──────────────────────────────────────────────────────────
+function openSyncSettings(){
+  const cur=_syncInterval?'3':'0';
+  const overlay=document.createElement('div');
+  overlay.id='syncSettingOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:300px;border-left:4px solid var(--gold)">
+      <div style="padding:14px 18px;border-bottom:1px solid #ddd6c8">
+        <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">⏱ 自動同步設定</div>
+        <div style="font-size:10px;color:#6b5a4e;margin-top:3px">定時從 Google Sheets 重新載入資料</div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">同步間隔</label>
+          <select id="syncMin" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+            <option value="0">關閉自動同步</option>
+            <option value="1">每 1 分鐘</option>
+            <option value="3" selected>每 3 分鐘（預設）</option>
+            <option value="5">每 5 分鐘</option>
+            <option value="10">每 10 分鐘</option>
+            <option value="30">每 30 分鐘</option>
+          </select>
+        </div>
+        <div style="font-size:10px;color:#6b5a4e;padding:8px;background:rgba(181,131,42,0.06);border-left:2px solid var(--gold)">
+          目前狀態：${_syncInterval?'已啟用（3 分鐘）':'已關閉'}
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById('syncSettingOverlay').remove()" style="padding:7px 16px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e">取 消</button>
+          <button onclick="applySyncSetting()" class="btn-primary" style="padding:7px 18px;font-size:12px">套 用</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function applySyncSetting(){
+  const min=parseInt(document.getElementById('syncMin').value);
+  startAutoSync(min);
+  document.getElementById('syncSettingOverlay').remove();
+  if(min>0){
+    _setBadge('⏱ 自動同步 '+min+'分','var(--sage)');
+    setTimeout(()=>_setBadge('✓ 已同步','var(--sage)'),2000);
+  } else {
+    _setBadge('✓ 已同步（手動）','var(--sage)');
+  }
+}
+
 // ── 啟動 ──────────────────────────────────────────────────────────────────
 if(!checkURLItem()) go('inv', null);
 // 背景連線 Google Sheets（失敗才改 badge，不卡畫面）
@@ -13077,6 +13127,24 @@ gasLoad().catch(e=>{
   console.warn('gasLoad 失敗', e);
   _setBadge('📴 離線模式','#6b5a4e');
 });
+
+// ── 定時自動同步 ─────────────────────────────────────────────────────────
+let _syncInterval=null;
+function startAutoSync(minutes){
+  if(_syncInterval) clearInterval(_syncInterval);
+  if(!minutes||minutes<=0) return;
+  _syncInterval=setInterval(()=>{
+    const safePgs=['inv','rep','borrow','loc','qr'];
+    if(!safePgs.includes(window._curPage||'inv')) return;
+    _setBadge('🔄 同步中…','var(--gold)');
+    gasLoad().catch(e=>{
+      console.warn('定時同步失敗',e);
+      _setBadge('📴 離線模式','#6b5a4e');
+    });
+  }, minutes * 60 * 1000);
+}
+// 預設 3 分鐘自動同步
+startAutoSync(3);
 </script>
 </body>
 </html>
