@@ -10922,10 +10922,10 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" id="drNav3" onclick="go('qr',this);closeDrawer()">品 項 QR Code</div>
       <div class="nav" id="drNav4" onclick="go('loc',this);closeDrawer()">位 置 管 理</div>
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
-      <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
+      <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--primary);border-left:2px solid var(--primary-light)">＋ 新 增 品 項</div>
       <div class="nsh" style="margin-top:8px">系 統</div>
-      <div class="nav" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
-      <div class="nav" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
+      <div class="nav" onclick="changePwd();closeDrawer()" style="color:var(--primary)">修 改 密 碼</div>
+      <div class="nav" onclick="confirmReset();closeDrawer()" style="color:var(--rose)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
       <div class="stor-badge" id="syncBadge">✓ 已同步</div>
@@ -10949,10 +10949,10 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('qr',this)">品 項 QR Code</div>
       <div class="nav" onclick="go('loc',this)">位 置 管 理</div>
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
-      <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
+      <div class="nav" onclick="openAddItem()" style="color:var(--primary);border-left:2px solid var(--primary-light)">＋ 新 增 品 項</div>
       <div class="nsh" style="margin-top:8px">系 統</div>
-      <div class="nav" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
-      <div class="nav" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
+      <div class="nav" onclick="changePwd()" style="color:var(--primary)">修 改 密 碼</div>
+      <div class="nav" onclick="confirmReset()" style="color:var(--rose)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
       <div class="stor-badge" id="syncBadge">✓ 已同步</div>
@@ -10977,23 +10977,21 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
   <!-- MOBILE BOTTOM NAV -->
   <nav class="mob-nav" aria-label="底部導覽">
-    <div class="mob-nav-inner">
-      <button class="mob-nav-btn on" id="mnBtn0" onclick="go('inv',this)" aria-label="庫存總覽">
-        <span class="ico">📋</span>總覽
-      </button>
-      <button class="mob-nav-btn" id="mnBtn1" onclick="go('scan',this);setTimeout(openCam,150)" aria-label="掃描出入庫">
-        <span class="ico">📷</span>掃描
-      </button>
-      <button class="mob-nav-btn" id="mnBtn2" onclick="go('borrow',this)" aria-label="借用管理">
-        <span class="ico">📤</span>借用
-      </button>
-      <button class="mob-nav-btn" id="mnBtn3" onclick="go('qr',this)" aria-label="QR Code">
-        <span class="ico">⬛</span>QR碼
-      </button>
-      <button class="mob-nav-btn" id="mnBtn4" onclick="go('rep',this)" aria-label="異動紀錄">
-        <span class="ico">📝</span>紀錄
-      </button>
-    </div>
+    <button class="mob-nav-btn on" id="mnBtn0" onclick="go('inv',this)" aria-label="庫存總覽">
+      <span class="ico">📋</span><span class="lbl">總覽</span>
+    </button>
+    <button class="mob-nav-btn" id="mnBtn1" onclick="go('scan',this);setTimeout(openCam,150)" aria-label="掃描出入庫">
+      <span class="ico">📷</span><span class="lbl">掃描</span>
+    </button>
+    <button class="mob-nav-btn" id="mnBtn2" onclick="go('borrow',this)" aria-label="借用管理">
+      <span class="ico">📤</span><span class="lbl">借用</span>
+    </button>
+    <button class="mob-nav-btn" id="mnBtn3" onclick="go('qr',this)" aria-label="QR Code">
+      <span class="ico">⬛</span><span class="lbl">QR碼</span>
+    </button>
+    <button class="mob-nav-btn" id="mnBtn4" onclick="go('rep',this)" aria-label="異動紀錄">
+      <span class="ico">📝</span><span class="lbl">紀錄</span>
+    </button>
   </nav>
 
 </div>
@@ -11700,8 +11698,8 @@ function pgInv(){
   let catIdx=0;
   Object.keys(CAT_META).forEach(cat=>{
     const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
-    const catCol=CAT_HEX[cat]||'#b5832a';
-    const catLight=CAT_LIGHT[cat]||'#faeeda';
+    const catCol=CAT_HEX[cat]||'#e8734a';
+    const catLight=CAT_LIGHT[cat]||'#fdf0eb';
     const icon=CAT_ICON[cat]||'📁';
     const lowCount=ci.filter(i=>stc(i)!=='b-ok').length;
     const warnBadge=lowCount>0?`<span style="font-size:9px;background:#fff3;color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;border:1px solid #fff5">⚠ ${lowCount}</span>`:'';
@@ -11805,95 +11803,174 @@ function step(){
     let grid='';
     Object.keys(CAT_META).forEach(cat=>{
       const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
-      const m=CAT_META[cat];
-      grid+=`<div style="margin-bottom:14px">
-        <div style="font-size:10px;color:#6b5a4e;letter-spacing:0.12em;margin-bottom:6px;display:flex;align-items:center;gap:6px">
-          <span class="b ${m.cls}" style="font-size:9px;padding:1px 6px">${m.label}</span>${cat}
+      const catCol=CAT_HEX[cat]||'#e8734a';
+      grid+=`<div style="margin-bottom:18px">
+        <div style="font-size:10px;letter-spacing:0.14em;margin-bottom:8px;display:flex;align-items:center;gap:6px;color:${catCol}">
+          <span style="width:8px;height:8px;border-radius:50%;background:${catCol};display:inline-block;flex-shrink:0"></span>${cat}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
-          ${ci.map(i=>`<div onclick="selI(${i.id})" class="item-card">
-            <div style="font-family:'Noto Serif TC',serif;font-size:12px;color:#1c1410;margin-bottom:2px">${i.nm}</div>
-            <div style="font-size:10px;color:#6b5a4e">庫存：<span style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410">${i.qty}</span> ${i.u}　<span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${ci.map(i=>`
+          <div onclick="selI(${i.id})" style="
+            background:#fff;border:1.5px solid #f0e4da;border-radius:14px;
+            padding:12px;cursor:pointer;transition:all 0.18s;
+            box-shadow:0 2px 8px rgba(45,37,32,0.06);"
+            onmouseover="this.style.borderColor='${catCol}';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 16px rgba(45,37,32,0.12)'"
+            onmouseout="this.style.borderColor='#f0e4da';this.style.transform='';this.style.boxShadow='0 2px 8px rgba(45,37,32,0.06)'">
+            <div style="font-size:12px;color:#2d2520;margin-bottom:5px;font-weight:500;line-height:1.4">${i.nm}</div>
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+              <span style="font-size:13px;font-weight:700;color:${catCol}">${i.qty}</span>
+              <span style="font-size:10px;color:#7a6b65">${i.u}</span>
+              <span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px">${i.con?'消耗':'非消耗'}</span>
+            </div>
           </div>`).join('')}
         </div>
       </div>`;
     });
     pg.innerHTML=`
-      <div class="step-hd" data-step="一">選 擇 品 項</div>
-      <div class="ss" onclick="openCam()" style="border-color:var(--gold);background:var(--gold-pale)">
-        <div style="font-size:22px;margin-bottom:6px">📷</div>
-        <div style="font-size:13px;font-family:'Noto Serif TC',serif;color:#1c1410;margin-bottom:3px;letter-spacing:0.08em">點 擊 開 啟 相 機 掃 描</div>
-        <div style="font-size:10px;color:#6b5a4e;letter-spacing:0.04em">對準品項上的 QR Code 即可自動辨識</div>
+      <div style="margin-bottom:18px">
+        <div style="font-size:11px;color:#7a6b65;letter-spacing:0.1em;margin-bottom:10px">步驟 1 ／ 3　·　選擇品項</div>
+        <div onclick="openCam()" style="
+          background:linear-gradient(135deg,var(--primary),var(--primary-deep));
+          border-radius:16px;padding:20px;cursor:pointer;text-align:center;
+          box-shadow:0 4px 16px rgba(232,115,74,0.35);transition:all 0.18s;color:#fff;margin-bottom:16px"
+          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(232,115,74,0.45)'"
+          onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(232,115,74,0.35)'">
+          <div style="font-size:32px;margin-bottom:8px">📷</div>
+          <div style="font-size:14px;font-weight:600;letter-spacing:0.08em;margin-bottom:4px">掃 描 QR Code</div>
+          <div style="font-size:11px;opacity:0.85">對準品項上的 QR Code 即可自動辨識</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border))"></div>
+          <span style="font-size:10px;color:#7a6b65;letter-spacing:0.1em">或依類別選擇</span>
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)"></div>
+        </div>
       </div>
-      <div style="font-size:10px;color:#b5832a;letter-spacing:0.1em;margin-bottom:8px">或 依 類 別 選 擇</div>
-      <div style="max-height:340px;overflow-y:auto">${grid}</div>`;
+      <div style="max-height:380px;overflow-y:auto;padding-right:2px">${grid}</div>`;
   } else if(ss===1){
     const i=sd.item;
     const ops=i.con?[
-      {op:'入庫',ic:'↓',sub:'補充材料入庫'},
-      {op:'領用',ic:'↑',sub:'消耗性取用'}
+      {op:'入庫',ic:'📥',sub:'補充材料入庫',col:'#5a9070',bg:'#eaf4ef'},
+      {op:'領用',ic:'📤',sub:'消耗性取用',col:'#8b7db5',bg:'#f0eef8'}
     ]:[
-      {op:'入庫',ic:'↓',sub:'歸還或補充'},
-      {op:'借用',ic:'↗',sub:'需填預定歸還日'}
+      {op:'入庫',ic:'📥',sub:'歸還或補充',col:'#5a9070',bg:'#eaf4ef'},
+      {op:'借用',ic:'🤝',sub:'需填預定歸還日',col:'#e8734a',bg:'#fdf0eb'}
     ];
     pg.innerHTML=`
-      <div class="step-hd" data-step="二">選 擇 操 作 類 型</div>
-      <div class="cb">
-        <div class="ci"><span>品 項</span><span style="font-family:'Noto Serif TC',serif">${i.nm}</span></div>
-        <div class="ci"><span>性 質</span><span><span class="b ${i.con?'b-c':'b-n'}">${i.con?'消耗品':'非消耗品'}</span></span></div>
-        <div class="ci"><span>目前庫存</span><span style="font-family:'Noto Serif TC',serif;font-size:14px">${i.qty} ${i.u}</span></div>
-        <div class="ci"><span>位 置</span><span><span class="lb">${ls(i.loc)}</span></span></div>
+      <div style="font-size:11px;color:#7a6b65;letter-spacing:0.1em;margin-bottom:14px">步驟 2 ／ 3　·　選擇操作類型</div>
+      <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:18px;border:1px solid var(--border-light);box-shadow:0 2px 8px rgba(45,37,32,0.05)">
+        <div style="font-size:14px;font-weight:600;color:#2d2520;margin-bottom:10px;line-height:1.4">${i.nm}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+          <div style="color:#7a6b65">性質</div>
+          <div><span class="b ${i.con?'b-c':'b-n'}">${i.con?'消耗品':'非消耗品'}</span></div>
+          <div style="color:#7a6b65">目前庫存</div>
+          <div style="font-weight:700;color:#2d2520;font-size:13px">${i.qty} <span style="font-size:10px;font-weight:400;color:#7a6b65">${i.u}</span></div>
+          <div style="color:#7a6b65">位置</div>
+          <div><span class="lb">${ls(i.loc)||'—'}</span></div>
+        </div>
       </div>
-      <div class="tg">${ops.map(o=>`<div class="tc" onclick="selO('${o.op}')">
-        <div style="font-family:'Noto Serif TC',serif;font-size:28px;color:#b5832a;margin-bottom:6px">${o.ic}</div>
-        <div style="font-size:14px;font-family:'Noto Serif TC',serif;color:#1c1410;letter-spacing:0.1em">${o.op}</div>
-        <div style="font-size:10px;color:#6b5a4e;margin-top:3px">${o.sub}</div>
-      </div>`).join('')}</div>
-      <button onclick="ss=0;step()" style="font-size:11px">← 重 新 選 擇</button>`;
+      <div style="display:grid;grid-template-columns:${ops.length>1?'1fr 1fr':'1fr'};gap:10px;margin-bottom:16px">
+        ${ops.map(o=>`
+        <div onclick="selO('${o.op}')" style="
+          background:${o.bg};border:2px solid transparent;border-radius:16px;
+          padding:20px 14px;text-align:center;cursor:pointer;transition:all 0.18s"
+          onmouseover="this.style.borderColor='${o.col}';this.style.transform='translateY(-2px)'"
+          onmouseout="this.style.borderColor='transparent';this.style.transform=''">
+          <div style="font-size:28px;margin-bottom:8px">${o.ic}</div>
+          <div style="font-size:15px;font-weight:600;color:${o.col};letter-spacing:0.06em;margin-bottom:4px">${o.op}</div>
+          <div style="font-size:10px;color:#7a6b65">${o.sub}</div>
+        </div>`).join('')}
+      </div>
+      <button onclick="ss=0;step()" style="
+        background:transparent;border:1.5px solid var(--border);
+        border-radius:20px;padding:8px 18px;font-size:11px;cursor:pointer;
+        color:#7a6b65;transition:all 0.15s;letter-spacing:0.04em"
+        onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='#7a6b65'">
+        ← 重新選擇
+      </button>`;
   } else if(ss===2){
     const i=sd.item,isBr=sd.op==='借用',isIn=sd.op==='入庫',pList=i.con?PC:PN;
     const dDue=new Date();dDue.setDate(dDue.getDate()+7);
+    const opColor=isBr?'#e8734a':isIn?'#5a9070':'#8b7db5';
     pg.innerHTML=`
-      <div class="step-hd" data-step="三">填 寫 資 料</div>
-      <div class="cb">
-        <div class="ci"><span>品 項</span><span style="font-family:'Noto Serif TC',serif">${i.nm}</span></div>
-        <div class="ci"><span>操 作</span><span><span class="b ${isBr?'b-br':isIn?'b-in':'b-u'}">${sd.op}</span></span></div>
-        <div class="ci"><span>目前庫存</span><span style="font-family:'Noto Serif TC',serif;font-size:14px">${i.qty} ${i.u}</span></div>
-        <div class="ci"><span>位 置</span><span><span class="lb">${ls(i.loc)}</span></span></div>
+      <div style="font-size:11px;color:#7a6b65;letter-spacing:0.1em;margin-bottom:14px">步驟 3 ／ 3　·　填寫資料</div>
+      <div style="background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid var(--border-light);box-shadow:0 2px 8px rgba(45,37,32,0.05)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:600;color:#2d2520;flex:1;line-height:1.4">${i.nm}</span>
+          <span class="b ${isBr?'b-br':isIn?'b-in':'b-u'}">${sd.op}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px">
+          <div style="color:#7a6b65">目前庫存</div>
+          <div style="font-weight:700;color:${opColor}">${i.qty} ${i.u}</div>
+          <div style="color:#7a6b65">位置</div>
+          <div><span class="lb">${ls(i.loc)||'—'}</span></div>
+        </div>
       </div>
-      <div class="fr">
-        <div><label class="fl">${isBr?'借用':'領用'} 人員姓名</label><select id="sU"><option value="">— 請選擇 —</option>${MEMBERS.map(m=>`<option>${m}</option>`).join('')}</select></div>
-        <div><label class="fl">數量（${i.u}）</label><input type="number" id="sQ" min="1" value="1"></div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+        <div>
+          <label style="font-size:11px;color:#7a6b65;letter-spacing:0.06em;display:block;margin-bottom:5px">${isBr?'借用':'領用'} 人員姓名 <span style="color:var(--primary)">*</span></label>
+          <select id="sU" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:12px;color:#2d2520">
+            <option value="">— 請選擇 —</option>${MEMBERS.map(m=>`<option>${m}</option>`).join('')}
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <label style="font-size:11px;color:#7a6b65;letter-spacing:0.06em;display:block;margin-bottom:5px">數量（${i.u}）<span style="color:var(--primary)">*</span></label>
+            <input type="number" id="sQ" min="1" value="1" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:14px;font-weight:600;color:#2d2520;text-align:center">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#7a6b65;letter-spacing:0.06em;display:block;margin-bottom:5px">出庫用途</label>
+            <select id="sP" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:12px;color:#2d2520">
+              ${pList.map(p=>`<option>${p}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        ${isBr?`<div>
+          <label style="font-size:11px;color:#7a6b65;letter-spacing:0.06em;display:block;margin-bottom:5px">預定歸還日 <span style="color:var(--primary)">*</span></label>
+          <input type="date" id="sD" value="${dDue.toISOString().slice(0,10)}" min="${iso()}" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:12px;color:#2d2520">
+        </div>`:''}
+        <div>
+          <label style="font-size:11px;color:#7a6b65;letter-spacing:0.06em;display:block;margin-bottom:5px">備註（選填）</label>
+          <input type="text" id="sN" placeholder="補充說明…" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font-size:12px;color:#2d2520">
+        </div>
       </div>
-      <div class="fr">
-        <div><label class="fl">出庫用途</label><select id="sP">${pList.map(p=>`<option>${p}</option>`).join('')}</select></div>
-        ${isBr?`<div><label class="fl">預定歸還日</label><input type="date" id="sD" value="${dDue.toISOString().slice(0,10)}" min="${iso()}"></div>`:'<div></div>'}
-      </div>
-      <div style="margin-bottom:10px"><label class="fl">備 註（選填）</label><input type="text" id="sN" placeholder="補充說明"></div>
-      <div class="row-btn">
-        <button onclick="ss=1;step()">← 上 一 步</button>
-        <button class="btn-primary" onclick="cfm()">確 認 ${sd.op}</button>
-      </div>
-      <div id="er" style="font-size:11px;color:#8b2020;margin-top:8px;letter-spacing:0.04em"></div>`;
+      <div id="er" style="font-size:11px;color:var(--rose);margin-bottom:10px;letter-spacing:0.04em;padding:0 2px"></div>
+      <div style="display:flex;gap:8px">
+        <button onclick="ss=1;step()" style="
+          flex:1;background:transparent;border:1.5px solid var(--border);
+          border-radius:20px;padding:11px;font-size:12px;cursor:pointer;color:#7a6b65;
+          transition:all 0.15s;letter-spacing:0.04em"
+          onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
+          onmouseout="this.style.borderColor='var(--border)';this.style.color='#7a6b65'">
+          ← 上一步
+        </button>
+        <button class="btn-primary" onclick="cfm()" style="flex:2;padding:11px;font-size:13px;border-radius:20px;letter-spacing:0.08em">
+          確認 ${sd.op}
+        </button>
+      </div>`;
   } else if(ss===3){
     const i=sd.item,isBr=sd.op==='借用';
-    pg.innerHTML=`<div class="success-wrap">
-      <div class="success-stamp">✓</div>
-      <div style="font-family:'Noto Serif TC',serif;font-size:18px;letter-spacing:0.15em;color:#1c1410;margin-bottom:8px">${sd.op} 完 成</div>
-      <div style="width:40px;height:1px;background:#b5832a;margin:0 auto 12px"></div>
-      <div style="font-size:12px;color:#6b5a4e;line-height:2;letter-spacing:0.05em">
-        ${i.nm}　×　${sd.qty} ${i.u}<br>
-        ${isBr?'借用':'領用'}人：${sd.user}　用途：${sd.pur}<br>
-        ${isBr?`預定歸還日：${sd.due}<br>`:''}
-        目前庫存：<span style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410">${i.qty}</span> ${i.u}
-      </div>
-      <div style="display:flex;gap:10px;justify-content:center;margin-top:20px">
-        <button onclick="pgScan()">繼 續 掃 描</button>
-        <button class="btn-primary" onclick="go(${isBr?"'borrow'":"'rep'"},null)">${isBr?'借用管理':'查看紀錄'}</button>
-      </div>
-    </div>`;
+    pg.innerHTML=`
+      <div style="text-align:center;padding:30px 16px">
+        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--sage),var(--sage-light));
+          display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
+          box-shadow:0 4px 20px rgba(90,144,112,0.35);font-size:32px">✓</div>
+        <div style="font-size:20px;font-weight:700;color:#2d2520;margin-bottom:6px;letter-spacing:0.1em">${sd.op} 完成</div>
+        <div style="width:40px;height:2px;background:linear-gradient(90deg,var(--primary),var(--lavender-light));margin:0 auto 16px;border-radius:2px"></div>
+        <div style="background:#fff;border-radius:16px;padding:16px;text-align:left;border:1px solid var(--border-light);margin-bottom:20px;font-size:12px;line-height:2;color:#4a3d38">
+          <div><span style="color:#7a6b65">品項　</span>${i.nm}　×　${sd.qty} ${i.u}</div>
+          <div><span style="color:#7a6b65">人員　</span>${sd.user}　<span style="color:#7a6b65">用途</span>　${sd.pur}</div>
+          ${isBr?`<div><span style="color:#7a6b65">歸還日</span>　${sd.due}</div>`:''}
+          <div><span style="color:#7a6b65">庫存　</span><span style="font-weight:700;color:var(--primary)">${i.qty}</span> ${i.u}</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onclick="pgScan()" style="flex:1;background:transparent;border:1.5px solid var(--border);border-radius:20px;padding:11px;font-size:12px;cursor:pointer;color:#7a6b65;letter-spacing:0.04em">繼續掃描</button>
+          <button class="btn-primary" onclick="go(${isBr?"'borrow'":"'rep'"},null)" style="flex:2;padding:11px;font-size:12px;border-radius:20px">${isBr?'查看借用管理':'查看異動紀錄'}</button>
+        </div>
+      </div>`;
   }
 }
+
 // ── Camera QR Scanner ──────────────────────────────────────────────────────
 let camStream=null,camAnim=null;
 
@@ -12023,6 +12100,75 @@ function closeCam(){
 function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
 
 // ── 新增品項 ──────────────────────────────────────────────────────────────
+
+// ── 修改品項數量 ───────────────────────────────────────────────────────────
+function editQty(id){
+  document.getElementById('invActionModal')?.remove();
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  withAuth(()=>{
+    const overlay=document.createElement('div');
+    overlay.id='editQtyOverlay';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML=`
+      <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:320px;border-left:4px solid var(--gold)">
+        <div style="padding:14px 18px;border-bottom:1px solid #ddd6c8">
+          <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">✏ 修 改 數 量</div>
+          <div style="font-size:11px;color:#6b5a4e;margin-top:3px">${item.nm}</div>
+        </div>
+        <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+          <div style="text-align:center">
+            <div style="font-size:11px;color:#6b5a4e;margin-bottom:6px;letter-spacing:0.06em">目 前 數 量</div>
+            <div style="font-family:'Noto Serif TC',serif;font-size:32px;color:#1c1410;font-weight:700">${item.qty} <span style="font-size:14px;font-weight:400;color:#6b5a4e">${item.u}</span></div>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">修 改 為</label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button onclick="stepQty(-1)" style="width:36px;height:36px;font-size:20px;border:1px solid #c8b89a;background:#fff;cursor:pointer;line-height:1;color:#6b5a4e">−</button>
+              <input id="eqInput" type="number" value="${item.qty}" min="0" style="flex:1;text-align:center;padding:8px;border:1px solid #c8b89a;background:#faf7f2;font-size:18px;font-family:'Noto Serif TC',serif;color:#1c1410">
+              <button onclick="stepQty(1)" style="width:36px;height:36px;font-size:20px;border:1px solid #c8b89a;background:#fff;cursor:pointer;line-height:1;color:#6b5a4e">＋</button>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">修 改 原 因</label>
+            <input id="eqNote" type="text" placeholder="例：盤點更正、損耗調整…" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+          </div>
+          <div id="eqErr" style="font-size:11px;color:#8b2020;display:none"></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button onclick="document.getElementById('editQtyOverlay').remove()" style="padding:7px 18px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e;letter-spacing:0.04em">取 消</button>
+            <button onclick="confirmEditQty(${id})" class="btn-primary" style="padding:7px 20px;font-size:12px">確 認 修 改</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+  },'修改品項數量','需要管理員授權才能直接修改庫存數量');
+}
+function stepQty(delta){
+  const inp=document.getElementById('eqInput');
+  if(!inp)return;
+  const v=parseInt(inp.value)||0;
+  inp.value=Math.max(0, v+delta);
+}
+
+function confirmEditQty(id){
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  const newQty=parseInt(document.getElementById('eqInput').value);
+  const note=document.getElementById('eqNote').value.trim()||'數量修改';
+  const err=document.getElementById('eqErr');
+  if(isNaN(newQty)||newQty<0){
+    err.textContent='請輸入有效數量（≥ 0）';
+    err.style.display='block';
+    return;
+  }
+  const oldQty=item.qty;
+  item.qty=newQty;
+  logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'調整',qty:newQty-oldQty,mem:'管理員',note:`${note}（${oldQty}→${newQty}）`});
+  gasSave();
+  document.getElementById('editQtyOverlay').remove();
+  pgInv();
+}
+
 function openAddItem(){
   withAuth(()=>{
     const cats=['佈置裝飾', '佈置裝飾材料', '兒盟獎勵結緣器具', '兒盟課程獎勵結緣物品材料', '兒盟課輔用品具', '團體活動健康促進', '場地裝置布置器材', '手工皂器材料的家', '手工皂器材料組', '手工皂模具', '手工藝器材料', '手工藝材料', '手工藝材料－剩餘手作材料', '手工藝－馬賽克系列', '手工藝／佈置裝飾', '手工藝／佈置裝飾材料', '手工藝／佈置裝飾系列', '按摩系列', '按摩系列－耳燭按摩材料', '擴香牌／磚器材料組', '敲打擊／手搖樂器', '桌遊－益智認知－精細動作－藝術創作', '活動場地裝置布置器材', '節慶活動場佈器材', '節慶活動服裝表演器材', '節慶活動表演器材', '節慶表演器材', '節慶表演器材（母親節／父親節）', '節慶表演器材／佈置裝飾材料', '節慶表演服飾類', '節慶表演花飾類', '節慶／活動表演器材', '精油芳療模組－穴位按摩刮痧系列', '結緣品', '結緣用品類', '美食／食農各類用具', '耳穴按摩－耳穴器材料組', '膏類組器材料', '蓑衣套組', '行政用品', '角色.節慶.活動服飾類', '角色扮演服飾類', '角色表演服飾器材', '角色／節慶活動裝飾類', '辦公文具用品', '面膜系列', '食農.美食電器用品工具器材', '食農用具', '食農相關', '食農／美食器具材料', '食農／美食器材料', '食農／美食器材料（B004）', '食農／美食用品具'];
@@ -12150,14 +12296,14 @@ function deleteItem(id){
     overlay.id='deleteConfirmOverlay';
     overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
     overlay.innerHTML=`
-      <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:360px;border-left:4px solid var(--red-seal)">
+      <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:360px;border-left:4px solid var(--rose)">
         <div style="padding:16px 20px;border-bottom:1px solid #ddd6c8">
           <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#8b2020;letter-spacing:0.08em">🗑 確認刪除品項</div>
         </div>
         <div style="padding:16px 20px">
           <div style="font-size:12px;color:#1c1410;font-family:'Noto Serif TC',serif;margin-bottom:8px">「${item.nm}」</div>
           <div style="font-size:11px;color:#6b5a4e;margin-bottom:4px">類別：${item.cat}　·　目前庫存：${item.qty} ${item.u}</div>
-          ${activeBrws.length>0?`<div style="font-size:11px;color:#8b2020;margin-top:8px;padding:6px 10px;background:rgba(139,32,32,0.06);border-left:3px solid var(--red-seal)">⚠ 此品項有 ${activeBrws.length} 筆借用尚未歸還，刪除後借用紀錄將保留但品項不再可用。</div>`:''}
+          ${activeBrws.length>0?`<div style="font-size:11px;color:#8b2020;margin-top:8px;padding:6px 10px;background:rgba(139,32,32,0.06);border-left:3px solid var(--rose)">⚠ 此品項有 ${activeBrws.length} 筆借用尚未歸還，刪除後借用紀錄將保留但品項不再可用。</div>`:''}
           <div style="font-size:11px;color:#8b2020;margin-top:10px">此操作無法復原，確定要刪除嗎？</div>
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 20px;border-top:1px solid #ddd6c8">
@@ -12213,7 +12359,7 @@ function invQuickAction(id){
     </div>
     <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(${ops.length},1fr);gap:8px">
       ${ops.map(o=>`
-      <div onclick="invDoOp(${id},'${o.op}')" style="cursor:pointer;text-align:center;padding:14px 8px;border:1px solid #ddd6c8;border-radius:3px;transition:all 0.15s;background:#fff"
+      <div onclick="invDoOp(${id},'${o.op}')" style="cursor:pointer;text-align:center;padding:14px 8px;border:1px solid #ddd6c8;transition:all 0.15s;background:#fff"
         onmouseover="this.style.borderColor='${catCol}';this.style.background='rgba(181,131,42,0.06)'"
         onmouseout="this.style.borderColor='#ddd6c8';this.style.background='#fff'">
         <div style="font-size:24px;color:${catCol};margin-bottom:5px">${o.ic}</div>
@@ -12221,16 +12367,19 @@ function invQuickAction(id){
         <div style="font-size:9px;color:#6b5a4e">${o.sub}</div>
       </div>`).join('')}
     </div>
-    <div style="padding:0 16px 14px 16px;border-top:1px solid #ede8e0;margin-top:2px">
-      <button onclick="deleteItem(${id})" style="width:100%;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em;margin-top:10px"
+    <div style="padding:10px 16px 14px 16px;border-top:1px solid #ede8e0;display:flex;gap:8px">
+      <button onclick="editQty(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
+        onmouseover="this.style.background='rgba(181,131,42,0.08)'" onmouseout="this.style.background='transparent'">
+        ✏ 修 改 數 量
+      </button>
+      <button onclick="deleteItem(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(139,32,32,0.06)'" onmouseout="this.style.background='transparent'">
-        🗑 刪 除 此 品 項
+        🗑 刪 除 品 項
       </button>
     </div>
   </div>`;
   document.body.appendChild(overlay);
 }
-
 function invReturnAction(id){
   document.getElementById('invActionModal')?.remove();
   invQuickAction(id);
@@ -12872,7 +13021,7 @@ function _setBadge(txt,color){
 }
 function showSaving(){ _setBadge('⏳ 儲存中…','var(--gold)'); }
 function showSaved(){  _setBadge('✓ 已同步',  'var(--sage)'); }
-function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--red-seal)'); }
+function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--rose)'); }
 
 function checkURLItem(){
   const params=new URLSearchParams(window.location.search);
