@@ -11100,31 +11100,44 @@ function fixSheetTime(dateVal, timeVal){
 // ── GAS CORS 修正：用 JSONP 方式讀取資料 ────────────────────────────────────
 // GAS 的 GET 請求會經過 Google redirect，導致 CORS header 遺失
 // JSONP 透過動態注入 <script> 標籤繞過此限制
-function jsonpGet(url, timeout=12000){
+// ── 通訊層：fetch CORS 優先，JSONP 備援 ─────────────────────────────────
+async function gasGet(url, timeout=10000){
+  // 方法一：fetch with CORS（支援的手機最快最穩）
+  try{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),timeout);
+    const res=await fetch(url+'&t='+Date.now(),{signal:ctrl.signal,cache:'no-store'});
+    clearTimeout(tid);
+    if(res.ok){
+      const data=await res.json();
+      return data;
+    }
+  }catch(e){ /* fetch 失敗，改用 JSONP */ }
+
+  // 方法二：JSONP（舊版 WebView 備援）
   return new Promise((resolve,reject)=>{
-    const cb='_gasCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const cb='_cb'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
     let settled=false;
     function cleanup(){
-      settled=true;
-      clearTimeout(timer);
+      settled=true; clearTimeout(timer);
       delete window[cb];
       try{if(script.parentNode)document.head.removeChild(script);}catch(e){}
     }
-    script.onerror=()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 載入失敗')); };
-    const timer=setTimeout(()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 逾時')); },timeout);
+    script.onerror=()=>{ if(settled)return; cleanup(); reject(new Error('JSONP失敗')); };
+    const timer=setTimeout(()=>{ if(settled)return; cleanup(); reject(new Error('JSONP逾時')); },timeout);
     window[cb]=(data)=>{ if(settled)return; cleanup(); resolve(data); };
     script.src=url+'&callback='+cb;
     document.head.appendChild(script);
   });
 }
 
-// JSONP 含自動重試（最多 retry 次）
-async function jsonpGetWithRetry(url, retries=1, timeout=6000){
+async function jsonpGet(url, timeout=10000){ return gasGet(url, timeout); }
+async function jsonpGetWithRetry(url, retries=1, timeout=8000){
   let lastErr;
   for(let i=0;i<=retries;i++){
-    try{ return await jsonpGet(url, timeout); }
-    catch(e){ lastErr=e; if(i<retries) await new Promise(r=>setTimeout(r,1000)); }
+    try{ return await gasGet(url, timeout); }
+    catch(e){ lastErr=e; if(i<retries) await new Promise(r=>setTimeout(r,1500)); }
   }
   throw lastErr;
 }
@@ -11196,6 +11209,8 @@ async function gasLoad(){
     }
 
     showSaved();
+    // 資料載入完成後，重新渲染當前顯示的頁面
+    go(window._curPage||'inv', null);
   }catch(e){
     console.error('gasLoad error',e);
     _setBadge('📴 離線模式','#6b5a4e');
@@ -11208,29 +11223,41 @@ async function gasLoad(){
 // ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
 async function gasSave(){
   showSaving();
-  const makePayload=()=>({
+  const payload={
     inv:  inv.map(i=>({...i, loc:JSON.stringify(i.loc)})),
     logs: logs,
     brws: brws
-  });
-  // 方法一：JSONP GET（與 gasLoad 相同機制，相容所有手機瀏覽器）
-  // 注意：GAS 端的 doGet 需處理 action=saveAll&data=...
+  };
+  const body=JSON.stringify({action:'saveAll',data:payload});
+
+  // 方法一：fetch POST with CORS（最穩，不受 URL 長度限制）
   try{
-    const encoded=encodeURIComponent(JSON.stringify(makePayload()));
-    await jsonpGetWithRetry(GAS_URL+'?action=saveAll&data='+encoded);
-    showSaved();return;
-  }catch(e){ console.warn('gasSave JSONP failed, trying POST',e); }
-  // 方法二：no-cors POST 備援（部分環境 JSONP 被擋時使用）
-  try{
-    await fetch(GAS_URL,{
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),12000);
+    const res=await fetch(GAS_URL,{
       method:'POST',
-      mode:'no-cors',
       headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'saveAll',data:makePayload()})
+      body,
+      signal:ctrl.signal
     });
-    showSaved();
+    clearTimeout(tid);
+    if(res.ok){ showSaved(); return; }
+  }catch(e){ console.warn('gasSave POST failed',e); }
+
+  // 方法二：JSONP GET（POST 失敗備援，注意 URL 長度）
+  try{
+    const encoded=encodeURIComponent(body);
+    if(encoded.length < 7500){
+      await jsonpGetWithRetry(GAS_URL+'?action=saveAll&data='+encoded);
+      showSaved(); return;
+    }else{
+      // 資料太大，改用 no-cors POST（無法確認結果，但通常可寫入）
+      await fetch(GAS_URL,{method:'POST',mode:'no-cors',
+        headers:{'Content-Type':'text/plain'},body});
+      showSaved();
+    }
   }catch(e2){
-    console.error('gasSave all methods failed',e2);
+    console.error('gasSave all failed',e2);
     showSaveErr();
   }
 }
@@ -12972,6 +12999,7 @@ const MOB_IDX={inv:0,scan:1,borrow:2,qr:3,loc:2,rep:4};
 const DSK_IDX={inv:0,scan:1,borrow:2,qr:3,loc:4,rep:5};
 
 function go(pg,el){
+  window._curPage=pg; // 記錄當前頁面供 gasLoad 刷新用
   // Desktop sidebar
   document.querySelectorAll('.sb .nav,.drawer .nav').forEach(n=>n.classList.remove('on'));
   if(el&&el.closest('.sb')){el.classList.add('on')}
