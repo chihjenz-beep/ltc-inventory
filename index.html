@@ -12313,9 +12313,68 @@ function confirmAddItem(){
   setTimeout(()=>{
     const srch=document.getElementById('srch');
     if(srch){srch.value=nm;srch.dispatchEvent(new Event('input'));}
-  },200);
+    // 自動顯示新品項的 QR Code
+    showNewItemQR(newItem);
+  },300);
 }
 
+
+// ── 新品項 QR Code 顯示 ──────────────────────────────────────────────────
+async function showNewItemQR(item){
+  // 用 QRCode library 動態產生（payload = 純數字 id）
+  const overlay=document.createElement('div');
+  overlay.id='newQROverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.75);z-index:4000;display:flex;align-items:center;justify-content:center;padding:16px';
+
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:320px;border-top:3px solid var(--gold);text-align:center">
+      <div style="padding:14px 18px;border-bottom:1px solid #ddd6c8;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">✦ 品項已建立</div>
+        <button onclick="document.getElementById('newQROverlay').remove()" style="border:none;background:none;font-size:18px;color:#6b5a4e;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <div style="padding:20px">
+        <div style="font-size:12px;color:#1c1410;font-family:'Noto Serif TC',serif;margin-bottom:4px">${item.nm}</div>
+        <div style="font-size:10px;color:#6b5a4e;margin-bottom:14px">ID：${item.id}　·　${item.cat}</div>
+        <div id="newQRCanvas" style="display:inline-block;background:#fff;padding:10px;border:1px solid #ddd6c8;margin-bottom:12px"></div>
+        <div style="font-size:10px;color:#6b5a4e;margin-bottom:14px;letter-spacing:0.06em">掃描內容：${item.id}</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="printNewQR(${item.id},'${item.nm.replace(/'/g,'&#39;')}')" style="flex:1;padding:8px;font-size:11px;background:transparent;border:1px solid #c8b89a;cursor:pointer;color:#6b5a4e;letter-spacing:0.06em">🖨 列 印</button>
+          <button onclick="document.getElementById('newQROverlay').remove()" class="btn-primary" style="flex:1;padding:8px;font-size:11px">完 成</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  // 產生 QR Code 圖案
+  const container=document.getElementById('newQRCanvas');
+  if(typeof QRCode!=='undefined'){
+    new QRCode(container,{text:String(item.id),width:160,height:160,
+      colorDark:'#1c1410',colorLight:'#ffffff',
+      correctLevel:QRCode.CorrectLevel.M});
+  } else {
+    // 備援：用 jsQR 反向（從 inv 取得已存的 base64）或顯示文字
+    const dataUrl=await getQRDataUrl(item,160);
+    const img=document.createElement('img');
+    img.src=dataUrl;img.width=160;img.height=160;
+    container.appendChild(img);
+  }
+}
+
+function printNewQR(id, nm){
+  getQRDataUrl(inv.find(i=>i.id===id)||{id,nm},160).then(url=>{
+    const w=window.open('');
+    w.document.write(`<!DOCTYPE html><html><head><title>QR Code</title>
+    <style>body{text-align:center;font-family:serif;padding:20px}
+    img{display:block;margin:0 auto 10px}
+    h3{font-size:14px;margin:0 0 4px}
+    p{font-size:11px;color:#666;margin:0}</style></head><body>
+    <img src="${url}" width="200" height="200">
+    <h3>${nm}</h3><p>ID：${id}</p>
+    <script>window.onload=()=>window.print()<\/script>
+    </body></html>`);
+    w.document.close();
+  });
+}
 
 // ── 刪除品項 ──────────────────────────────────────────────────────────────
 function deleteItem(id){
