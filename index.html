@@ -12715,9 +12715,10 @@ function pgLoc(){
     const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
-    <table class="tbl" style="margin-bottom:10px"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table class="tbl" style="margin-bottom:10px;min-width:420px"><thead><tr><th style="width:35%">品 項</th><th style="width:35%">儲 存 位 置</th><th style="width:30%">操 作</th></tr></thead><tbody>
     ${ci.map(i=>`<tr><td style="font-family:'Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px">編 輯 位 置</button></td></tr>`).join('')}
-    </tbody></table></div>`;
+    </tbody></table></div></div>`;
   });
   h+='<div id="lF" style="margin-top:12px"></div>';
   document.getElementById('pg').innerHTML=h;
