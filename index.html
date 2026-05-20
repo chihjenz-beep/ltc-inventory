@@ -10740,22 +10740,34 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .mob-nav{
   display:none;
   position:fixed;bottom:0;left:0;right:0;
-  background:var(--paper-warm);
-  border-top:1px solid var(--border);
-  z-index:200;
+  background:#f5f0e8;
+  border-top:1px solid #ddd0b8;
+  z-index:900;
   padding-bottom:env(safe-area-inset-bottom);
+  box-shadow:0 -2px 8px rgba(28,20,16,0.08);
 }
-.mob-nav-inner{display:flex;align-items:stretch}
+.mob-nav-inner{display:flex;align-items:stretch;height:70px}
 .mob-nav-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;padding:8px 2px 6px;
-  cursor:pointer;color:var(--ink-faint);
-  font-size:9px;letter-spacing:0.06em;
-  border:none;background:none;font-family:'Noto Sans TC',sans-serif;
-  position:relative;transition:color 0.15s;
+  justify-content:center;gap:3px;
+  padding:8px 0 6px;
+  cursor:pointer;color:#7a6b65;
+  font-size:12px;letter-spacing:0.02em;font-weight:400;
+  border:none;background:transparent;
+  font-family:'Noto Sans TC',sans-serif;
+  position:relative;transition:color 0.12s;
   -webkit-tap-highlight-color:transparent;
 }
-.mob-nav-btn .ico{font-size:18px;margin-bottom:2px;line-height:1}
+.mob-nav-btn .ico{
+  font-size:30px;line-height:1;display:block;
+  transition:transform 0.12s;
+}
+.mob-nav-btn.on{color:#b5832a}
+.mob-nav-btn.on .ico{transform:scale(1.1)}
+.mob-nav-btn.on::after{
+  content:'';position:absolute;top:0;left:15%;right:15%;
+  height:2px;background:#b5832a;border-radius:0 0 2px 2px;
+}
 .mob-nav-btn.on{color:var(--gold)}
 .mob-nav-btn.on::after{
   content:'';position:absolute;top:0;left:20%;right:20%;
@@ -12665,6 +12677,14 @@ async function printAllQR(){
   .sts{grid-template-columns:repeat(2,1fr)}
   .tbl th,.tbl td{padding:5px 6px;font-size:10px}
   .st-v{font-size:22px}
+  .sb,.topbar{display:none!important}
+  .mob-bar,.mob-nav{display:flex}
+  .mob-topbar-menu{display:flex;align-items:center}
+  .pg-wrap{padding-bottom:70px}
+}
+@media(min-width:601px){
+  .mob-bar,.mob-nav,.mob-topbar-menu{display:none!important}
+  .sb,.topbar{display:flex}
 }
 </style></head><body>
   <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 185 張）</h1>
