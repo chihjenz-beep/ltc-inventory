@@ -11189,9 +11189,15 @@ async function gasLoad(){
     if(d.data.logs && d.data.logs.length>0){
       logs=d.data.logs.map(row=>({
         ...row,
-        qty:  Number(row.qty),
-        date: fixSheetDate(row.date),
-        time: fixSheetTime(row.date, row.time)
+        // 相容舊欄位名稱（op→type, mem→user, note→pur, ts→date）
+        type: row.type || row.op || '',
+        user: row.user || row.mem || '',
+        pur:  row.pur  || row.note || '',
+        due:  row.due  || '',
+        loc:  row.loc  || '',
+        qty:  Number(row.qty||0),
+        date: fixSheetDate(row.date||row.ts),
+        time: row.time || ''
       }));
     }
 
