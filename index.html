@@ -11104,19 +11104,23 @@ function fixSheetTime(dateVal, timeVal){
 // JSONP 透過動態注入 <script> 標籤繞過此限制
 // ── 通訊層：fetch CORS 優先，JSONP 備援 ─────────────────────────────────
 async function gasGet(url, timeout=10000){
-  // 方法一：fetch with CORS（支援的手機最快最穩）
+  // 方法一：fetch with CORS + redirect follow（GAS 會 302 redirect）
   try{
     const ctrl=new AbortController();
     const tid=setTimeout(()=>ctrl.abort(),timeout);
-    const res=await fetch(url+'&t='+Date.now(),{signal:ctrl.signal,cache:'no-store'});
+    const res=await fetch(url+'&t='+Date.now(),{
+      signal:ctrl.signal,
+      cache:'no-store',
+      redirect:'follow'
+    });
     clearTimeout(tid);
     if(res.ok){
       const data=await res.json();
-      return data;
+      if(data&&(data.ok!==undefined||data.data!==undefined)) return data;
     }
   }catch(e){ /* fetch 失敗，改用 JSONP */ }
 
-  // 方法二：JSONP（舊版 WebView 備援）
+  // 方法二：JSONP（備援）
   return new Promise((resolve,reject)=>{
     const cb='_cb'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
@@ -11146,7 +11150,7 @@ async function jsonpGetWithRetry(url, retries=1, timeout=8000){
 
 async function gasLoad(){
   try{
-    const d=await jsonpGetWithRetry(GAS_URL+'?action=getAll');
+    const d=await gasGet(GAS_URL+'?action=getAll');
     if(!d.ok) throw new Error(d.error);
 
     // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
@@ -11189,9 +11193,15 @@ async function gasLoad(){
     if(d.data.logs && d.data.logs.length>0){
       logs=d.data.logs.map(row=>({
         ...row,
-        qty:  Number(row.qty),
-        date: fixSheetDate(row.date),
-        time: fixSheetTime(row.date, row.time)
+        // 相容舊欄位名稱（Sheets 可能用 op/mem/note/ts）
+        type: row.type || row.op   || '',
+        user: row.user || row.mem  || '',
+        pur:  row.pur  || row.note || '',
+        due:  row.due  || '',
+        loc:  row.loc  || '',
+        qty:  Number(row.qty || 0),
+        date: fixSheetDate(row.date || row.ts || ''),
+        time: row.time || ''
       }));
     }
 
@@ -11212,10 +11222,13 @@ async function gasLoad(){
 
     showSaved();
   }catch(e){
-    console.error('gasLoad error',e);
-    _setBadge('📴 離線模式','#6b5a4e');
+    console.error('gasLoad error', e.message||e);
+    const msg=e.message||'連線失敗';
+    _setBadge('📴 離線','#8b2020');
     document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
-      el.title='無法連線到 Google Sheets，目前使用本機資料，功能不受影響';
+      el.title='無法連線：'+msg+'\n點此手動重試';
+      el.style.cursor='pointer';
+      el.onclick=()=>{ _setBadge('🔄 重試中…','var(--gold)'); gasLoad().catch(()=>{}); };
     });
   }
 }
@@ -12194,7 +12207,7 @@ function confirmEditQty(id){
   }
   const oldQty=item.qty;
   item.qty=newQty;
-  logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'調整',qty:newQty-oldQty,mem:'管理員',note:`${note}（${oldQty}→${newQty}）`});
+  logs.unshift({type:'調整',nm:item.nm,qty:newQty-oldQty,user:'管理員',pur:(note||'數量調整')+`（${oldQty}→${newQty}）`,due:'',loc:ls(item.loc),date:tdy(),time:ntm()});
   gasSave();
   document.getElementById('editQtyOverlay').remove();
   pgInv();
@@ -12412,7 +12425,7 @@ function confirmDeleteItem(id){
   // 從 inv 移除
   inv=inv.filter(i=>i.id!==id);
   // 記錄異動日誌
-  logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'刪除',qty:0,mem:'管理員',note:'品項已刪除'});
+  logs.unshift({type:'刪除',nm:item.nm,qty:0,user:'管理員',pur:'品項已刪除',due:'',loc:ls(item.loc),date:tdy(),time:ntm()});
   gasSave();
   pgInv();
 }
@@ -13014,7 +13027,8 @@ function pgRep(){
     h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
   } else {
     rows.forEach(l=>{
-      const cls=l.type==='入庫'?'b-in':l.type==='借用'?'b-br':l.type==='歸還'?'b-rt':'b-u';
+      const typeMap={'入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
+      const cls=typeMap[l.type]||'b-u';
       // 只取日期部分（前10碼），去除時間
       const dateOnly=(l.date||'').slice(0,10);
       const dueOnly =(l.due ||'').slice(0,10);
