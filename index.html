@@ -10741,32 +10741,32 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   display:none;
   position:fixed;bottom:0;left:0;right:0;
   background:#f5f0e8;
-  border-top:1px solid #ddd0b8;
+  border-top:1px solid #d4c4a8;
   z-index:900;
   padding-bottom:env(safe-area-inset-bottom);
-  box-shadow:0 -2px 8px rgba(28,20,16,0.08);
 }
-.mob-nav-inner{display:flex;align-items:stretch;height:70px}
+.mob-nav-inner{
+  display:flex;align-items:stretch;
+  width:100%;height:72px;
+}
 .mob-nav-btn{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:3px;
-  padding:8px 0 6px;
-  cursor:pointer;color:#7a6b65;
+  justify-content:center;gap:4px;
+  padding:6px 0 4px;
+  cursor:pointer;color:#6b5a4e;
   font-size:12px;letter-spacing:0.02em;font-weight:400;
   border:none;background:transparent;
   font-family:'Noto Sans TC',sans-serif;
-  position:relative;transition:color 0.12s;
   -webkit-tap-highlight-color:transparent;
+  transition:color 0.12s;
 }
 .mob-nav-btn .ico{
-  font-size:30px;line-height:1;display:block;
-  transition:transform 0.12s;
+  font-size:32px;line-height:1;display:block;
 }
-.mob-nav-btn.on{color:#b5832a}
-.mob-nav-btn.on .ico{transform:scale(1.1)}
+.mob-nav-btn.on{color:#b5832a;font-weight:600;}
 .mob-nav-btn.on::after{
-  content:'';position:absolute;top:0;left:15%;right:15%;
-  height:2px;background:#b5832a;border-radius:0 0 2px 2px;
+  content:'';position:absolute;top:0;left:20%;right:20%;
+  height:3px;background:#b5832a;border-radius:0 0 3px 3px;
 }
 .mob-nav-btn.on{color:var(--gold)}
 .mob-nav-btn.on::after{
