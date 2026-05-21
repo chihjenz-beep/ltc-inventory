@@ -11803,7 +11803,7 @@ function pgBorrow(){
     if(!el)return;
     const payload=String(item.id);
     try{
-      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(el,{text:payload,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
@@ -12464,7 +12464,7 @@ function pgQR(){
     const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px" class="qr-grid-mobile">`;
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px" class="qr-grid-mobile">`;
     ci.forEach(i=>{
       const catCol=CAT_HEX[cat]||'#888';
       h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(28,20,16,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -12472,7 +12472,7 @@ function pgQR(){
           <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
         </div>
         <div style="margin:0 auto 6px;width:64px;height:64px;display:flex;align-items:center;justify-content:center">
-          <div id="qrc-${i.id}" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center"></div>
+          <div id="qrc-${i.id}" style="width:160px;height:160px;display:flex;align-items:center;justify-content:center"></div>
         </div>
         <div style="font-family:'Noto Serif TC',serif;font-size:11px;color:#1c1410;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${i.nm}</div>
         <div style="font-size:9px;color:#6b5a4e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${ls(i.loc)}</div>
@@ -12491,7 +12491,7 @@ function pgQR(){
     if(!el)return;
     const payload=String(item.id);
     try{
-      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(el,{text:payload,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
@@ -12557,7 +12557,7 @@ function previewCard(id){
   if(el){
     const payload=String(item.id);
     try{
-      new QRCode(el,{text:payload,width:120,height:120,correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(el,{text:payload,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:10px;color:#999">QR產生失敗</span>'; }
   }
 }
@@ -12728,7 +12728,7 @@ function pgLoc(){
     if(!el)return;
     const payload=String(item.id);
     try{
-      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(el,{text:payload,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
@@ -12826,7 +12826,7 @@ function pgRep(){
     if(!el)return;
     const payload=String(item.id);
     try{
-      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(el,{text:payload,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
