@@ -10692,6 +10692,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh" style="margin-top:8px">系 統</div>
+      <div class="nav" onclick="startInvLock();closeDrawer()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
@@ -10719,6 +10720,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh" style="margin-top:8px">系 統</div>
+      <div class="nav" onclick="startInvLock()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
@@ -11085,6 +11087,12 @@ async function gasLoad(){
   try{
     const d=await jsonpGetWithRetry(GAS_URL+'?action=getAll');
     if(!d.ok) throw new Error(d.error);
+    // 讀取盤點鎖定狀態
+    if(d.data.config){
+      const cfg=d.data.config;
+      _invLock = cfg.inventoryLock===true||cfg.inventoryLock==='true'||cfg.inventoryLock==='TRUE';
+      _invLockInfo = {by:cfg.lockBy||'', at:cfg.lockAt||''};
+    }
 
     // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
     // 若本機品項數 >= Sheets 品項數，以本機為準並寫回（避免舊資料覆蓋新匯入清單）
@@ -11168,10 +11176,92 @@ async function gasLoad(){
 // ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
 // ── 操作防護：未載入 Sheets 資料時阻擋所有寫入 ──────────────────────────
 function guardOp(opName){
-  if(_gasLoaded) return true;
-  showRetryOverlay('請先連線後再操作');
-  console.warn('操作已阻擋：'+opName+'，_gasLoaded=false');
-  return false;
+  if(!_gasLoaded){
+    showRetryOverlay('請先連線後再操作');
+    console.warn('操作已阻擋：'+opName+'，_gasLoaded=false');
+    return false;
+  }
+  if(_invLock){
+    showInvLockNotice();
+    console.warn('操作已阻擋：'+opName+'，盤點鎖定中');
+    return false;
+  }
+  return true;
+}
+
+// ── 盤點鎖定 ──────────────────────────────────────────────────────────────
+function applyInvLockUI(){
+  const banner=document.getElementById('invLockBanner');
+  if(_invLock){
+    if(!banner){
+      const b=document.createElement('div');
+      b.id='invLockBanner';
+      b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:800;background:#8b2020;color:#fff;text-align:center;padding:8px 16px;font-size:12px;letter-spacing:0.08em;font-family:"Noto Serif TC",serif;display:flex;align-items:center;justify-content:center;gap:10px';
+      b.innerHTML=`<span>🔒 盤點模式進行中，操作已鎖定</span><span style="opacity:0.7;font-size:10px">鎖定者：${_invLockInfo.by||'管理員'}　${_invLockInfo.at||''}</span><button onclick="unlockInvWithAuth()" style="margin-left:12px;padding:3px 12px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;cursor:pointer;font-size:11px;border-radius:2px">解 除 鎖 定</button>`;
+      document.body.prepend(b);
+    }
+  } else {
+    if(banner) banner.remove();
+  }
+}
+
+function showInvLockNotice(){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.75);z-index:3000;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;max-width:300px;width:100%;border-top:3px solid #8b2020;padding:20px;text-align:center">
+      <div style="font-size:28px;margin-bottom:10px">🔒</div>
+      <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#8b2020;letter-spacing:0.1em;margin-bottom:8px">盤點進行中</div>
+      <div style="font-size:11px;color:#6b5a4e;line-height:1.8;margin-bottom:16px">
+        目前系統正在進行盤點，<br>操作暫時鎖定。<br>
+        <span style="font-size:10px">鎖定者：${_invLockInfo.by||'管理員'}　${_invLockInfo.at||''}</span>
+      </div>
+      <button onclick="this.closest('div[style]').remove()" style="padding:7px 20px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e">關 閉</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function startInvLock(){
+  withAuth(()=>{
+    const now=new Date();
+    const dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    _invLock=true;
+    _invLockInfo={by:'管理員', at:dateStr};
+    // 寫入 Sheets config
+    saveLockConfig(true,'管理員',dateStr);
+    applyInvLockUI();
+    go(window._curPage||'inv',null);
+  },'開始盤點','啟用盤點鎖定後，其他使用者無法操作，僅管理員可繼續');
+}
+
+function unlockInvWithAuth(){
+  withAuth(()=>{
+    _invLock=false;
+    _invLockInfo={by:'',at:''};
+    saveLockConfig(false,'','');
+    applyInvLockUI();
+    go(window._curPage||'inv',null);
+  },'解除盤點鎖定','確認要解除盤點模式嗎？');
+}
+
+async function saveLockConfig(locked, by, at){
+  const encoded=encodeURIComponent(JSON.stringify({inventoryLock:locked,lockBy:by,lockAt:at}));
+  try{
+    await jsonpGetWithRetry(GAS_URL+'?action=saveConfig&data='+encoded);
+  }catch(e){
+    try{ await fetchGet(GAS_URL+'?action=saveConfig&data='+encoded); }
+    catch(e2){ console.warn('saveLockConfig 失敗',e2); }
+  }
+}
+
+// 管理員操作時忽略盤點鎖定（已通過 withAuth 驗證）
+function guardOpAdmin(opName){
+  if(!_gasLoaded){
+    showRetryOverlay('請先連線後再操作');
+    return false;
+  }
+  return true; // 管理員不受盤點鎖定限制
 }
 
 async function gasSave(){
@@ -12066,7 +12156,7 @@ function openAddItem(){
 }
 
 function confirmAddItem(){
-  if(!guardOp('新增品項')) return;
+  if(!guardOpAdmin('新增品項')) return;
   const nm=document.getElementById('aiNm').value.trim();
   const cat=document.getElementById('aiCat').value;
   const con=document.querySelector('input[name="aiCon"]:checked').value==='true';
@@ -12136,7 +12226,7 @@ function deleteItem(id){
 }
 
 function confirmDeleteItem(id){
-  if(!guardOp('刪除品項')) return;
+  if(!guardOpAdmin('刪除品項')) return;
   document.getElementById('deleteConfirmOverlay')?.remove();
   const item=inv.find(i=>i.id===id);
   if(!item)return;
@@ -12772,6 +12862,8 @@ const DSK_IDX={inv:0,scan:1,borrow:2,qr:3,loc:4,rep:5};
 
 function go(pg,el){
   window._curPage=pg;
+  // 渲染後顯示/隱藏盤點鎖定提示
+  setTimeout(applyInvLockUI, 50);
   // Desktop sidebar
   document.querySelectorAll('.sb .nav,.drawer .nav').forEach(n=>n.classList.remove('on'));
   if(el&&el.closest('.sb')){el.classList.add('on')}
