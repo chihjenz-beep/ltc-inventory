@@ -2,6 +2,9 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>平安家園 — 活動物品手帳</title>
 <meta name="theme-color" content="#ede8df">
@@ -11031,31 +11034,49 @@ function fixSheetTime(dateVal, timeVal){
 // ── GAS CORS 修正：用 JSONP 方式讀取資料 ────────────────────────────────────
 // GAS 的 GET 請求會經過 Google redirect，導致 CORS header 遺失
 // JSONP 透過動態注入 <script> 標籤繞過此限制
-function jsonpGet(url, timeout=12000){
+// ── 網路層：fetch 優先，JSONP 備援 ──────────────────────────────────────
+async function fetchGet(url, timeout=8000){
+  const ctrl=new AbortController();
+  const tid=setTimeout(()=>ctrl.abort(), timeout);
+  try{
+    const res=await fetch(url+'&t='+Date.now(), {
+      signal:ctrl.signal, cache:'no-store', redirect:'follow'
+    });
+    clearTimeout(tid);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(data && (data.ok!==undefined || data.data!==undefined)) return data;
+    throw new Error('回應格式錯誤');
+  }catch(e){ clearTimeout(tid); throw e; }
+}
+
+function jsonpGet(url, timeout=8000){
   return new Promise((resolve,reject)=>{
-    const cb='_gasCallback_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const cb='_cb'+Date.now()+'_'+Math.random().toString(36).slice(2);
     const script=document.createElement('script');
     let settled=false;
     function cleanup(){
-      settled=true;
-      clearTimeout(timer);
+      settled=true; clearTimeout(timer);
       delete window[cb];
       try{if(script.parentNode)document.head.removeChild(script);}catch(e){}
     }
-    script.onerror=()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 載入失敗')); };
-    const timer=setTimeout(()=>{ if(settled)return; cleanup(); reject(new Error('JSONP 逾時')); },timeout);
+    script.onerror=()=>{ if(settled)return; cleanup(); reject(new Error('JSONP失敗')); };
+    const timer=setTimeout(()=>{ if(settled)return; cleanup(); reject(new Error('JSONP逾時')); },timeout);
     window[cb]=(data)=>{ if(settled)return; cleanup(); resolve(data); };
     script.src=url+'&callback='+cb;
     document.head.appendChild(script);
   });
 }
 
-// JSONP 含自動重試（最多 retry 次）
-async function jsonpGetWithRetry(url, retries=1, timeout=6000){
+async function jsonpGetWithRetry(url, retries=1, timeout=8000){
+  // 方法一：fetch（現代手機首選，不受廣告攔截/WebView限制影響）
+  try{ return await fetchGet(url, timeout); }
+  catch(e){ console.warn('fetch失敗，改用JSONP:', e.message); }
+  // 方法二：JSONP（備援）
   let lastErr;
   for(let i=0;i<=retries;i++){
     try{ return await jsonpGet(url, timeout); }
-    catch(e){ lastErr=e; if(i<retries) await new Promise(r=>setTimeout(r,1000)); }
+    catch(e){ lastErr=e; if(i<retries) await new Promise(r=>setTimeout(r,1200)); }
   }
   throw lastErr;
 }
@@ -11145,18 +11166,21 @@ async function gasLoad(){
 }
 
 // ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
+// ── 操作防護：未載入 Sheets 資料時阻擋所有寫入 ──────────────────────────
+function guardOp(opName){
+  if(_gasLoaded) return true;
+  showRetryOverlay('請先連線後再操作');
+  console.warn('操作已阻擋：'+opName+'，_gasLoaded=false');
+  return false;
+}
+
 async function gasSave(){
   // 安全保護：若尚未從 Sheets 載入成功，禁止寫入（避免初始值覆蓋真實資料）
   if(!_gasLoaded){
-    console.warn('gasSave 已阻擋：Sheets 尚未載入，防止初始值覆蓋真實資料');
-    _setBadge('⚠ 未同步（請稍候）','#8b2020');
-    // 嘗試先載入再儲存
-    try{
-      await gasLoad();
-    }catch(e){
-      alert('⚠ 無法連線 Google Sheets\n\n目前顯示的可能是初始資料，\n操作已取消以保護真實資料。\n\n請確認網路後再試。');
-      return;
-    }
+    // 尚未從 Sheets 載入：完全阻擋，不嘗試補救寫入
+    console.warn('gasSave 已阻擋：_gasLoaded=false');
+    showRetryOverlay('尚未載入 Sheets 資料');
+    return;
   }
   showSaving();
   const makePayload=()=>({
@@ -12042,6 +12066,7 @@ function openAddItem(){
 }
 
 function confirmAddItem(){
+  if(!guardOp('新增品項')) return;
   const nm=document.getElementById('aiNm').value.trim();
   const cat=document.getElementById('aiCat').value;
   const con=document.querySelector('input[name="aiCon"]:checked').value==='true';
@@ -12111,6 +12136,7 @@ function deleteItem(id){
 }
 
 function confirmDeleteItem(id){
+  if(!guardOp('刪除品項')) return;
   document.getElementById('deleteConfirmOverlay')?.remove();
   const item=inv.find(i=>i.id===id);
   if(!item)return;
@@ -12178,6 +12204,7 @@ function invReturnAction(id){
 }
 
 function invDoOp(id, op){
+  if(!guardOp(op)) return;
   document.getElementById('invActionModal')?.remove();
   if(op==='歸還'){
     // Show borrow return modal inline
@@ -12246,6 +12273,7 @@ function selO(op){
   }
 }
 function cfm(){
+  if(!guardOp('出入庫')) return;
   const u=(document.getElementById('sU').value||'').trim(),q=parseInt(document.getElementById('sQ').value)||0,pur=document.getElementById('sP').value,due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'',er=document.getElementById('er');
   if(!u){er.textContent='請填寫人員姓名';return}
   if(q<=0){er.textContent='數量須大於 0';return}
@@ -12819,10 +12847,65 @@ let _gasLoaded=false; // Sheets 載入成功前禁止寫入
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
 if(!checkURLItem()) go('inv', null);
-// 背景連線 Google Sheets（失敗才改 badge，不卡畫面）
-gasLoad().catch(e=>{
+
+// 顯示載入遮罩（確保使用者知道資料尚未就緒）
+function showLoadingOverlay(){
+  if(document.getElementById('loadingOverlay')) return;
+  const el=document.createElement('div');
+  el.id='loadingOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.82);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+  el.innerHTML=`
+    <div style="width:48px;height:48px;border:4px solid rgba(181,131,42,0.3);border-top-color:#b5832a;border-radius:50%;animation:spin 0.8s linear infinite"></div>
+    <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#f7f3ec;letter-spacing:0.12em">連 線 中…</div>
+    <div style="font-size:11px;color:rgba(247,243,236,0.6)">正在從 Google Sheets 載入最新資料</div>`;
+  const style=document.createElement('style');
+  style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
+  el.appendChild(style);
+  document.body.appendChild(el);
+}
+
+function hideLoadingOverlay(){
+  const el=document.getElementById('loadingOverlay');
+  if(el){ el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }
+}
+
+function showRetryOverlay(errMsg){
+  hideLoadingOverlay();
+  if(document.getElementById('retryOverlay')) return;
+  const el=document.createElement('div');
+  el.id='retryOverlay';
+  el.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.88);z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px';
+  el.innerHTML=`
+    <div style="font-size:32px">📡</div>
+    <div style="font-family:'Noto Serif TC',serif;font-size:15px;color:#f7f3ec;letter-spacing:0.1em">無 法 連 線</div>
+    <div style="font-size:11px;color:rgba(247,243,236,0.7);text-align:center;max-width:260px;line-height:1.8">
+      無法載入 Google Sheets 資料<br>
+      <span style="color:#e8a87c">操作已鎖定，避免資料遺失</span>
+    </div>
+    <button onclick="retryLoad()" style="margin-top:8px;padding:10px 28px;background:#b5832a;color:#fff;border:none;font-family:'Noto Serif TC',serif;font-size:13px;letter-spacing:0.1em;cursor:pointer;border-radius:2px">重 新 連 線</button>
+    <div style="font-size:10px;color:rgba(247,243,236,0.4)">連線成功後可正常操作</div>`;
+  document.body.appendChild(el);
+}
+
+async function retryLoad(){
+  const retryEl=document.getElementById('retryOverlay');
+  if(retryEl) retryEl.remove();
+  showLoadingOverlay();
+  try{
+    await gasLoad();
+    hideLoadingOverlay();
+  }catch(e){
+    showRetryOverlay(e.message||'連線失敗');
+  }
+}
+
+// 連線 Google Sheets，顯示載入遮罩
+showLoadingOverlay();
+gasLoad().then(()=>{
+  hideLoadingOverlay();
+}).catch(e=>{
   console.warn('gasLoad 失敗', e);
-  _setBadge('📴 離線模式','#6b5a4e');
+  showRetryOverlay(e.message||'');
 });
 </script>
 </body>
