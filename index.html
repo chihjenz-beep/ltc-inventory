@@ -12278,10 +12278,14 @@ function invQuickAction(id){
         <div style="font-size:9px;color:#6b5a4e">${o.sub}</div>
       </div>`).join('')}
     </div>
-    <div style="padding:0 16px 14px 16px;border-top:1px solid #ede8e0;margin-top:2px">
-      <button onclick="deleteItem(${id})" style="width:100%;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em;margin-top:10px"
+    <div style="padding:10px 16px 14px 16px;border-top:1px solid #ede8e0;display:flex;gap:8px">
+      <button onclick="editQty(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
+        onmouseover="this.style.background='rgba(181,131,42,0.08)'" onmouseout="this.style.background='transparent'">
+        ✏ 修 改 數 量
+      </button>
+      <button onclick="deleteItem(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(139,32,32,0.06)'" onmouseout="this.style.background='transparent'">
-        🗑 刪 除 此 品 項
+        🗑 刪 除 品 項
       </button>
     </div>
   </div>`;
