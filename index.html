@@ -10257,7 +10257,7 @@ body{
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 
 .topbar{
-  padding:10px 12px;
+  padding:12px 20px;
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:10px;
   background:var(--paper-warm);
@@ -10735,10 +10735,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   <div class="main">
     <div class="topbar">
       <button class="mob-topbar-menu" onclick="openDrawer()" aria-label="選單">☰</button>
-      <div style="display:flex;flex-direction:column;line-height:1.2;margin-right:auto">
-        <div style="font-family:'Noto Serif TC',serif;font-size:13px;font-weight:700;color:var(--ink);letter-spacing:0.05em">平安家園</div>
-        <div style="font-size:9px;color:var(--gold);letter-spacing:0.12em">活 動 物 品 手 帳</div>
-      </div>
+      <div class="tb-t"><span class="tb-dot">◈</span><span id="pgt">庫存總覽</span></div>
       <div class="srch-wrap" id="srchWrap" style="display:none">
         <span class="srch-icon">🔍</span>
         <input type="text" id="srch" placeholder="搜尋品項或類別…" oninput="pgInv()">
@@ -12782,19 +12779,14 @@ async function printAllQR(){
   .sts{grid-template-columns:repeat(2,1fr)}
   .tbl th,.tbl td{padding:5px 6px;font-size:10px}
   .st-v{font-size:22px}
-  .sb{display:none!important}
-  .topbar{display:flex}
+  .sb,.topbar{display:none!important}
   .mob-bar,.mob-nav{display:flex}
-  .scan-btn{display:none}
-  #srchWrap{display:none!important}
   .mob-topbar-menu{display:flex;align-items:center}
   .pg-wrap{padding-bottom:70px}
 }
 @media(min-width:601px){
   .mob-bar,.mob-nav,.mob-topbar-menu{display:none!important}
   .sb,.topbar{display:flex}
-  .scan-btn{display:flex}
-  #srchWrap{display:flex!important}
 }
 </style></head><body>
   <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 185 張）</h1>
