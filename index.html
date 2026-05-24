@@ -11132,6 +11132,7 @@ async function gasLoad(){
       bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
     }
 
+    _gasLoaded=true;
     showSaved();
     go(window._curPage||'inv', null);
   }catch(e){
@@ -11145,6 +11146,18 @@ async function gasLoad(){
 
 // ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
 async function gasSave(){
+  // 安全保護：若尚未從 Sheets 載入成功，禁止寫入（避免初始值覆蓋真實資料）
+  if(!_gasLoaded){
+    console.warn('gasSave 已阻擋：Sheets 尚未載入，防止初始值覆蓋真實資料');
+    _setBadge('⚠ 未同步（請稍候）','#8b2020');
+    // 嘗試先載入再儲存
+    try{
+      await gasLoad();
+    }catch(e){
+      alert('⚠ 無法連線 Google Sheets\n\n目前顯示的可能是初始資料，\n操作已取消以保護真實資料。\n\n請確認網路後再試。');
+      return;
+    }
+  }
   showSaving();
   const makePayload=()=>({
     inv:  inv.map(i=>({...i, loc:JSON.stringify(i.loc)})),
@@ -12800,6 +12813,9 @@ function checkURLItem(){
   }
   return false;
 }
+
+// ── 全域旗標 ──────────────────────────────────────────────────────────────
+let _gasLoaded=false; // Sheets 載入成功前禁止寫入
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
 if(!checkURLItem()) go('inv', null);
