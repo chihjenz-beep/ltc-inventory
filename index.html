@@ -11296,6 +11296,57 @@ async function doReset(){
 // Shows password modal; calls onSuccess() if correct.
 
 // ── 登入系統 ──────────────────────────────────────────────────────────────
+
+// ── 自動登出（30 分鐘）────────────────────────────────────────────────────
+let _autoLogoutTimer=null;
+let _autoLogoutWarnTimer=null;
+const AUTO_LOGOUT_MIN=30;
+
+function startAutoLogout(){
+  clearAutoLogout();
+  // 25 分鐘時警告
+  _autoLogoutWarnTimer=setTimeout(()=>{
+    if(!_curUser) return;
+    const overlay=document.createElement('div');
+    overlay.id='autoLogoutWarn';
+    overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px';
+    overlay.innerHTML=`
+      <div style="background:#f7f3ec;border:1px solid #c8bfaf;max-width:300px;width:100%;border-top:3px solid var(--gold);padding:20px;text-align:center">
+        <div style="font-size:28px;margin-bottom:10px">⏰</div>
+        <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410;letter-spacing:0.1em;margin-bottom:8px">即將自動登出</div>
+        <div style="font-size:11px;color:#6b5a4e;margin-bottom:16px">閒置超過 25 分鐘，將於 5 分鐘後自動登出</div>
+        <button onclick="extendSession()" class="btn-primary" style="padding:8px 24px;font-size:12px;letter-spacing:0.08em">繼 續 使 用</button>
+      </div>`;
+    document.body.appendChild(overlay);
+  }, 25*60*1000);
+  // 30 分鐘強制登出
+  _autoLogoutTimer=setTimeout(()=>{
+    document.getElementById('autoLogoutWarn')?.remove();
+    if(!_curUser) return;
+    if(_curUser){
+      logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
+        pur:'自動登出（逾時30分鐘）',due:'',loc:'',date:tdy(),time:ntm()});
+      if(_gasLoaded) gasSave();
+    }
+    _curUser=null;
+    _gasLoaded=false;
+    sessionStorage.removeItem('pahome_user');
+    document.getElementById('invLockBanner')?.remove();
+    showLoginScreen();
+    alert('⏰ 已自動登出（閒置超過 30 分鐘）');
+  }, AUTO_LOGOUT_MIN*60*1000);
+}
+
+function clearAutoLogout(){
+  if(_autoLogoutTimer){ clearTimeout(_autoLogoutTimer); _autoLogoutTimer=null; }
+  if(_autoLogoutWarnTimer){ clearTimeout(_autoLogoutWarnTimer); _autoLogoutWarnTimer=null; }
+}
+
+function extendSession(){
+  document.getElementById('autoLogoutWarn')?.remove();
+  startAutoLogout(); // 重新計時
+}
+
 function showLoginScreen(){
   const overlay=document.createElement('div');
   overlay.id='loginOverlay';
@@ -11351,11 +11402,14 @@ function doLogin(){
   logs.unshift({type:'登入',nm:user.nm,qty:0,user:user.nm,
     pur:'角色：'+roleLabel(user.role),due:'',loc:'',date:tdy(),time:ntm()});
   updateUserBadge();
+  // 30 分鐘自動登出計時器（設計師不受限）
+  if(!isDesigner()) startAutoLogout();
   // 載入資料
   gasLoad().catch(e=>console.warn('gasLoad失敗',e));
 }
 
 function doLogout(){
+  clearAutoLogout();
   if(!confirm('確定要登出嗎？'))return;
   if(_curUser){
     logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
@@ -12423,7 +12477,9 @@ function confirmEditQty(id){
   }
   const oldQty=item.qty;
   item.qty=newQty;
-  logs.unshift({type:'調整',nm:item.nm,qty:newQty-oldQty,user:'管理員',
+  const operator=_curUser?_curUser.nm:'未知';
+  logs.unshift({type:'調整',nm:item.nm,qty:newQty-oldQty,
+    user:operator,operator:operator,
     pur:(note||'數量調整')+`（${oldQty}→${newQty}）`,
     due:'',loc:ls(item.loc),date:tdy(),time:ntm()});
   gasSave();
@@ -13207,6 +13263,7 @@ if(!_curUser){
   showLoginScreen();
 } else {
   updateUserBadge();
+  if(!isDesigner()) startAutoLogout();
   if(!checkURLItem()) go('inv',null);
   gasLoad().catch(e=>console.warn('gasLoad失敗',e));
 }
