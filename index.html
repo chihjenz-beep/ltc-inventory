@@ -11187,7 +11187,7 @@ async function gasLoad(){
       logs=d.data.logs.map(row=>({
         ...row,
         type: row.type || row.op   || '',
-        operator: row.operator || row.user || '',
+        operator: row.operator || '',
         user: row.user || row.mem  || '',
         pur:  row.pur  || row.note || '',
         due:  row.due  || '',
@@ -13089,7 +13089,7 @@ function pgRep(){
         <td><span class="b ${cls}">${l.type}</span></td>
         <td style="font-family:'Noto Serif TC',serif">${l.nm}</td>
         <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
-        <td>${l.user||'—'}${l.operator&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${l.pur||'—'}</td>
+        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${l.pur||'—'}</td>
         <td>${dueOnly||'—'}</td>
         <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
     });
