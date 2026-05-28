@@ -11227,6 +11227,48 @@ async function gasLoad(){
 }
 
 // ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
+
+// ── 增量寫入（避免多人同時操作時資料覆蓋）────────────────────────────────
+async function gasAppendLog(logRow){
+  const data=encodeURIComponent(JSON.stringify({...logRow,loc:logRow.loc||''}));
+  try{
+    await jsonpGetWithRetry(GAS_URL+'?action=appendLog&data='+data);
+  }catch(e){
+    try{ await fetchGet(GAS_URL+'?action=appendLog&data='+data); }
+    catch(e2){ console.warn('appendLog 失敗',e2); }
+  }
+}
+
+async function gasUpdateInv(id, qty){
+  const data=encodeURIComponent(JSON.stringify({id, qty}));
+  try{
+    await jsonpGetWithRetry(GAS_URL+'?action=updateInv&data='+data);
+  }catch(e){
+    try{ await fetchGet(GAS_URL+'?action=updateInv&data='+data); }
+    catch(e2){ console.warn('updateInv 失敗',e2); }
+  }
+}
+
+async function gasAppendBrws(bRow){
+  const data=encodeURIComponent(JSON.stringify(bRow));
+  try{
+    await jsonpGetWithRetry(GAS_URL+'?action=appendBrws&data='+data);
+  }catch(e){
+    try{ await fetchGet(GAS_URL+'?action=appendBrws&data='+data); }
+    catch(e2){ console.warn('appendBrws 失敗',e2); }
+  }
+}
+
+async function gasUpdateBrws(bid, fields){
+  const data=encodeURIComponent(JSON.stringify({id:bid, ...fields}));
+  try{
+    await jsonpGetWithRetry(GAS_URL+'?action=updateBrws&data='+data);
+  }catch(e){
+    try{ await fetchGet(GAS_URL+'?action=updateBrws&data='+data); }
+    catch(e2){ console.warn('updateBrws 失敗',e2); }
+  }
+}
+
 async function gasSave(){
   if(!_gasLoaded){
     console.warn('gasSave 已阻擋：_gasLoaded=false');
@@ -11617,10 +11659,10 @@ const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
 const LEVS=['第一層','第二層','第三層'];
 // ── 使用者資料（role: designer／admin／supervisor／user）─────────────────
 const USERS=[
-  {nm:'林智仁', pwd:'4281', role:'designer'},
+  {nm:'白雪儀', pwd:'619483', role:'supervisor'},
   {nm:'翁美慧', pwd:'735024', role:'admin'},
   {nm:'曾麗惠', pwd:'147308', role:'admin'},
-  {nm:'白雪儀', pwd:'619483', role:'supervisor'},
+  {nm:'蔡尚文', pwd:'326574', role:'admin'},
   {nm:'高麗君', pwd:'204857', role:'user'},
   {nm:'蔡雅安', pwd:'371650', role:'user'},
   {nm:'潘淑凰', pwd:'563742', role:'user'},
@@ -11635,11 +11677,11 @@ const USERS=[
   {nm:'徐暐達', pwd:'391208', role:'user'},
   {nm:'臧妘惠', pwd:'150673', role:'user'},
   {nm:'張淑貞', pwd:'847291', role:'user'},
-  {nm:'蔡尚文', pwd:'326574', role:'admin'},
   {nm:'袁子晏', pwd:'709438', role:'user'},
   {nm:'侯妙薇', pwd:'573816', role:'user'},
   {nm:'侯雅琳', pwd:'961250', role:'user'},
   {nm:'黃靚',   pwd:'438097', role:'user'},
+  {nm:'林智仁', pwd:'4281',   role:'designer'},
 ];
 const MEMBERS=USERS.map(u=>u.nm);
 
@@ -12478,11 +12520,16 @@ function confirmEditQty(id){
   const oldQty=item.qty;
   item.qty=newQty;
   const operator=_curUser?_curUser.nm:'未知';
-  logs.unshift({type:'調整',nm:item.nm,qty:newQty-oldQty,
+  const editLog={type:'調整',nm:item.nm,qty:newQty-oldQty,
     user:operator,operator:operator,
     pur:(note||'數量調整')+`（${oldQty}→${newQty}）`,
-    due:'',loc:ls(item.loc),date:tdy(),time:ntm()});
-  gasSave();
+    due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+  logs.unshift(editLog);
+  showSaving();
+  Promise.all([
+    gasAppendLog(editLog),
+    gasUpdateInv(item.id,item.qty)
+  ]).then(()=>showSaved()).catch(()=>showSaveErr());
   document.getElementById('editQtyOverlay').remove();
   pgInv();
 }
@@ -12623,8 +12670,16 @@ function doRetById(bid){
   const b=brws.find(x=>x.id===bid);if(!b||b.ret)return;
   b.ret=true;b.retD=tdy();
   const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
-  logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()});
-  gasSave();pgInv();
+  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
+  logs.push(retLog);
+  // 增量寫入
+  showSaving();
+  Promise.all([
+    gasAppendLog(retLog),
+    it?gasUpdateInv(it.id,it.qty):Promise.resolve(),
+    gasUpdateBrws(b.id,{ret:true,retD:b.retD})
+  ]).then(()=>showSaved()).catch(()=>showSaveErr());
+  pgInv();
   // Flash toast
   const t=document.createElement('div');
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2a6b5e;color:#fff;padding:10px 24px;font-size:12px;letter-spacing:0.08em;z-index:4000;border-radius:2px;font-family:\'Noto Serif TC\',serif;white-space:nowrap';
