@@ -11167,10 +11167,15 @@ async function gasLoad(){
           const sl=typeof i.loc==='object'?i.loc:{};
           return ll&&(ll.r!==sl.r||ll.k!==sl.k||ll.lv!==sl.lv);
         });
-        inv=sheetInv.map(i=>({
-          ...i,
-          loc: localLocMap[i.id] || i.loc
-        }));
+        inv=sheetInv.map(i=>{
+          // 類別以本機為準（避免 Sheets 舊類別覆蓋已更新的分類）
+          const localItem=inv.find(x=>x.id===Number(i.id));
+          return {
+            ...i,
+            cat: localItem ? localItem.cat : i.cat,
+            loc: localLocMap[i.id] || i.loc
+          };
+        });
         // 若本機 loc 與 Sheets 不同，延遲推送（避免卡住 gasLoad 主流程）
         if(locChanged){ setTimeout(()=>gasSave(), 2000); }
       } else {
@@ -13205,6 +13210,14 @@ function checkURLItem(){
   }
   return false;
 }
+
+// ── 全域旗標 ──────────────────────────────────────────────────────────────
+let _gasLoaded=false;
+let _invLock=false;
+let _invLockInfo={by:'',at:''};
+
+let _syncInterval=null;
+let _syncMinutes=3;
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
 // 檢查 session
