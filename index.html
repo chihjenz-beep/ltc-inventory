@@ -11376,7 +11376,7 @@ function startAutoLogout(){
     if(_curUser){
       logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
         pur:'自動登出（逾時30分鐘）',due:'',loc:'',date:tdy(),time:ntm()});
-      if(_gasLoaded) gasSave();
+      if(_gasLoaded) gasAppendLog(logs[0]);
     }
     _curUser=null;
     _gasLoaded=false;
@@ -11448,23 +11448,30 @@ function doLogin(){
   _curUser={nm:user.nm,role:user.role};
   sessionStorage.setItem('pahome_user',JSON.stringify(_curUser));
   document.getElementById('loginOverlay').remove();
-  // 記錄登入
-  logs.unshift({type:'登入',nm:user.nm,qty:0,user:user.nm,
-    pur:'角色：'+roleLabel(user.role),due:'',loc:'',date:tdy(),time:ntm()});
+  // 記錄登入（暫存，待 gasLoad 完成後再合併寫入）
+  const loginEntry={type:'登入',nm:user.nm,qty:0,user:user.nm,
+    pur:'角色：'+roleLabel(user.role),due:'',loc:'',date:tdy(),time:ntm()};
+  logs.unshift(loginEntry);
   updateUserBadge();
   // 30 分鐘自動登出計時器（設計師不受限）
   if(!isDesigner()) startAutoLogout();
-  // 載入資料
-  gasLoad().catch(e=>console.warn('gasLoad失敗',e));
+  // 載入資料：完成後補寫登入紀錄（gasLoad 會覆蓋 logs，需重新插入）
+  gasLoad().then(()=>{
+    // 若 Sheets 尚未有此筆（同一人同日同分鐘內），補插到最前面並推送
+    const dup=logs.find(l=>l.type==='登入'&&l.user===loginEntry.user&&l.date===loginEntry.date&&l.time===loginEntry.time);
+    if(!dup){ logs.unshift(loginEntry); }
+    gasAppendLog(loginEntry);
+  }).catch(e=>console.warn('gasLoad失敗',e));
 }
 
 function doLogout(){
   clearAutoLogout();
   if(!confirm('確定要登出嗎？'))return;
   if(_curUser){
-    logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
-      pur:'',due:'',loc:'',date:tdy(),time:ntm()});
-    if(_gasLoaded) gasSave();
+    const logoutEntry={type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
+      pur:'',due:'',loc:'',date:tdy(),time:ntm()};
+    logs.unshift(logoutEntry);
+    if(_gasLoaded) gasAppendLog(logoutEntry);
   }
   _curUser=null;
   sessionStorage.removeItem('pahome_user');
@@ -13111,7 +13118,7 @@ function pgRep(){
         <td><span class="b ${cls}">${l.type}</span></td>
         <td style="font-family:'Noto Serif TC',serif">${l.nm}</td>
         <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
-        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${l.pur||'—'}</td>
+        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${(l.type==='登入'||l.type==='登出')?'—':(l.pur||'—')}</td>
         <td>${dueOnly||'—'}</td>
         <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
     });
