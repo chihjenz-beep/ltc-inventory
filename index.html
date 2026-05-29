@@ -10927,6 +10927,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
+      <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -10955,6 +10956,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
+      <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -11083,16 +11085,16 @@ function fixSheetTime(dateVal, timeVal){
       return h+':'+mn;
     }
   }
-  // Case 2: timeVal 是小數（0.xxx = 當天時間比例）
-  if(typeof timeVal === 'number'){
+  // Case 2: timeVal 是非零字串（HH:MM 格式），直接用
+  if(timeVal && typeof timeVal === 'string') return timeVal.slice(0,5);
+  // Case 3: timeVal 是帶小數的數字（Sheets 時間小數，0.5=12:00），排除整數
+  if(typeof timeVal === 'number' && timeVal % 1 !== 0){
     const frac = timeVal % 1;
     const totalSec = Math.round(frac * 86400);
     const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
     const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
     return h+':'+mn;
   }
-  // Case 3: timeVal 是字串，直接用
-  if(timeVal) return String(timeVal);
   // Case 4: dateVal 本身帶小數（datetime serial）
   if(typeof dateVal === 'number' && dateVal % 1 !== 0){
     const frac = dateVal % 1;
@@ -11199,7 +11201,7 @@ async function gasLoad(){
         loc:  row.loc  || '',
         qty:  Number(row.qty || 0),
         date: fixSheetDate(row.date || row.ts),
-        time: row.time || ''
+        time: fixSheetTime(row.date || row.ts, row.time)
       }));
     }
 
@@ -13125,6 +13127,86 @@ function pgRep(){
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
+// ── 登入狀況（設計師專用）────────────────────────────────────────────────────
+function pgLoginLog(){
+  if(!isDesigner()){ go('inv',null); return; }
+
+  const curUser = window._llUser  || '';
+  const curFrom = window._llFrom  || '';
+  const curTo   = window._llTo    || '';
+
+  // 從 logs 篩出登入 / 登出紀錄
+  let rows = logs.filter(l=>l.type==='登入'||l.type==='登出');
+  if(curUser) rows = rows.filter(l=>l.user===curUser);
+  if(curFrom) rows = rows.filter(l=>l.date&&l.date>=curFrom);
+  if(curTo)   rows = rows.filter(l=>l.date&&l.date<=curTo);
+  // 按日期時間新→舊
+  rows.sort((a,b)=>{
+    const da=(a.date||'')+(a.time||''), db=(b.date||'')+(b.time||'');
+    return da<db?1:da>db?-1:0;
+  });
+
+  // 所有曾登入過的人員名單（供篩選）
+  const members=[...new Set(logs.filter(l=>l.type==='登入'||l.type==='登出').map(l=>l.user).filter(Boolean))].sort();
+
+  let h=`
+  <div style="padding:14px 16px 6px">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
+      <div>
+        <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px;letter-spacing:0.06em">人 員</div>
+        <select onchange="window._llUser=this.value;pgLoginLog()" style="padding:5px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410;min-width:110px">
+          <option value="">（全部人員）</option>
+          ${members.map(m=>`<option value="${m}"${m===curUser?' selected':''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px;letter-spacing:0.06em">起 始 日 期</div>
+        <input type="date" value="${curFrom}" onchange="window._llFrom=this.value;pgLoginLog()" style="padding:5px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+      </div>
+      <div>
+        <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px;letter-spacing:0.06em">結 束 日 期</div>
+        <input type="date" value="${curTo}" onchange="window._llTo=this.value;pgLoginLog()" style="padding:5px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+      </div>
+      <button onclick="window._llUser='';window._llFrom='';window._llTo='';pgLoginLog()" style="padding:5px 14px;border:1px solid #c8b89a;background:transparent;font-size:11px;color:#6b5a4e;cursor:pointer;letter-spacing:0.06em">清 除</button>
+    </div>
+    <div style="font-size:10px;color:#9a8a7a;margin-top:8px;letter-spacing:0.04em">共 <b style="color:#1c1410">${rows.length}</b> 筆登入／登出紀錄</div>
+  </div>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr>
+    <th style="width:13%">日 期</th>
+    <th style="width:8%">時 間</th>
+    <th style="width:8%">類 型</th>
+    <th style="width:18%">人 員</th>
+    <th style="width:18%">角 色</th>
+    <th style="width:35%">備 註</th>
+  </tr></thead><tbody>`;
+
+  if(!rows.length){
+    h+=`<tr><td colspan="6" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 紀 錄</td></tr>`;
+  } else {
+    const typeMap={'登入':'b-in','登出':'b-w'};
+    rows.forEach(l=>{
+      const cls=typeMap[l.type]||'b-u';
+      // pur 欄存角色資訊（登入時）或備註（自動登出）
+      const purTxt=l.pur||'—';
+      // 嘗試從 pur 取角色，格式為「角色：XXX」
+      const roleMatch=purTxt.match(/角色[：:](.+)/);
+      const roleTxt=roleMatch?roleMatch[1]:'—';
+      const noteTxt=roleMatch?'—':purTxt;
+      h+=`<tr>
+        <td style="color:#6b5a4e">${(l.date||'').slice(0,10)||'—'}</td>
+        <td style="font-variant-numeric:tabular-nums">${l.time||'—'}</td>
+        <td><span class="b ${cls}">${l.type}</span></td>
+        <td style="font-family:'Noto Serif TC',serif">${l.user||'—'}</td>
+        <td>${l.type==='登入'?roleTxt:'—'}</td>
+        <td style="font-size:11px;color:#6b5a4e">${l.type==='登出'?noteTxt:'—'}</td>
+      </tr>`;
+    });
+  }
+
+  h+='</tbody></table></div>';
+  document.getElementById('pg').innerHTML=h;
+}
+
 function repFilter(){
   window._repNm  =document.getElementById('repNm')?.value||'';
   window._repFrom=document.getElementById('repFrom')?.value||'';
@@ -13136,8 +13218,8 @@ function repClear(){
   pgRep();
 }
 
-const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep};
-const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄'};
+const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep,loginlog:pgLoginLog};
+const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄',loginlog:'登 入 狀 況'};
 // Mobile nav mapping: pg → bottom-nav button index (only 5 tabs; loc maps to borrow tab)
 const MOB_IDX={inv:0,scan:1,borrow:2,qr:3,loc:2,rep:4};
 const DSK_IDX={inv:0,scan:1,borrow:2,qr:3,loc:4,rep:5};
