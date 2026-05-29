@@ -12413,6 +12413,11 @@ function confirmAddItem(){
     CAT_META[cat]={cls,label:cat};
   }
 
+  // 寫入異動紀錄
+  const addLog={type:'新增',nm,qty,user:_curUser?_curUser.nm:'未知',operator:_curUser?_curUser.nm:'未知',pur:cat,due:'',loc:ls({r:r||'',k:k||'',lv:lv||''}),date:tdy(),time:ntm()};
+  logs.push(addLog);
+  if(_gasLoaded) gasAppendLog(addLog);
+
   gasSave();
   document.getElementById('addItemOverlay').remove();
   go('inv',null);
@@ -13093,7 +13098,7 @@ function pgRep(){
     h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
   } else {
     rows.forEach(l=>{
-      const typeMap={'入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
+      const typeMap={'新增':'b-in','入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
       const cls=typeMap[l.type]||'b-u';
       // 只取日期部分（前10碼），去除時間
       const dateOnly=(l.date||'').slice(0,10);
