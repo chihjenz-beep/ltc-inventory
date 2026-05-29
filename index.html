@@ -11076,32 +11076,33 @@ function fixSheetDate(val){
   return String(val);
 }
 function fixSheetTime(dateVal, timeVal){
-  // Case 1: dateVal 是 ISO datetime 字串 → 從中提取本地時間
+  // Case 1: timeVal 是 ISO datetime 字串（Sheets 時間欄回傳格式）→ 取本地時間
+  if(typeof timeVal === 'string' && (timeVal.includes('T')||timeVal.includes('Z'))){
+    const d = new Date(timeVal);
+    if(!isNaN(d)){
+      return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    }
+  }
+  // Case 2: timeVal 是一般時間字串（HH:MM）
+  if(timeVal && typeof timeVal === 'string') return timeVal.slice(0,5);
+  // Case 3: dateVal 是 ISO datetime 字串 → 取本地時間（date+time 合一欄）
   if(typeof dateVal === 'string' && dateVal.includes('T')){
     const d = new Date(dateVal);
     if(!isNaN(d)){
-      const h = String(d.getHours()).padStart(2,'0');
-      const mn = String(d.getMinutes()).padStart(2,'0');
-      return h+':'+mn;
+      return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
     }
   }
-  // Case 2: timeVal 是非零字串（HH:MM 格式），直接用
-  if(timeVal && typeof timeVal === 'string') return timeVal.slice(0,5);
-  // Case 3: timeVal 是帶小數的數字（Sheets 時間小數，0.5=12:00），排除整數
+  // Case 4: timeVal 是帶小數的數字（Sheets 時間小數，0.5=12:00），排除整數
   if(typeof timeVal === 'number' && timeVal % 1 !== 0){
     const frac = timeVal % 1;
     const totalSec = Math.round(frac * 86400);
-    const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
-    const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
-    return h+':'+mn;
+    return String(Math.floor(totalSec/3600)).padStart(2,'0')+':'+String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
   }
-  // Case 4: dateVal 本身帶小數（datetime serial）
+  // Case 5: dateVal 本身帶小數（datetime serial）
   if(typeof dateVal === 'number' && dateVal % 1 !== 0){
     const frac = dateVal % 1;
     const totalSec = Math.round(frac * 86400);
-    const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
-    const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
-    return h+':'+mn;
+    return String(Math.floor(totalSec/3600)).padStart(2,'0')+':'+String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
   }
   return '';
 }
