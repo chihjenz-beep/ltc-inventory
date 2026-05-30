@@ -10972,8 +10972,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   <div class="main">
     <div class="topbar">
       <button class="mob-topbar-menu" onclick="openDrawer()" aria-label="選單">☰</button>
-      <div class="tb-t"><span class="tb-dot">◈</span><span id="pgt">庫存總覽</span></div>
-      <div class="user-badge" style="font-size:11px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.06em;white-space:nowrap;margin-left:10px;flex-shrink:0"></div>
+      <div class="tb-t"><span class="tb-dot">◈</span><span id="pgt">庫存總覽</span><span class="user-badge" style="font-size:10px;color:#9a8a7a;font-family:'Noto Serif TC',serif;letter-spacing:0.04em;margin-left:12px;font-weight:400"></span></div>
       <div class="srch-wrap" id="srchWrap" style="display:none">
         <span class="srch-icon">🔍</span>
         <input type="text" id="srch" placeholder="搜尋品項或類別…" oninput="pgInv()">
@@ -11195,7 +11194,7 @@ async function gasLoad(){
     if(d.data.logs && d.data.logs.length>0){
       logs=d.data.logs.map(row=>({
         ...row,
-        type: row.type || row.op   || '',
+        type: row.type || row.op || row.type_  || '',
         operator: row.operator || '',
         user: row.user || row.mem  || '',
         pur:  row.pur  || row.note || '',
@@ -13109,17 +13108,19 @@ function pgRep(){
     h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
   } else {
     rows.forEach(l=>{
-      const typeMap={'新增':'b-in','入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
-      const cls=typeMap[l.type]||'b-u';
+      const typeMap={'新增':'b-in','入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d','登入':'b-in','登出':'b-w'};
+      const tp=l.type||'';
+      const cls=typeMap[tp]||'b-u';
       // 只取日期部分（前10碼），去除時間
       const dateOnly=(l.date||'').slice(0,10);
       const dueOnly =(l.due ||'').slice(0,10);
+      if(!tp) return; // type 空白的筆略過不顯示
       h+=`<tr>
         <td style="color:#6b5a4e">${dateOnly||'—'}</td>
-        <td><span class="b ${cls}">${l.type}</span></td>
-        <td style="font-family:'Noto Serif TC',serif">${l.nm}</td>
-        <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
-        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${(l.type==='登入'||l.type==='登出')?'—':(l.pur||'—')}</td>
+        <td><span class="b ${cls}">${tp}</span></td>
+        <td style="font-family:'Noto Serif TC',serif">${l.nm||'—'}</td>
+        <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty||0}</td>
+        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${(tp==='登入'||tp==='登出')?'—':(l.pur||'—')}</td>
         <td>${dueOnly||'—'}</td>
         <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
     });
@@ -13253,6 +13254,7 @@ function go(pg,el){
 
   document.getElementById('pgt').textContent=ttmap[pg]||pg;
   document.getElementById('srchWrap').style.display=pg==='inv'?'flex':'none';
+  updateUserBadge();
   // Scroll to top on page change (mobile)
   const body=document.getElementById('pg');
   if(body)body.scrollTop=0;
