@@ -10928,6 +10928,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
+      <div class="nav sys-section" onclick="forceSyncInv();closeDrawer()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -10957,6 +10958,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
+      <div class="nav sys-section" onclick="forceSyncInv()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -11168,14 +11170,14 @@ async function gasLoad(){
         ...i,
         qty: sheetQtyMap[i.id] !== undefined ? sheetQtyMap[i.id] : i.qty
       }));
-      // 若 Sheets 品項數與本機不同，自動推送（同步新增/刪除的品項）
+      // 若 Sheets 品項數與本機不同，立即推送（不延遲，確保同步）
       if(sheetInv.length !== inv.length){
-        console.log(`Sheets品項(${sheetInv.length}) ≠ 本機(${inv.length})，自動同步至 Sheets`);
-        setTimeout(()=>gasSave(), 2000);
+        console.log(`Sheets品項(${sheetInv.length}) ≠ 本機(${inv.length})，立即同步至 Sheets`);
+        _needInvSync=true;
       }
     } else {
-      // 首次：把預設值寫入 Sheets（延遲執行避免卡主流程）
-      setTimeout(()=>gasSave(), 2000);
+      // 首次：把預設值寫入 Sheets
+      _needInvSync=true;
     }
 
     if(d.data.logs && d.data.logs.length>0){
@@ -11211,6 +11213,12 @@ async function gasLoad(){
 
     _gasLoaded=true;
     showSaved();
+    // 若品項數不一致，立即同步 inv 至 Sheets（設定 _gasLoaded=true 後才能執行）
+    if(window._needInvSync){
+      window._needInvSync=false;
+      console.log('inv 同步中...');
+      gasSave().catch(e=>console.warn('inv 同步失敗',e));
+    }
     go(window._curPage||'inv', null);
   }catch(e){
     console.error('gasLoad error',e);
@@ -11318,6 +11326,17 @@ function confirmReset(){
     document.body.appendChild(overlay);
   }, '重設系統', '重設後所有紀錄將清除，此操作無法復原');
 }
+async function forceSyncInv(){
+  if(!_gasLoaded){ alert('⚠ 尚未連線 Google Sheets，請稍後再試。'); return; }
+  if(!confirm(`確定要將本機 ${inv.length} 筆庫存品項強制同步至 Google Sheets？\n此操作會覆蓋 Sheets 的 inv 工作表。`)) return;
+  try{
+    await gasSave();
+    alert(`✓ 已同步 ${inv.length} 筆品項至 Google Sheets`);
+  }catch(e){
+    alert('⚠ 同步失敗，請再試一次。');
+  }
+}
+
 async function doReset(){
   if(!_gasLoaded){
     alert('⚠ 尚未連線 Google Sheets，無法執行重設。\n請確認網路連線後再試。');
@@ -13059,7 +13078,9 @@ function oLE(id){
 function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');gasSave();document.getElementById('lF').innerHTML='';pgLoc();}
 
 function pgRep(){
-  const nms=['（全部品項）',...new Set(logs.map(l=>l.nm).filter(Boolean))];
+  // 排除登入／登出，只顯示物品操作紀錄
+  const opLogs=logs.filter(l=>l.type!=='登入'&&l.type!=='登出');
+  const nms=['（全部品項）',...new Set(opLogs.map(l=>l.nm).filter(Boolean))];
   nms.sort((a,b)=>a==='（全部品項）'?-1:a.localeCompare(b,'zh-TW'));
   const curNm  =window._repNm  ||'';
   const curFrom=window._repFrom||'';
@@ -13083,7 +13104,7 @@ function pgRep(){
     <button onclick="repClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
-  let rows=[...logs].reverse();
+  let rows=[...opLogs].reverse();
   if(curNm)   rows=rows.filter(l=>l.nm===curNm);
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
   if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
@@ -13109,10 +13130,10 @@ function pgRep(){
   </tr></thead><tbody>`;
 
   if(!rows.length){
-    h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
+    h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${opLogs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
   } else {
     rows.forEach(l=>{
-      const typeMap={'新增':'b-in','入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d','登入':'b-in','登出':'b-w'};
+      const typeMap={'新增':'b-in','入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
       const tp=l.type||'';
       const cls=typeMap[tp]||'b-u';
       // 只取日期部分（前10碼），去除時間
