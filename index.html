@@ -11308,6 +11308,7 @@ async function gasSave(){
   }catch(e2){
     console.error('gasSave all methods failed',e2);
     showSaveErr();
+    throw e2;
   }
 }
 
@@ -11331,13 +11332,22 @@ function confirmReset(){
   }, '重設系統', '重設後所有紀錄將清除，此操作無法復原');
 }
 async function doReset(){
-  // 還原預設庫存數量
+  if(!_gasLoaded){
+    alert('⚠ 尚未連線 Google Sheets，無法執行重設。\n請確認網路連線後再試。');
+    return;
+  }
+  // 清空本機資料
   inv.forEach(i=>{ i.qty=30; });
   logs=[];
   brws=[];
   bseq=1;
-  await gasSave();
-  location.reload();
+  try{
+    await gasSave();
+    location.reload();
+  }catch(e){
+    alert('⚠ 重設失敗：無法寫入 Google Sheets，請再試一次。');
+    console.error('doReset gasSave failed',e);
+  }
 }
 
 // ── Password guard ─────────────────────────────────────────────────────────
