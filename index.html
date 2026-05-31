@@ -11268,7 +11268,32 @@ async function gasRefresh(){
       bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
     }
 
-    // logs：不覆蓋（避免本機剛寫入的紀錄被舊的 Sheets 資料洗掉）
+    // logs：以 Sheets 為主體，本機尚未推送的新筆補入（避免洗掉剛操作的紀錄）
+    if(d.data.logs){
+      const sheetLogs=d.data.logs.map(row=>({
+        ...row,
+        type: row.type||row.op||'',
+        operator: row.operator||'',
+        user: row.user||row.mem||'',
+        pur:  row.pur||row.note||'',
+        due:  row.due||'',
+        loc:  row.loc||'',
+        qty:  Number(row.qty||0),
+        date: fixSheetDate(row.date||row.ts),
+        time: fixSheetTime(row.date||row.ts, row.time)
+      }));
+      // 用 date+time+type+user 做識別鍵，找本機有但 Sheets 還沒有的新筆
+      const sheetKeys=new Set(sheetLogs.map(l=>`${l.date}|${l.time}|${l.type}|${l.user}`));
+      const localOnly=logs.filter(l=>{
+        const k=`${l.date}|${l.time}|${l.type}|${l.user}`;
+        return !sheetKeys.has(k);
+      });
+      // 合併：Sheets 資料 + 本機獨有筆，按時間新→舊排序
+      logs=[...sheetLogs, ...localOnly].sort((a,b)=>{
+        const da=(a.date||'')+(a.time||''), db=(b.date||'')+(b.time||'');
+        return da<db?1:da>db?-1:0;
+      });
+    }
 
     // 重繪當前頁面（不跳頁）
     if(window._curPage) (pgmap[window._curPage]||pgInv)();
