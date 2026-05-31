@@ -11416,6 +11416,7 @@ function startAutoLogout(){
     }
     _curUser=null;
     _gasLoaded=false;
+    stopAutoSync();
     sessionStorage.removeItem('pahome_user');
     document.getElementById('invLockBanner')?.remove();
     showLoginScreen();
@@ -11491,6 +11492,7 @@ function doLogin(){
   updateUserBadge();
   // 30 分鐘自動登出計時器（設計師不受限）
   if(!isDesigner()) startAutoLogout();
+  startAutoSync();  // 每5分鐘自動同步
   // 載入資料：完成後補寫登入紀錄（gasLoad 會覆蓋 logs，需重新插入）
   gasLoad().then(()=>{
     // 若 Sheets 尚未有此筆（同一人同日同分鐘內），補插到最前面並推送
@@ -11502,6 +11504,7 @@ function doLogin(){
 
 function doLogout(){
   clearAutoLogout();
+  stopAutoSync();
   if(!confirm('確定要登出嗎？'))return;
   if(_curUser){
     const logoutEntry={type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
@@ -13360,7 +13363,20 @@ let _invLock=false;
 let _invLockInfo={by:'',at:''};
 
 let _syncInterval=null;
-let _syncMinutes=3;
+const AUTO_SYNC_MIN=5;  // 每5分鐘自動從 Sheets 重新讀取
+
+function startAutoSync(){
+  stopAutoSync();
+  _syncInterval=setInterval(()=>{
+    if(!_curUser||!_gasLoaded) return;
+    console.log('[autoSync] 定時重新載入 Sheets 資料');
+    gasLoad().catch(e=>console.warn('[autoSync] gasLoad失敗',e));
+  }, AUTO_SYNC_MIN * 60 * 1000);
+}
+
+function stopAutoSync(){
+  if(_syncInterval){ clearInterval(_syncInterval); _syncInterval=null; }
+}
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
 // 檢查 session
@@ -13373,6 +13389,7 @@ if(!_curUser){
 } else {
   updateUserBadge();
   if(!isDesigner()) startAutoLogout();
+  startAutoSync();  // 每5分鐘自動同步
   if(!checkURLItem()) go('inv',null);
   gasLoad().catch(e=>console.warn('gasLoad失敗',e));
 }
