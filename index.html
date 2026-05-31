@@ -12223,8 +12223,14 @@ function doRet(id){
   const b=brws.find(x=>x.id===id);if(!b)return;
   b.ret=true;b.retD=tdy();
   const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
-  logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
-  gasSave();
+  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()};
+  logs.push(retLog);
+  showSaving();
+  Promise.all([
+    gasAppendLog(retLog),
+    it?gasUpdateInv(it.id,it.qty):Promise.resolve(),
+    gasUpdateBrws(b.id,{ret:true,retD:b.retD})
+  ]).then(()=>showSaved()).catch(()=>showSaveErr());
   pgBorrow();
 }
 
@@ -12562,8 +12568,7 @@ function confirmAddItem(){
   const addLog={type:'新增',nm,qty,user:_curUser?_curUser.nm:'未知',operator:_curUser?_curUser.nm:'未知',pur:cat,due:'',loc:ls({r:r||'',k:k||'',lv:lv||''}),date:tdy(),time:ntm()};
   logs.push(addLog);
   if(_gasLoaded) gasAppendLog(addLog);
-
-  gasSave();
+  if(_gasLoaded) gasSaveInvOnly(); // 新品項需同步 inv 清單
   document.getElementById('addItemOverlay').remove();
   go('inv',null);
   setTimeout(()=>{
@@ -12684,9 +12689,13 @@ function confirmDeleteItem(id){
   if(!item)return;
   // 從 inv 移除
   inv=inv.filter(i=>i.id!==id);
-  // 記錄異動日誌
-  logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'刪除',qty:0,mem:'管理員',note:'品項已刪除'});
-  gasSave();
+  const delLog={type:'刪除',nm:item.nm,qty:0,user:_curUser?_curUser.nm:'未知',operator:_curUser?_curUser.nm:'未知',pur:'品項已刪除',due:'',loc:'',date:tdy(),time:ntm()};
+  logs.unshift(delLog);
+  showSaving();
+  Promise.all([
+    gasAppendLog(delLog),
+    gasSaveInvOnly()
+  ]).then(()=>showSaved()).catch(()=>showSaveErr());
   pgInv();
 }
 
@@ -12829,20 +12838,71 @@ function selO(op){
     sd.op=op;ss=2;step();
   }
 }
+// 即時查詢 Sheets 上某品項的庫存（借用前防超借用）
+async function gasGetInvQty(id){
+  const d=await jsonpGetWithRetry(GAS_URL+`?action=getInvQty&id=${id}`);
+  if(!d.ok) throw new Error(d.error||'getInvQty failed');
+  return Number(d.qty);
+}
+
 function cfm(){
   if(!guardOp('出入庫')) return;
-  const operator=_curUser?_curUser.nm:'未知';  // 登入者（實際操作人）
-  const u=(document.getElementById('sU').value||'').trim(),q=parseInt(document.getElementById('sQ').value)||0,pur=document.getElementById('sP').value,due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'',er=document.getElementById('er');
+  const operator=_curUser?_curUser.nm:'未知';
+  const u=(document.getElementById('sU').value||'').trim();
+  const q=parseInt(document.getElementById('sQ').value)||0;
+  const pur=document.getElementById('sP').value;
+  const due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'';
+  const er=document.getElementById('er');
   if(!u){er.textContent='請填寫人員姓名';return}
   if(q<=0){er.textContent='數量須大於 0';return}
   const it=sd.item;
+  // 本機初步檢查
   if(sd.op!=='入庫'&&q>it.qty){er.textContent=`庫存不足，目前僅剩 ${it.qty} ${it.u}`;return}
-  if(sd.op==='入庫')it.qty+=q;else it.qty-=q;
-  sd.qty=q;sd.user=u;sd.pur=pur;sd.due=due;
-  if(sd.op==='借用')brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
-  logs.push({type:sd.op,nm:it.nm,qty:q,user:u,operator,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()});
-  gasSave();
-  ss=3;step();
+
+  // 借用/領用：先向 Sheets 確認即時庫存，防止多人同時借用超額
+  if(sd.op!=='入庫' && _gasLoaded){
+    er.textContent='';
+    const btn=document.querySelector('#pg button.btn-primary');
+    if(btn){btn.disabled=true;btn.textContent='確認中...';}
+    gasGetInvQty(it.id).then(realQty=>{
+      if(btn){btn.disabled=false;btn.textContent=`確 認 ${sd.op}`;}
+      // 以 Sheets 即時 qty 為準
+      if(q>realQty){
+        // 同步修正本機 qty
+        it.qty=realQty;
+        er.textContent=realQty>0
+          ? `庫存已被他人借走，目前僅剩 ${realQty} ${it.u}，請修改數量`
+          : `${it.nm} 庫存已全數借出，無法借用`;
+        // 更新畫面數量顯示
+        const qEl=document.getElementById('sQ');
+        if(qEl&&realQty>0) qEl.max=realQty;
+        return;
+      }
+      // 通過：執行借用
+      _doConfirm(it, q, u, pur, due, operator);
+    }).catch(e=>{
+      if(btn){btn.disabled=false;btn.textContent=`確 認 ${sd.op}`;}
+      console.warn('getInvQty 失敗，以本機資料為準',e);
+      // GAS 查詢失敗時，以本機資料為準繼續執行
+      _doConfirm(it, q, u, pur, due, operator);
+    });
+  } else {
+    // 入庫 或 未連線時直接執行
+    _doConfirm(it, q, u, pur, due, operator);
+  }
+}
+
+function _doConfirm(it, q, u, pur, due, operator){
+  if(sd.op==='入庫') it.qty+=q; else it.qty-=q;
+  sd.qty=q; sd.user=u; sd.pur=pur; sd.due=due;
+  if(sd.op==='借用') brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
+  const opLog={type:sd.op,nm:it.nm,qty:q,user:u,operator,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()};
+  logs.push(opLog);
+  showSaving();
+  const writes=[gasAppendLog(opLog), gasUpdateInv(it.id, it.qty)];
+  if(sd.op==='借用') writes.push(gasAppendBrws(brws[brws.length-1]));
+  Promise.all(writes).then(()=>showSaved()).catch(()=>showSaveErr());
+  ss=3; step();
 }
 
 // ── QR Page ────────────────────────────────────────────────────────────────
@@ -13187,7 +13247,13 @@ function oLE(id){
     upP('e');document.getElementById('lF').scrollIntoView({behavior:'smooth'});
   }
 }
-function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');gasSave();document.getElementById('lF').innerHTML='';pgLoc();}
+function sLE(id){
+  const item=inv.find(i=>i.id===id);
+  item.loc=gLoc('e');
+  showSaving();
+  gasSaveInvOnly().then(()=>showSaved()).catch(()=>showSaveErr());
+  document.getElementById('lF').innerHTML='';pgLoc();
+}
 
 function pgRep(){
   // 排除登入／登出，只顯示物品操作紀錄
