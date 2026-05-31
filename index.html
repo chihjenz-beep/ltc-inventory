@@ -11229,6 +11229,57 @@ async function gasLoad(){
   }
 }
 
+// ── 定時輕量同步（避免競爭：只更新 qty 與 brws，不動 logs）──────────────────
+let _refreshing=false;  // 防止重疊執行
+async function gasRefresh(){
+  if(_refreshing||!_gasLoaded||!_curUser) return;
+  _refreshing=true;
+  try{
+    const d=await jsonpGetWithRetry(GAS_URL+'?action=getAll');
+    if(!d.ok) throw new Error(d.error);
+
+    // config（盤點鎖）
+    if(d.data.config){
+      const cfg=d.data.config;
+      _invLock=cfg.inventoryLock===true||cfg.inventoryLock==='true'||cfg.inventoryLock==='TRUE';
+      _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
+    }
+
+    // inv：只更新 qty，品項清單不動
+    if(d.data.inv && d.data.inv.length>0){
+      const qtyMap={};
+      d.data.inv.forEach(r=>{ qtyMap[Number(r.id)]=Number(r.qty); });
+      inv=inv.map(i=>({ ...i, qty: qtyMap[i.id]!==undefined ? qtyMap[i.id] : i.qty }));
+    }
+
+    // brws：合併——以 Sheets 為主體，本機尚未推送的新借用紀錄補入
+    if(d.data.brws){
+      const sheetBrws=d.data.brws.map(row=>({
+        ...row,
+        id:  Number(row.id),  iid: Number(row.iid),  qty: Number(row.qty),
+        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE',
+        due:  fixSheetDate(row.due),  date: fixSheetDate(row.date),
+        time: fixSheetTime(row.date, row.time),  retD: fixSheetDate(row.retD)
+      }));
+      const sheetIds=new Set(sheetBrws.map(b=>b.id));
+      // 本機有但 Sheets 還沒有的（剛操作、尚未寫入）→ 保留
+      const localOnly=brws.filter(b=>!sheetIds.has(b.id));
+      brws=[...sheetBrws, ...localOnly];
+      bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
+    }
+
+    // logs：不覆蓋（避免本機剛寫入的紀錄被舊的 Sheets 資料洗掉）
+
+    // 重繪當前頁面（不跳頁）
+    if(window._curPage) (pgmap[window._curPage]||pgInv)();
+    applyInvLockUI();
+  }catch(e){
+    console.warn('[gasRefresh] 失敗',e);
+  }finally{
+    _refreshing=false;
+  }
+}
+
 // ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
 
 // ── 增量寫入（避免多人同時操作時資料覆蓋）────────────────────────────────
@@ -13369,8 +13420,8 @@ function startAutoSync(){
   stopAutoSync();
   _syncInterval=setInterval(()=>{
     if(!_curUser||!_gasLoaded) return;
-    console.log('[autoSync] 定時重新載入 Sheets 資料');
-    gasLoad().catch(e=>console.warn('[autoSync] gasLoad失敗',e));
+    console.log('[autoSync] 定時輕量同步');
+    gasRefresh();
   }, AUTO_SYNC_MIN * 60 * 1000);
 }
 
