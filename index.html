@@ -11402,11 +11402,13 @@ function confirmReset(){
     document.body.appendChild(overlay);
   }, '重設系統', '重設後所有紀錄將清除，此操作無法復原');
 }
-// inv 專用寫回（payload 較小，不含 logs/brws，避免 JSONP URL 超長）
+// inv 專用寫回：分批 JSONP GET，避免 URL 超長問題
 async function gasSaveInvOnly(){
   if(!_gasLoaded) throw new Error('_gasLoaded=false');
+  showSaving();
   const payload=inv.map(i=>({...i, loc:JSON.stringify(i.loc)}));
-  // 優先用 POST（payload 大，JSONP GET 易超長）
+
+  // 先嘗試 POST（若 GAS 已部署新版）
   try{
     await fetch(GAS_URL,{
       method:'POST', mode:'no-cors',
@@ -11414,10 +11416,21 @@ async function gasSaveInvOnly(){
       body:JSON.stringify({action:'saveInv', data:payload})
     });
     showSaved(); return;
-  }catch(e){ console.warn('gasSaveInvOnly POST failed, trying JSONP',e); }
-  // 備援：JSONP GET（小資料量時可用）
-  const encoded=encodeURIComponent(JSON.stringify(payload));
-  await jsonpGetWithRetry(GAS_URL+'?action=saveInv&data='+encoded);
+  }catch(e){ console.warn('gasSaveInvOnly POST failed',e); }
+
+  // 備援：分批 JSONP（每批 40 筆，避免 URL 超長）
+  // 先用 saveInvChunk action 寫入，GAS 尚未支援時 fallback 到 saveAll
+  const CHUNK=40;
+  for(let i=0;i<payload.length;i+=CHUNK){
+    const chunk=payload.slice(i,i+CHUNK);
+    const encoded=encodeURIComponent(JSON.stringify({start:i,rows:chunk,total:payload.length}));
+    try{
+      await jsonpGetWithRetry(GAS_URL+'?action=saveInvChunk&data='+encoded);
+    }catch(e){
+      console.warn(`saveInvChunk batch ${i} failed`,e);
+      throw e;
+    }
+  }
   showSaved();
 }
 
