@@ -11457,11 +11457,19 @@ async function doReset(){
   brws=[];
   bseq=1;
   try{
-    await gasSave();
-    location.reload();
+    showSaving();
+    // 用 JSONP GET 清空 logs 和 brws（空陣列 payload 很小，不會超長）
+    await Promise.all([
+      jsonpGetWithRetry(GAS_URL+'?action=saveLogs&data='+encodeURIComponent(JSON.stringify([]))),
+      jsonpGetWithRetry(GAS_URL+'?action=saveBrws&data='+encodeURIComponent(JSON.stringify([]))),
+    ]);
+    // inv 分批寫（qty 已歸30）
+    await gasSaveInvOnly();
+    showSaved();
+    setTimeout(()=>location.reload(), 800);
   }catch(e){
     alert('⚠ 重設失敗：無法寫入 Google Sheets，請再試一次。');
-    console.error('doReset gasSave failed',e);
+    console.error('doReset failed',e);
   }
 }
 
