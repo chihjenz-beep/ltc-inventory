@@ -11149,8 +11149,8 @@ async function gasLoad(){
       _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
     }
 
-    // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
-    // 若本機品項數 >= Sheets 品項數，以本機為準並寫回（避免舊資料覆蓋新匯入清單）
+    // inv：本機 HTML 品項清單為主（品項/cat/loc 不被 Sheets 覆蓋）
+    // Sheets 只同步 qty（實際庫存數量可能被操作更新過）
     if(d.data.inv && d.data.inv.length>0){
       const sheetInv=d.data.inv.map(row=>({
         ...row,
@@ -11160,30 +11160,17 @@ async function gasLoad(){
         con:  row.con===true||row.con==='true'||row.con==='TRUE',
         loc:  typeof row.loc==='string'?JSON.parse(row.loc):row.loc||{}
       }));
-      if(sheetInv.length >= inv.length){
-        // Sheets 資料較新或相同，以 Sheets 為準
-        // 但 loc 以本機 HTML 為準（避免 Sheets 舊位置覆蓋已更新的位置）
-        const localLocMap={};
-        inv.forEach(i=>{ localLocMap[i.id]=i.loc; });
-        const locChanged=sheetInv.some(i=>{
-          const ll=localLocMap[i.id];
-          const sl=typeof i.loc==='object'?i.loc:{};
-          return ll&&(ll.r!==sl.r||ll.k!==sl.k||ll.lv!==sl.lv);
-        });
-        inv=sheetInv.map(i=>{
-          // 類別以本機為準（避免 Sheets 舊類別覆蓋已更新的分類）
-          const localItem=inv.find(x=>x.id===Number(i.id));
-          return {
-            ...i,
-            cat: localItem ? localItem.cat : i.cat,
-            loc: localLocMap[i.id] || i.loc
-          };
-        });
-        // 若本機 loc 與 Sheets 不同，延遲推送（避免卡住 gasLoad 主流程）
-        if(locChanged){ setTimeout(()=>gasSave(), 2000); }
-      } else {
-        // 本機品項較多（剛匯入新清單），以本機為準並推送到 Sheets
-        console.log(`本機品項(${inv.length})多於 Sheets(${sheetInv.length})，自動同步至 Sheets`);
+      // 建立 Sheets qty 查找表（id → qty）
+      const sheetQtyMap={};
+      sheetInv.forEach(i=>{ sheetQtyMap[i.id]=i.qty; });
+      // 以本機 HTML 品項為準，只用 Sheets 的 qty 覆蓋
+      inv=inv.map(i=>({
+        ...i,
+        qty: sheetQtyMap[i.id] !== undefined ? sheetQtyMap[i.id] : i.qty
+      }));
+      // 若 Sheets 品項數與本機不同，自動推送（同步新增/刪除的品項）
+      if(sheetInv.length !== inv.length){
+        console.log(`Sheets品項(${sheetInv.length}) ≠ 本機(${inv.length})，自動同步至 Sheets`);
         setTimeout(()=>gasSave(), 2000);
       }
     } else {
