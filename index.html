@@ -15,6 +15,7 @@
 <meta name="description" content="平安家園長照站活動物品庫存管理系統">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
 /* jsQR v1.4.0 - 內嵌離線版 */
@@ -10927,6 +10928,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
+      <div class="nav sys-section" onclick="exportBackup();closeDrawer()" style="color:#4a6a8a">📥 匯 出 備 份</div>
       <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section" onclick="forceSyncInv();closeDrawer()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
@@ -10957,6 +10959,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
+      <div class="nav sys-section" onclick="exportBackup()" style="color:#4a6a8a">📥 匯 出 備 份</div>
       <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section" onclick="forceSyncInv()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
@@ -11162,17 +11165,18 @@ async function gasLoad(){
         con:  row.con===true||row.con==='true'||row.con==='TRUE',
         loc:  typeof row.loc==='string'?JSON.parse(row.loc):row.loc||{}
       }));
-      // 建立 Sheets qty 查找表（id → qty）
+      // 建立 Sheets qty 查找表（id → qty），過濾掉 id 為 NaN 的髒資料
       const sheetQtyMap={};
-      sheetInv.forEach(i=>{ sheetQtyMap[i.id]=i.qty; });
+      sheetInv.filter(i=>!isNaN(i.id)&&i.id>0).forEach(i=>{ sheetQtyMap[i.id]=i.qty; });
       // 以本機 HTML 品項為準，只用 Sheets 的 qty 覆蓋
       inv=inv.map(i=>({
         ...i,
         qty: sheetQtyMap[i.id] !== undefined ? sheetQtyMap[i.id] : i.qty
       }));
     // 若品項數不一致，立即推送（不延遲，確保同步）
-      if(sheetInv.length !== inv.length){
-        console.log(`Sheets品項(${sheetInv.length}) ≠ 本機(${inv.length})，立即同步至 Sheets`);
+      const validSheetInv=sheetInv.filter(i=>!isNaN(i.id)&&i.id>0);
+      if(validSheetInv.length !== inv.length){
+        console.log(`Sheets品項(${validSheetInv.length}) ≠ 本機(${inv.length})，立即同步至 Sheets`);
         _needInvSync=true;
       }
     } else {
@@ -11248,7 +11252,7 @@ async function gasRefresh(){
     // inv：只更新 qty，品項清單不動
     if(d.data.inv && d.data.inv.length>0){
       const qtyMap={};
-      d.data.inv.forEach(r=>{ qtyMap[Number(r.id)]=Number(r.qty); });
+      d.data.inv.filter(r=>!isNaN(Number(r.id))&&Number(r.id)>0).forEach(r=>{ qtyMap[Number(r.id)]=Number(r.qty); });
       inv=inv.map(i=>({ ...i, qty: qtyMap[i.id]!==undefined ? qtyMap[i.id] : i.qty }));
     }
 
@@ -11807,7 +11811,7 @@ function cpSubmit(){
 
 const ROOMS=['庫房一','庫房二','庫房三'];
 const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
-const LEVS=['第一層','第二層','第三層'];
+const LEVS=['第一層','第二層','第三層','第四層','第五層','第六層'];
 // ── 使用者資料（role: designer／admin／supervisor／user）─────────────────
 const USERS=[
   {nm:'白雪儀', pwd:'619483', role:'supervisor'},
