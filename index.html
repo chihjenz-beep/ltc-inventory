@@ -11170,14 +11170,22 @@ async function gasLoad(){
       }));
       // 建立 Sheets qty 查找表（id → qty），過濾掉 id 為 NaN 的髒資料
       const sheetQtyMap={};
-      sheetInv.filter(i=>!isNaN(i.id)&&i.id>0).forEach(i=>{ sheetQtyMap[i.id]=i.qty; });
-      // 以本機 HTML 品項為準，只用 Sheets 的 qty 覆蓋
+      const validSheetInv=sheetInv.filter(i=>Number.isInteger(i.id)&&i.id>0);
+      validSheetInv.forEach(i=>{ sheetQtyMap[i.id]=i.qty; });
+      // 本機品項以 HTML 為準（更新 qty）
+      const localIds=new Set(inv.map(i=>i.id));
       inv=inv.map(i=>({
         ...i,
         qty: sheetQtyMap[i.id] !== undefined ? sheetQtyMap[i.id] : i.qty
-      })).filter(i=>Number.isInteger(i.id)&&i.id>0); // 清除 NaN/異常 id
-    // 若品項數不一致，立即推送（不延遲，確保同步）
-      const validSheetInv=sheetInv.filter(i=>!isNaN(i.id)&&i.id>0);
+      })).filter(i=>Number.isInteger(i.id)&&i.id>0);
+      // Sheets 有但本機沒有的品項（前端新增的），補入本機
+      const newFromSheet=validSheetInv.filter(i=>!localIds.has(i.id));
+      if(newFromSheet.length>0){
+        inv=[...inv, ...newFromSheet];
+        inv.sort((a,b)=>a.id-b.id);
+        console.log(`從 Sheets 補入 ${newFromSheet.length} 筆新品項`);
+      }
+      // 本機比 Sheets 多時才同步（有新品項尚未寫入 Sheets）
       if(inv.length > validSheetInv.length){
         console.log(`本機品項(${inv.length}) > Sheets(${validSheetInv.length})，同步至 Sheets`);
         _needInvSync=true;
@@ -11252,11 +11260,22 @@ async function gasRefresh(){
       _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
     }
 
-    // inv：只更新 qty，品項清單不動
+    // inv：更新 qty，並補入 Sheets 有但本機沒有的新品項
     if(d.data.inv && d.data.inv.length>0){
+      const validSheet=d.data.inv.filter(r=>Number.isInteger(Number(r.id))&&Number(r.id)>0);
       const qtyMap={};
-      d.data.inv.filter(r=>!isNaN(Number(r.id))&&Number(r.id)>0).forEach(r=>{ qtyMap[Number(r.id)]=Number(r.qty); });
+      validSheet.forEach(r=>{ qtyMap[Number(r.id)]=Number(r.qty); });
+      const localIds=new Set(inv.map(i=>i.id));
       inv=inv.map(i=>({ ...i, qty: qtyMap[i.id]!==undefined ? qtyMap[i.id] : i.qty }));
+      // 補入 Sheets 新增、本機沒有的品項
+      const newFromSheet=validSheet.filter(r=>!localIds.has(Number(r.id))).map(r=>({
+        ...r, id:Number(r.id), qty:Number(r.qty), min:Number(r.min),
+        con:r.con===true||r.con==='true'||r.con==='TRUE',
+        loc:typeof r.loc==='string'?JSON.parse(r.loc):r.loc||{}
+      }));
+      if(newFromSheet.length>0){
+        inv=[...inv,...newFromSheet].sort((a,b)=>a.id-b.id);
+      }
     }
 
     // brws：合併——以 Sheets 為主體，本機尚未推送的新借用紀錄補入
