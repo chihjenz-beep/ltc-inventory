@@ -11211,7 +11211,7 @@ async function gasLoad(){
     }
 
     if(d.data.brws && d.data.brws.length>0){
-      brws=d.data.brws.map(row=>({
+      const rawBrws=d.data.brws.map(row=>({
         ...row,
         id:  Number(row.id),
         iid: Number(row.iid),
@@ -11222,8 +11222,12 @@ async function gasLoad(){
         time: fixSheetTime(row.date, row.time),
         retD: fixSheetDate(row.retD)
       }));
+      // 去除重複 id（保留最後一筆，通常是最新狀態）
+      const brwsMap=new Map();
+      rawBrws.forEach(b=>{ if(Number.isFinite(b.id)&&b.id>0) brwsMap.set(b.id,b); });
+      brws=Array.from(brwsMap.values());
       // rebuild bseq
-      bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
+      bseq=brws.reduce((m,b)=>Number.isFinite(b.id)?Math.max(m,b.id):m, 0)+1;
     }
 
     _gasLoaded=true;
@@ -11291,7 +11295,7 @@ async function gasRefresh(){
       // 本機有但 Sheets 還沒有的（剛操作、尚未寫入）→ 保留
       const localOnly=brws.filter(b=>!sheetIds.has(b.id));
       brws=[...sheetBrws, ...localOnly];
-      bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
+      bseq=brws.reduce((m,b)=>Number.isFinite(b.id)?Math.max(m,b.id):m, 0)+1;
     }
 
     // logs：以 Sheets 為主體，本機尚未推送的新筆補入（避免洗掉剛操作的紀錄）
