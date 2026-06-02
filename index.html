@@ -13316,10 +13316,10 @@ function pgRep(){
   }
 
   h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:12%">時 間</th><th style="width:8%">操 作</th>
+    <th style="width:14%">日期／時間</th><th style="width:8%">操 作</th>
     <th style="width:16%">品 項</th><th style="width:6%">數 量</th>
     <th style="width:18%">人 員</th><th style="width:13%">用 途</th>
-    <th style="width:11%">歸 還 日</th><th style="width:16%">位 置</th>
+    <th style="width:11%">歸 還 日</th><th style="width:14%">位 置</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
@@ -13334,7 +13334,7 @@ function pgRep(){
       const dueOnly =(l.due ||'').slice(0,10);
       if(!tp) return; // type 空白的筆略過不顯示
       h+=`<tr>
-        <td style="color:#6b5a4e">${dateOnly||'—'}</td>
+        <td style="color:#6b5a4e;font-size:11px;line-height:1.5">${dateOnly||'—'}<br><span style="color:#9a8a7a">${l.time||'—'}</span></td>
         <td><span class="b ${cls}">${tp}</span></td>
         <td style="font-family:'Noto Serif TC',serif">${l.nm||'—'}</td>
         <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty||0}</td>
@@ -13400,16 +13400,15 @@ function pgLoginLog(){
     <div style="font-size:10px;color:#9a8a7a;margin-top:8px;letter-spacing:0.04em">共 <b style="color:#1c1410">${rows.length}</b> 筆登入／登出紀錄</div>
   </div>
   <div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:13%">日 期</th>
-    <th style="width:8%">時 間</th>
+    <th style="width:18%">日期／時間</th>
     <th style="width:8%">類 型</th>
     <th style="width:18%">人 員</th>
     <th style="width:18%">角 色</th>
-    <th style="width:35%">備 註</th>
+    <th style="width:38%">備 註</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
-    h+=`<tr><td colspan="6" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 紀 錄</td></tr>`;
+    h+=`<tr><td colspan="5" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 紀 錄</td></tr>`;
   } else {
     const typeMap={'登入':'b-in','登出':'b-w'};
     rows.forEach(l=>{
@@ -13421,8 +13420,7 @@ function pgLoginLog(){
       const roleTxt=roleMatch?roleMatch[1]:'—';
       const noteTxt=roleMatch?'—':purTxt;
       h+=`<tr>
-        <td style="color:#6b5a4e">${(l.date||'').slice(0,10)||'—'}</td>
-        <td style="font-variant-numeric:tabular-nums">${l.time||'—'}</td>
+        <td style="color:#6b5a4e;font-size:11px;line-height:1.5">${(l.date||'').slice(0,10)||'—'}<br><span style="color:#9a8a7a">${l.time||'—'}</span></td>
         <td><span class="b ${cls}">${l.type}</span></td>
         <td style="font-family:'Noto Serif TC',serif">${l.user||'—'}</td>
         <td>${l.type==='登入'?roleTxt:'—'}</td>
