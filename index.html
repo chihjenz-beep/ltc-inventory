@@ -11178,8 +11178,8 @@ async function gasLoad(){
       })).filter(i=>Number.isInteger(i.id)&&i.id>0); // 清除 NaN/異常 id
     // 若品項數不一致，立即推送（不延遲，確保同步）
       const validSheetInv=sheetInv.filter(i=>!isNaN(i.id)&&i.id>0);
-      if(validSheetInv.length !== inv.length){
-        console.log(`Sheets品項(${validSheetInv.length}) ≠ 本機(${inv.length})，立即同步至 Sheets`);
+      if(inv.length > validSheetInv.length){
+        console.log(`本機品項(${inv.length}) > Sheets(${validSheetInv.length})，同步至 Sheets`);
         _needInvSync=true;
       }
     } else {
