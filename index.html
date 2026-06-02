@@ -11409,6 +11409,15 @@ function confirmReset(){
     document.body.appendChild(overlay);
   }, '重設系統', '重設後所有紀錄將清除，此操作無法復原');
 }
+async function gasAppendInv(item){
+  const data=encodeURIComponent(JSON.stringify({...item, loc:JSON.stringify(item.loc)}));
+  try{ await jsonpGetWithRetry(GAS_URL+'?action=appendInv&data='+data); }
+  catch(e){
+    try{ await fetchGet(GAS_URL+'?action=appendInv&data='+data); }
+    catch(e2){ console.warn('appendInv 失敗',e2); }
+  }
+}
+
 // inv 專用寫回：分批 JSONP GET，避免 URL 超長問題
 async function gasSaveInvOnly(){
   if(!_gasLoaded) throw new Error('_gasLoaded=false');
@@ -12082,6 +12091,7 @@ let inv=[
   {id:189, nm:'拉力器', con:false, cat:'團體活動健康促進', u:'個', qty:0, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第1層'}},
   {id:190, nm:'浮力球', con:false, cat:'團體活動健康促進', u:'個', qty:0, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第1層'}},
   {id:191, nm:'簡易音響組', con:false, cat:'活動服裝表演器材料', u:'個', qty:1, min:1, loc:{r:'庫房一', k:'鐵架1', lv:'第2層'}},
+  {id:192, nm:'素面手搖鈴', con:false, cat:'活動服裝表演器材料', u:'個', qty:0, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
 ,
 ];
 let logs=[],brws=[],bseq=1;
@@ -12583,7 +12593,7 @@ function confirmAddItem(){
   const addLog={type:'新增',nm,qty,user:_curUser?_curUser.nm:'未知',operator:_curUser?_curUser.nm:'未知',pur:cat,due:'',loc:ls({r:r||'',k:k||'',lv:lv||''}),date:tdy(),time:ntm()};
   logs.push(addLog);
   if(_gasLoaded) gasAppendLog(addLog);
-  if(_gasLoaded) gasSaveInvOnly(); // 新品項需同步 inv 清單
+  if(_gasLoaded) gasAppendInv(newItem); // 增量追加新品項至 Sheets
   document.getElementById('addItemOverlay').remove();
   go('inv',null);
   setTimeout(()=>{
