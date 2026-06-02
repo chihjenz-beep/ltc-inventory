@@ -11891,7 +11891,7 @@ const CAT_META={
 
 const ls=l=>(!l||(!l.r&&!l.k&&!l.lv))?'—':[l.r,l.k,l.lv].filter(Boolean).join(' › ');
 const tdy=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');};
-const ntm=()=>new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
+const ntm=()=>{const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');};
 const iso=()=>new Date().toISOString().slice(0,10);
 const ovd=d=>{if(!d)return false;const[y,mo,day]=String(d).slice(0,10).split('-').map(Number);const t=new Date();return new Date(y,mo-1,day)<new Date(t.getFullYear(),t.getMonth(),t.getDate());};
 const cb=cat=>{const m=CAT_META[cat];return m?`<span class="b ${m.cls}" style="font-size:10px;padding:1px 7px">${m.label}</span>`:cat};
