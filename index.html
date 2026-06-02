@@ -11005,6 +11005,9 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <button class="mob-nav-btn" id="mnBtn4" onclick="go('rep',this)" aria-label="異動紀錄">
         <span class="ico">📝</span>紀錄
       </button>
+      <button class="mob-nav-btn" onclick="gasRefresh()" aria-label="更新頁面">
+        <span class="ico">🔄</span>更新
+      </button>
     </div>
   </nav>
 
@@ -11172,7 +11175,7 @@ async function gasLoad(){
       inv=inv.map(i=>({
         ...i,
         qty: sheetQtyMap[i.id] !== undefined ? sheetQtyMap[i.id] : i.qty
-      }));
+      })).filter(i=>Number.isInteger(i.id)&&i.id>0); // 清除 NaN/異常 id
     // 若品項數不一致，立即推送（不延遲，確保同步）
       const validSheetInv=sheetInv.filter(i=>!isNaN(i.id)&&i.id>0);
       if(validSheetInv.length !== inv.length){
@@ -11809,7 +11812,7 @@ function cpSubmit(){
   setTimeout(()=>t.remove(),2200);
 }
 
-const ROOMS=['庫房一','庫房二','庫房三'];
+const ROOMS=['庫房一','庫房二','庫房三','庫房四','庫房五','庫房六'];
 const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
 const LEVS=['第一層','第二層','第三層','第四層','第五層','第六層'];
 // ── 使用者資料（role: designer／admin／supervisor／user）─────────────────
@@ -12563,7 +12566,7 @@ function confirmAddItem(){
   if(inv.find(i=>i.nm===nm)){err.textContent='品項名稱已存在，請使用不同名稱';err.style.display='block';return;}
   err.style.display='none';
 
-  const newId=inv.reduce((m,i)=>Math.max(m,i.id),0)+1;
+  const newId=inv.reduce((m,i)=>isNaN(i.id)?m:Math.max(m,i.id),0)+1;
   const newItem={
     id:newId, nm, con, cat, u:'個', qty, min:1,
     loc:{r:r||'', k:k||'', lv:lv||''}
