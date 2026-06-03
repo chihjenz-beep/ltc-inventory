@@ -13289,39 +13289,33 @@ function oLE(id){
   const it=inv.find(i=>i.id===id);
   if(!it)return;
   // 移除已有的編輯表單
-  document.getElementById('lF').innerHTML='';
   document.querySelectorAll('.loc-edit-inline').forEach(el=>el.remove());
-  // 找到被點擊的列，在其後插入編輯表單
-  const rows=document.querySelectorAll(`tr[onclick="oLE(${id})"]`);
-  const tr=rows[0];
-  if(!tr){
-    // fallback: 插入 lF
-    document.getElementById('lF').innerHTML=`
-      <div style="background:#f7f3ec;border:1px solid #c8bfaf;border-left:3px solid #b5832a;padding:14px;margin-top:4px">
-        <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
-        ${locBld('e',it.loc)}
-        <div class="row-btn" style="margin-top:8px">
-          <button onclick="document.getElementById('lF').innerHTML=''">取 消</button>
-          <button class="btn-primary" onclick="sLE(${id})">儲 存</button>
-        </div>
-      </div>`;
-    upP('e');
-    document.getElementById('lF').scrollIntoView({behavior:'smooth'});
-    return;
-  }
-  const editRow=document.createElement('tr');
-  editRow.className='loc-edit-inline';
-  editRow.innerHTML=`<td colspan="2" style="padding:12px;background:#f7f3ec;border-left:3px solid #b5832a">
+  document.getElementById('lF').innerHTML='';
+
+  const editDiv=document.createElement('div');
+  editDiv.className='loc-edit-inline';
+  editDiv.style.cssText='background:#f7f3ec;border:1px solid #c8bfaf;border-left:3px solid #b5832a;padding:14px;margin:4px 0 8px';
+  editDiv.innerHTML=`
     <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;margin-bottom:10px;letter-spacing:0.08em">編 輯 ── ${it.nm}</div>
     ${locBld('e',it.loc)}
     <div class="row-btn" style="margin-top:8px">
       <button onclick="document.querySelectorAll('.loc-edit-inline').forEach(el=>el.remove())">取 消</button>
       <button class="btn-primary" onclick="sLE(${id})">儲 存</button>
-    </div>
-  </td>`;
-  tr.parentNode.insertBefore(editRow, tr.nextSibling);
+    </div>`;
+
+  // 找到點擊的列，插在所屬 table 之後
+  const allRows=document.querySelectorAll('tr');
+  let targetTable=null;
+  allRows.forEach(tr=>{
+    if(tr.getAttribute('onclick')==='oLE('+id+')') targetTable=tr.closest('table');
+  });
+  if(targetTable && targetTable.parentNode){
+    targetTable.parentNode.insertBefore(editDiv, targetTable.nextSibling);
+  } else {
+    document.getElementById('lF').appendChild(editDiv);
+  }
   upP('e');
-  editRow.scrollIntoView({behavior:'smooth', block:'center'});
+  editDiv.scrollIntoView({behavior:'smooth', block:'center'});
 }
 function sLE(id){
   const item=inv.find(i=>i.id===id);
