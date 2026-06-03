@@ -11171,16 +11171,17 @@ async function gasLoad(){
         con:  row.con===true||row.con==='true'||row.con==='TRUE',
         loc:  typeof row.loc==='string'?JSON.parse(row.loc):row.loc||{}
       }));
-      // 建立 Sheets qty 查找表（id → qty），過濾掉 id 為 NaN 的髒資料
-      const sheetQtyMap={};
+      // 建立 Sheets 查找表（id → qty, loc），過濾掉 id 為 NaN 的髒資料
+      const sheetMap={};
       const validSheetInv=sheetInv.filter(i=>Number.isInteger(i.id)&&i.id>0);
-      validSheetInv.forEach(i=>{ sheetQtyMap[i.id]=i.qty; });
-      // 本機品項以 HTML 為準（更新 qty）
+      validSheetInv.forEach(i=>{ sheetMap[i.id]={qty:i.qty, loc:i.loc}; });
+      // 本機品項以 HTML 為準，從 Sheets 同步 qty 和 loc
       const localIds=new Set(inv.map(i=>i.id));
-      inv=inv.map(i=>({
-        ...i,
-        qty: sheetQtyMap[i.id] !== undefined ? sheetQtyMap[i.id] : i.qty
-      })).filter(i=>Number.isInteger(i.id)&&i.id>0);
+      inv=inv.map(i=>{
+        const s=sheetMap[i.id];
+        if(!s) return i;
+        return { ...i, qty:s.qty, loc:s.loc };
+      }).filter(i=>Number.isInteger(i.id)&&i.id>0);
       // Sheets 有但本機沒有的品項（前端新增的），補入本機
       const newFromSheet=validSheetInv.filter(i=>!localIds.has(i.id));
       if(newFromSheet.length>0){
@@ -11267,13 +11268,17 @@ async function gasRefresh(){
       _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
     }
 
-    // inv：更新 qty，並補入 Sheets 有但本機沒有的新品項
+    // inv：更新 qty 和 loc，並補入 Sheets 有但本機沒有的新品項
     if(d.data.inv && d.data.inv.length>0){
       const validSheet=d.data.inv.filter(r=>Number.isInteger(Number(r.id))&&Number(r.id)>0);
-      const qtyMap={};
-      validSheet.forEach(r=>{ qtyMap[Number(r.id)]=Number(r.qty); });
+      const sheetMap={};
+      validSheet.forEach(r=>{ sheetMap[Number(r.id)]={qty:Number(r.qty), loc:typeof r.loc==='string'?JSON.parse(r.loc):r.loc||{}}; });
       const localIds=new Set(inv.map(i=>i.id));
-      inv=inv.map(i=>({ ...i, qty: qtyMap[i.id]!==undefined ? qtyMap[i.id] : i.qty }));
+      inv=inv.map(i=>{
+        const s=sheetMap[i.id];
+        if(!s) return i;
+        return { ...i, qty:s.qty, loc:s.loc };  // 同步 qty 和 loc
+      });
       // 補入 Sheets 新增、本機沒有的品項
       const newFromSheet=validSheet.filter(r=>!localIds.has(Number(r.id))).map(r=>({
         ...r, id:Number(r.id), qty:Number(r.qty), min:Number(r.min),
@@ -11441,6 +11446,15 @@ async function gasAppendInv(item){
   catch(e){
     try{ await fetchGet(GAS_URL+'?action=appendInv&data='+data); }
     catch(e2){ console.warn('appendInv 失敗',e2); }
+  }
+}
+
+async function gasUpdateInvLoc(id, loc){
+  const data=encodeURIComponent(JSON.stringify({id, loc:JSON.stringify(loc)}));
+  try{ await jsonpGetWithRetry(GAS_URL+'?action=updateInvLoc&data='+data); }
+  catch(e){
+    try{ await fetchGet(GAS_URL+'?action=updateInvLoc&data='+data); }
+    catch(e2){ console.warn('updateInvLoc 失敗',e2); }
   }
 }
 
