@@ -13297,17 +13297,6 @@ function locFilter(){
   const listEl=document.getElementById('locList');
   if(listEl) listEl.innerHTML=h;
 }
-  document.getElementById('pg').innerHTML=h;
-  // Async fill all QR canvases
-  inv.forEach(item=>{
-    const el=document.getElementById('qrc-'+item.id);
-    if(!el)return;
-    const payload=String(item.id);
-    try{
-      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
-  });
-}
 function oLE(id){
   if(!canWrite()){ alert('⚠ 編輯位置需要管理員或以上權限'); return; }
   const it=inv.find(i=>i.id===id);
