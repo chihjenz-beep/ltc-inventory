@@ -10959,6 +10959,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('loc',this)">位 置 管 理</div>
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
+      <div class="nav" onclick="gasRefresh()" style="color:#4a7a9a">🔄 更 新 資 料</div>
       <div class="nav" onclick="doLogout()" style="color:#8b2020">⏏ 登 出</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
       <div class="nav sys-section" onclick="exportBackup()" style="color:#4a6a8a">📥 匯 出 備 份</div>
@@ -13267,11 +13268,20 @@ function pgLoc(){
   let h=`
   <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
     <input id="locSrch" type="text" placeholder="🔍 搜尋品項名稱…" value="${window._locKw||''}"
-      oninput="window._locKw=this.value;pgLoc()"
+      oninput="window._locKw=this.value;locFilter()"
+      oncompositionend="window._locKw=this.value;locFilter()"
       style="flex:1;padding:7px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410;font-family:'Noto Serif TC',serif">
-    <button onclick="window._locKw='';pgLoc()" style="padding:6px 12px;border:1px solid #c8b89a;background:transparent;font-size:11px;color:#6b5a4e;cursor:pointer;white-space:nowrap">清 除</button>
-  </div>`;
-  let totalShown=0;
+    <button onclick="window._locKw='';document.getElementById('locSrch').value='';locFilter()" style="padding:6px 12px;border:1px solid #c8b89a;background:transparent;font-size:11px;color:#6b5a4e;cursor:pointer;white-space:nowrap">清 除</button>
+  </div>
+  <div id="locList"></div>
+  <div id="lF" style="margin-top:12px"></div>`;
+  document.getElementById('pg').innerHTML=h;
+  locFilter();
+}
+
+function locFilter(){
+  const kw=(window._locKw||'').trim().toLowerCase();
+  let h=''; let totalShown=0;
   Object.keys(CAT_META).forEach(cat=>{
     let ci=inv.filter(i=>i.cat===cat);
     if(kw) ci=ci.filter(i=>i.nm.toLowerCase().includes(kw));
@@ -13280,11 +13290,13 @@ function pgLoc(){
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <table class="tbl" style="margin-bottom:10px"><thead><tr><th style="width:50%">品 項</th><th style="width:50%">儲 存 位 置（點列編輯）</th></tr></thead><tbody>
-    ${ci.map(i=>`<tr onclick="oLE(${i.id})" style="cursor:pointer" title="點擊編輯位置"><td style="font-family:'Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td></tr>`).join('')}
+    ${ci.map(i=>`<tr onclick="oLE(${i.id})" style="cursor:pointer"><td style="font-family:'Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td></tr>`).join('')}
     </tbody></table></div>`;
   });
-  if(kw&&totalShown===0) h+=`<div style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 品 項</div>`;
-  h+='<div id="lF" style="margin-top:12px"></div>';
+  if(kw&&totalShown===0) h=`<div style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 品 項</div>`;
+  const listEl=document.getElementById('locList');
+  if(listEl) listEl.innerHTML=h;
+}
   document.getElementById('pg').innerHTML=h;
   // Async fill all QR canvases
   inv.forEach(item=>{
@@ -13329,14 +13341,23 @@ function oLE(id){
   upP('e');
   editDiv.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
+async function gasUpdateInvLoc(id, loc){
+  const data=encodeURIComponent(JSON.stringify({id, loc:JSON.stringify(loc)}));
+  try{ await jsonpGetWithRetry(GAS_URL+'?action=updateInvLoc&data='+data); }
+  catch(e){
+    try{ await fetchGet(GAS_URL+'?action=updateInvLoc&data='+data); }
+    catch(e2){ console.warn('updateInvLoc 失敗',e2); }
+  }
+}
+
 function sLE(id){
   const item=inv.find(i=>i.id===id);
   item.loc=gLoc('e');
   showSaving();
-  gasSaveInvOnly().then(()=>showSaved()).catch(()=>showSaveErr());
+  gasUpdateInvLoc(item.id, item.loc).then(()=>showSaved()).catch(()=>showSaveErr());
   document.querySelectorAll('.loc-edit-inline').forEach(el=>el.remove());
   document.getElementById('lF').innerHTML='';
-  pgLoc();
+  locFilter();
 }
 
 function pgRep(){
