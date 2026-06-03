@@ -13251,10 +13251,10 @@ function locBld(px,loc){
   const rv=loc&&loc.r?loc.r:'',rkv=loc&&loc.k?loc.k:'',lv=loc&&loc.lv?loc.lv:'';
   return `<div class="loc-box">
     <div style="font-size:10px;color:#b5832a;letter-spacing:0.12em;margin-bottom:8px">儲 存 位 置</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div><label class="fl">場 所</label><select id="${px}R" onchange="upP('${px}')" style="width:100%"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
-      <div><label class="fl">架 位</label><select id="${px}K" onchange="upP('${px}')" style="width:100%"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
-      <div><label class="fl">層 數</label><select id="${px}L" onchange="upP('${px}')" style="width:100%"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">場 所</label><select id="${px}R" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">架 位</label><select id="${px}K" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">層 數</label><select id="${px}L" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
     </div>
     <div style="font-size:11px;color:#1c1410;margin-top:8px;padding:5px 8px;background:#f7f3ec;border:1px solid #ddd6c8;letter-spacing:0.04em" id="${px}Pv">${ls(loc)||'尚 未 設 定'}</div>
   </div>`;
@@ -13294,7 +13294,7 @@ function oLE(id){
 
   const editDiv=document.createElement('div');
   editDiv.className='loc-edit-inline';
-  editDiv.style.cssText='background:#f7f3ec;border:1px solid #c8bfaf;border-left:3px solid #b5832a;padding:14px;margin:4px 0 8px';
+  editDiv.style.cssText='background:#f7f3ec;border:1px solid #c8bfaf;border-left:3px solid #b5832a;padding:14px;margin:4px 0 8px;box-sizing:border-box;width:100%;overflow:hidden';
   editDiv.innerHTML=`
     <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;margin-bottom:10px;letter-spacing:0.08em">編 輯 ── ${it.nm}</div>
     ${locBld('e',it.loc)}
@@ -13315,7 +13315,7 @@ function oLE(id){
     document.getElementById('lF').appendChild(editDiv);
   }
   upP('e');
-  editDiv.scrollIntoView({behavior:'smooth', block:'center'});
+  editDiv.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 function sLE(id){
   const item=inv.find(i=>i.id===id);
