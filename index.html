@@ -13251,10 +13251,10 @@ function locBld(px,loc){
   const rv=loc&&loc.r?loc.r:'',rkv=loc&&loc.k?loc.k:'',lv=loc&&loc.lv?loc.lv:'';
   return `<div class="loc-box">
     <div style="font-size:10px;color:#b5832a;letter-spacing:0.12em;margin-bottom:8px">儲 存 位 置</div>
-    <div style="display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">場 所</label><select id="${px}R" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
-      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">架 位</label><select id="${px}K" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
-      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">層 數</label><select id="${px}L" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch">
+      <div style="flex:0 0 120px"><label class="fl">場 所</label><select id="${px}R" onchange="upP('${px}')" style="width:120px"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div style="flex:0 0 100px"><label class="fl">架 位</label><select id="${px}K" onchange="upP('${px}')" style="width:100px"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div style="flex:0 0 100px"><label class="fl">層 數</label><select id="${px}L" onchange="upP('${px}')" style="width:100px"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
     </div>
     <div style="font-size:11px;color:#1c1410;margin-top:8px;padding:5px 8px;background:#f7f3ec;border:1px solid #ddd6c8;letter-spacing:0.04em" id="${px}Pv">${ls(loc)||'尚 未 設 定'}</div>
   </div>`;
@@ -13263,15 +13263,27 @@ function upP(p){const r=document.getElementById(p+'R').value,k=document.getEleme
 function gLoc(p){return{r:document.getElementById(p+'R').value,k:document.getElementById(p+'K').value,lv:document.getElementById(p+'L').value}}
 
 function pgLoc(){
-  let h=`<div style="font-size:11px;color:#6b5a4e;letter-spacing:0.06em;margin-bottom:16px">點擊「編輯位置」修改品項的儲存位置設定。</div>`;
+  const kw=(window._locKw||'').trim().toLowerCase();
+  let h=`
+  <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
+    <input id="locSrch" type="text" placeholder="🔍 搜尋品項名稱…" value="${window._locKw||''}"
+      oninput="window._locKw=this.value;pgLoc()"
+      style="flex:1;padding:7px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410;font-family:'Noto Serif TC',serif">
+    <button onclick="window._locKw='';pgLoc()" style="padding:6px 12px;border:1px solid #c8b89a;background:transparent;font-size:11px;color:#6b5a4e;cursor:pointer;white-space:nowrap">清 除</button>
+  </div>`;
+  let totalShown=0;
   Object.keys(CAT_META).forEach(cat=>{
-    const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
+    let ci=inv.filter(i=>i.cat===cat);
+    if(kw) ci=ci.filter(i=>i.nm.toLowerCase().includes(kw));
+    if(!ci.length)return;
+    totalShown+=ci.length;
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <table class="tbl" style="margin-bottom:10px"><thead><tr><th style="width:50%">品 項</th><th style="width:50%">儲 存 位 置（點列編輯）</th></tr></thead><tbody>
     ${ci.map(i=>`<tr onclick="oLE(${i.id})" style="cursor:pointer" title="點擊編輯位置"><td style="font-family:'Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td></tr>`).join('')}
     </tbody></table></div>`;
   });
+  if(kw&&totalShown===0) h+=`<div style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 品 項</div>`;
   h+='<div id="lF" style="margin-top:12px"></div>';
   document.getElementById('pg').innerHTML=h;
   // Async fill all QR canvases
