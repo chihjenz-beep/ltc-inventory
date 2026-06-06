@@ -11971,7 +11971,7 @@ let inv=[
   {id:30, nm:'香茅薄荷皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
   {id:31, nm:'絲瓜絡', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
   {id:32, nm:'台灣檜木粉', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
+  {id:33, nm:'台灣柴燒紅檜精油', con:false, cat:'精油系列', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
   {id:34, nm:'手工皂模具／擴香石模具', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
   {id:35, nm:'塑膠花瓣（手工藝器材料）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第3層'}},
   {id:36, nm:'各色毛根（紅/朱紅/綠/蔚藍/橙/米/黃/蘭花/粉紅/櫻桃/燃橙/深褐）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第4層'}},
@@ -12265,7 +12265,7 @@ function pgBorrow(){
       <td style="font-family:'Noto Serif TC',serif">${b.nm}</td>
       <td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td>
       <td><span class="${isOD?'b b-od':''}" style="${isOD?'':'color:#6b5a4e'}">${b.due||'—'}${isOD?' ⚠':''}</span></td>
-      <td><button onclick="doRet(${b.id})" style="font-size:10px;padding:4px 10px">歸 還</button></td>
+      <td><button onclick="${(()=>{const it=inv.find(i=>i.id===b.iid);return it&&it.u==='ml'?`showMlReturnDialog(${b.id})`:`doRet(${b.id})`;})()}" style="font-size:10px;padding:4px 10px">歸 還</button></td>
       ${isDesigner()?`<td style="text-align:center"><button onclick="deleteBrws(${b.id})" style="font-size:10px;padding:2px 6px;background:transparent;border:1px solid #c8a0a0;color:#8b2020;cursor:pointer;border-radius:2px" title="刪除此筆">✕</button></td>`:''}
     </tr>`;});
     h+='</tbody></table>';
@@ -12288,17 +12288,22 @@ function pgBorrow(){
   });
 }
 
-function doRet(id){
+function doRet(id, retQty){
   const b=brws.find(x=>x.id===id);if(!b)return;
-  b.ret=true;b.retD=tdy();
-  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
-  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()};
+  const actualRetQty = (retQty !== undefined) ? retQty : b.qty;
+  b.ret=true;b.retD=tdy();b.retQty=actualRetQty;
+  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=actualRetQty;
+  const isMl=it&&it.u==='ml';
+  const purNote=isMl&&actualRetQty<b.qty
+    ?`歸還 ${actualRetQty}ml（借出 ${b.qty}ml，耗用 ${Math.round((b.qty-actualRetQty)*100)/100}ml）`
+    :(b.pur||'歸還');
+  const retLog={type:'歸還',nm:b.nm,qty:actualRetQty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:purNote,due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()};
   logs.push(retLog);
   showSaving();
   Promise.all([
     gasAppendLog(retLog),
     it?gasUpdateInv(it.id,it.qty):Promise.resolve(),
-    gasUpdateBrws(b.id,{ret:true,retD:b.retD})
+    gasUpdateBrws(b.id,{ret:true,retD:b.retD,retQty:actualRetQty})
   ]).then(()=>showSaved()).catch(()=>showSaveErr());
   pgBorrow();
 }
@@ -12869,25 +12874,75 @@ function invDoOp(id, op){
   }
 }
 
-function doRetById(bid){
+function doRetById(bid, retQty){
   const b=brws.find(x=>x.id===bid);if(!b||b.ret)return;
-  b.ret=true;b.retD=tdy();
-  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
-  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
+  const actualRetQty = (retQty !== undefined) ? retQty : b.qty;
+  b.ret=true;b.retD=tdy();b.retQty=actualRetQty;
+  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=actualRetQty;
+  const isMl=it&&it.u==='ml';
+  const purNote=isMl&&actualRetQty<b.qty
+    ?`歸還 ${actualRetQty}ml（借出 ${b.qty}ml，耗用 ${Math.round((b.qty-actualRetQty)*100)/100}ml）`
+    :(b.pur||'歸還');
+  const retLog={type:'歸還',nm:b.nm,qty:actualRetQty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:purNote,due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
   logs.push(retLog);
-  // 增量寫入
   showSaving();
   Promise.all([
     gasAppendLog(retLog),
     it?gasUpdateInv(it.id,it.qty):Promise.resolve(),
-    gasUpdateBrws(b.id,{ret:true,retD:b.retD})
+    gasUpdateBrws(b.id,{ret:true,retD:b.retD,retQty:actualRetQty})
   ]).then(()=>showSaved()).catch(()=>showSaveErr());
   pgInv();
-  // Flash toast
   const t=document.createElement('div');
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2a6b5e;color:#fff;padding:10px 24px;font-size:12px;letter-spacing:0.08em;z-index:4000;border-radius:2px;font-family:\'Noto Serif TC\',serif;white-space:nowrap';
-  t.textContent='✓ 歸還完成：'+b.nm+' × '+b.qty;
+  t.textContent='✓ 歸還完成：'+b.nm+' × '+actualRetQty+(it&&it.u==='ml'?'ml':'');
   document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+}
+
+function showMlReturnDialog(bid){
+  const b=brws.find(x=>x.id===bid);if(!b)return;
+  const it=inv.find(i=>i.id===b.iid);
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.58);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+  overlay.innerHTML=`
+  <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:min(320px,92vw);box-shadow:0 12px 40px rgba(28,20,16,0.22)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #ddd6c8">
+      <span style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">精油歸還</span>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="border:none;background:none;font-size:18px;color:#6b5a4e;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-family:'Noto Serif TC',serif;font-size:12px;color:#1c1410">${b.nm}</div>
+      <div style="font-size:11px;color:#6b5a4e">借出量：<b style="color:#1c1410">${b.qty} ml</b>　借用人：${b.user}</div>
+      <div>
+        <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">實際歸還量（ml）</label>
+        <input id="mlRetQty" type="number" min="0" max="${b.qty}" step="0.1" placeholder="0 ~ ${b.qty} ml"
+          style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:16px;color:#1c1410;box-sizing:border-box">
+      </div>
+      <div id="mlRetNote" style="font-size:11px;color:#6b5a4e;min-height:16px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:7px 16px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e">取 消</button>
+        <button class="btn-primary" onclick="
+          const rq=parseFloat(document.getElementById('mlRetQty').value);
+          if(isNaN(rq)||rq<0){document.getElementById('mlRetNote').textContent='請輸入有效數量';return;}
+          if(rq>${b.qty}){document.getElementById('mlRetNote').textContent='不能超過借出量 ${b.qty}ml';return;}
+          this.closest('[style*=fixed]').remove();
+          doRet(${bid}, rq);
+        " style="padding:7px 16px;font-size:12px">確 認 歸 還</button>
+      </div>
+    </div>
+  </div>`;
+  // 即時顯示耗損量
+  overlay.querySelector('#mlRetQty').addEventListener('input',function(){
+    const rq=parseFloat(this.value);
+    const note=overlay.querySelector('#mlRetNote');
+    if(!isNaN(rq)&&rq>=0&&rq<=${b.qty}){
+      const used=Math.round((${b.qty}-rq)*100)/100;
+      note.textContent=used>0?`耗用 ${used} ml，歸還後庫存增加 ${rq} ml`:'全數歸還，無耗損';
+      note.style.color='#2a6b5e';
+    } else {
+      note.textContent='';
+    }
+  });
+  document.body.appendChild(overlay);
 }
 
 function showReturnPicker(activeBrws){
