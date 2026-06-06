@@ -12931,12 +12931,13 @@ function showMlReturnDialog(bid){
     </div>
   </div>`;
   // 即時顯示耗損量
+  const borrowedQty=b.qty;
   overlay.querySelector('#mlRetQty').addEventListener('input',function(){
     const rq=parseFloat(this.value);
     const note=overlay.querySelector('#mlRetNote');
-    if(!isNaN(rq)&&rq>=0&&rq<=${b.qty}){
-      const used=Math.round((${b.qty}-rq)*100)/100;
-      note.textContent=used>0?`耗用 ${used} ml，歸還後庫存增加 ${rq} ml`:'全數歸還，無耗損';
+    if(!isNaN(rq)&&rq>=0&&rq<=borrowedQty){
+      const used=Math.round((borrowedQty-rq)*100)/100;
+      note.textContent=used>0?('耗用 '+used+' ml，歸還後庫存增加 '+rq+' ml'):'全數歸還，無耗損';
       note.style.color='#2a6b5e';
     } else {
       note.textContent='';
