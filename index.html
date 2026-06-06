@@ -12369,7 +12369,7 @@ function step(){
       </div>
       <div class="fr">
         <div><label class="fl">${isBr?'借用':'領用'} 人員姓名</label><select id="sU"><option value="">— 請選擇 —</option>${MEMBERS.map(m=>`<option>${m}</option>`).join('')}</select></div>
-        <div><label class="fl">數量（${i.u}）</label><input type="number" id="sQ" min="1" value="1"></div>
+        <div><label class="fl">數量（${i.u}）</label><input type="number" id="sQ" ${i.u==='ml'?'min="0.1" step="0.1" placeholder="請輸入 ml 數量"':'min="1" step="1"'} value="${i.u==='ml'?'':'1'}"></div>
       </div>
       <div class="fr">
         <div><label class="fl">出庫用途</label><select id="sP">${pList.map(p=>`<option>${p}</option>`).join('')}</select></div>
@@ -12549,7 +12549,7 @@ function openAddItem(){
           </div>
           <div>
             <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">類 別 <span style="color:#8b2020">*</span></label>
-            <select id="aiCat" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+            <select id="aiCat" onchange="if(this.value==='精油系列'){document.getElementById('aiUnit').value='ml';}else if(document.getElementById('aiUnit').value==='ml'){document.getElementById('aiUnit').value='個';}" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
               <option value="">請選擇類別</option>
               ${catOpts}
             </select>
@@ -12565,9 +12565,21 @@ function openAddItem(){
               </label>
             </div>
           </div>
-          <div>
-            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量</label>
-            <input id="aiQty" type="number" value="0" min="0" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410">
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <div style="flex:1">
+              <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量</label>
+              <input id="aiQty" type="number" value="0" min="0" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410">
+            </div>
+            <div style="flex:0 0 80px">
+              <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">單 位</label>
+              <select id="aiUnit" style="width:100%;padding:8px 6px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410">
+                <option value="個">個</option>
+                <option value="ml">ml</option>
+                <option value="組">組</option>
+                <option value="件">件</option>
+                <option value="套">套</option>
+              </select>
+            </div>
           </div>
           <div>
             <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">存 放 位 置</label>
@@ -12622,7 +12634,7 @@ function confirmAddItem(){
 
   const newId=inv.reduce((m,i)=>isNaN(i.id)?m:Math.max(m,i.id),0)+1;
   const newItem={
-    id:newId, nm, con, cat, u:'個', qty, min:1,
+    id:newId, nm, con, cat, u:document.getElementById('aiUnit')?.value||'個', qty, min:1,
     loc:{r:r||'', k:k||'', lv:lv||''}
   };
   inv.push(newItem);
@@ -12918,7 +12930,7 @@ function cfm(){
   if(!guardOp('出入庫')) return;
   const operator=_curUser?_curUser.nm:'未知';
   const u=(document.getElementById('sU').value||'').trim();
-  const q=parseInt(document.getElementById('sQ').value)||0;
+  const q=it.u==='ml'?parseFloat(document.getElementById('sQ').value)||0:parseInt(document.getElementById('sQ').value)||0;
   const pur=document.getElementById('sP').value;
   const due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'';
   const er=document.getElementById('er');
