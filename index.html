@@ -12930,13 +12930,13 @@ function cfm(){
   if(!guardOp('出入庫')) return;
   const operator=_curUser?_curUser.nm:'未知';
   const u=(document.getElementById('sU').value||'').trim();
-  const q=it.u==='ml'?parseFloat(document.getElementById('sQ').value)||0:parseInt(document.getElementById('sQ').value)||0;
+  const it=sd.item;
+  const q=it&&it.u==='ml'?parseFloat(document.getElementById('sQ').value)||0:parseInt(document.getElementById('sQ').value)||0;
   const pur=document.getElementById('sP').value;
   const due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'';
   const er=document.getElementById('er');
   if(!u){er.textContent='請填寫人員姓名';return}
   if(q<=0){er.textContent='數量須大於 0';return}
-  const it=sd.item;
   // 本機初步檢查
   if(sd.op!=='入庫'&&q>it.qty){er.textContent=`庫存不足，目前僅剩 ${it.qty} ${it.u}`;return}
 
