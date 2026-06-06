@@ -12265,7 +12265,7 @@ function pgBorrow(){
       <td style="font-family:'Noto Serif TC',serif">${b.nm}</td>
       <td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td>
       <td><span class="${isOD?'b b-od':''}" style="${isOD?'':'color:#6b5a4e'}">${b.due||'—'}${isOD?' ⚠':''}</span></td>
-      <td><button onclick="${(()=>{const it=inv.find(i=>i.id===b.iid);return it&&it.u==='ml'?`showMlReturnDialog(${b.id})`:`doRet(${b.id})`;})()}" style="font-size:10px;padding:4px 10px">歸 還</button></td>
+      <td><button onclick="(function(){var it=inv.find(function(i){return i.id===b.iid});if(it&&it.u==='ml'){showMlReturnDialog(${b.id});}else{doRet(${b.id});}})()" style="font-size:10px;padding:4px 10px">歸 還</button></td>
       ${isDesigner()?`<td style="text-align:center"><button onclick="deleteBrws(${b.id})" style="font-size:10px;padding:2px 6px;background:transparent;border:1px solid #c8a0a0;color:#8b2020;cursor:pointer;border-radius:2px" title="刪除此筆">✕</button></td>`:''}
     </tr>`;});
     h+='</tbody></table>';
