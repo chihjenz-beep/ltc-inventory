@@ -12733,7 +12733,10 @@ function confirmEditQty(id){
   Promise.all([
     gasAppendLog(editLog),
     gasUpdateInv(item.id,item.qty)
-  ]).then(()=>showSaved()).catch(()=>showSaveErr());
+  ]).then(()=>showSaved()).catch(()=>{
+    showSaveErr();
+    alert('⚠ 儲存失敗，請再試一次或通知設計師。');
+  });
   document.getElementById('editQtyOverlay').remove();
   pgInv();
 }
@@ -13101,7 +13104,7 @@ function pgQR(){
       依類別顯示各品項專屬 QR Code。點擊任意卡片可預覽並列印。
     </div>
     <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap;flex-shrink:0;margin-left:12px">
-      列 印 全 部 185 張 ↗
+      列 印 全 部 ${inv.length} 張 ↗
     </button>
   </div>`;
 
@@ -13276,7 +13279,7 @@ async function printAllQR(){
     return {item,url};
   }));
 
-  if(btn){btn.textContent='列 印 全 部 185 張 ↗';btn.disabled=false}
+  if(btn){btn.textContent='列 印 全 部 '+inv.length+' 張 ↗';btn.disabled=false}
 
   const w=window.open('','_blank','width=900,height=700');
   let cardsHtml=cards.map(({item,url})=>{
@@ -13324,7 +13327,7 @@ async function printAllQR(){
   .st-v{font-size:22px}
 }
 </style></head><body>
-  <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 185 張）</h1>
+  <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 ${inv.length} 張）</h1>
   <div class="grid">${cardsHtml}</div>
   <script>window.onload=()=>{setTimeout(()=>window.print(),600)}<\/script>
   </body></html>`);
