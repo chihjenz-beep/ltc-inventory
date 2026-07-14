@@ -15,7 +15,6 @@
 <meta name="description" content="平安家園長照站活動物品庫存管理系統">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
 /* jsQR v1.4.0 - 內嵌離線版 */
@@ -10927,11 +10926,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" id="drNav4" onclick="go('loc',this);closeDrawer()">位 置 管 理</div>
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
-      <div class="nav" onclick="doLogout();closeDrawer()" style="color:#8b2020">⏏ 登 出</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
-      <div class="nav sys-section" onclick="exportBackup();closeDrawer()" style="color:#4a6a8a">📥 匯 出 備 份</div>
-      <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
-      <div class="nav sys-section" onclick="forceSyncInv();closeDrawer()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -10959,12 +10954,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="go('loc',this)">位 置 管 理</div>
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
-      <div class="nav" onclick="gasRefresh()" style="color:#4a7a9a">🔄 更 新 資 料</div>
-      <div class="nav" onclick="doLogout()" style="color:#8b2020">⏏ 登 出</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
-      <div class="nav sys-section" onclick="exportBackup()" style="color:#4a6a8a">📥 匯 出 備 份</div>
-      <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
-      <div class="nav sys-section" onclick="forceSyncInv()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -10980,7 +10970,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   <div class="main">
     <div class="topbar">
       <button class="mob-topbar-menu" onclick="openDrawer()" aria-label="選單">☰</button>
-      <div class="tb-t"><span class="tb-dot">◈</span><span id="pgt">庫存總覽</span><span class="user-badge" style="font-size:10px;color:#9a8a7a;font-family:'Noto Serif TC',serif;letter-spacing:0.04em;margin-left:12px;font-weight:400"></span></div>
+      <div class="tb-t"><span class="tb-dot">◈</span><span id="pgt">庫存總覽</span></div>
       <div class="srch-wrap" id="srchWrap" style="display:none">
         <span class="srch-icon">🔍</span>
         <input type="text" id="srch" placeholder="搜尋品項或類別…" oninput="pgInv()">
@@ -11007,9 +10997,6 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       </button>
       <button class="mob-nav-btn" id="mnBtn4" onclick="go('rep',this)" aria-label="異動紀錄">
         <span class="ico">📝</span>紀錄
-      </button>
-      <button class="mob-nav-btn" onclick="gasRefresh()" aria-label="更新頁面">
-        <span class="ico">🔄</span>更新
       </button>
     </div>
   </nav>
@@ -11087,33 +11074,32 @@ function fixSheetDate(val){
   return String(val);
 }
 function fixSheetTime(dateVal, timeVal){
-  // Case 1: timeVal 是 ISO datetime 字串（Sheets 時間欄回傳格式）→ 取本地時間
-  if(typeof timeVal === 'string' && (timeVal.includes('T')||timeVal.includes('Z'))){
-    const d = new Date(timeVal);
-    if(!isNaN(d)){
-      return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-    }
-  }
-  // Case 2: timeVal 是一般時間字串（HH:MM）
-  if(timeVal && typeof timeVal === 'string') return timeVal.slice(0,5);
-  // Case 3: dateVal 是 ISO datetime 字串 → 取本地時間（date+time 合一欄）
+  // Case 1: dateVal 是 ISO datetime 字串 → 從中提取本地時間
   if(typeof dateVal === 'string' && dateVal.includes('T')){
     const d = new Date(dateVal);
     if(!isNaN(d)){
-      return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      const h = String(d.getHours()).padStart(2,'0');
+      const mn = String(d.getMinutes()).padStart(2,'0');
+      return h+':'+mn;
     }
   }
-  // Case 4: timeVal 是帶小數的數字（Sheets 時間小數，0.5=12:00），排除整數
-  if(typeof timeVal === 'number' && timeVal % 1 !== 0){
+  // Case 2: timeVal 是小數（0.xxx = 當天時間比例）
+  if(typeof timeVal === 'number'){
     const frac = timeVal % 1;
     const totalSec = Math.round(frac * 86400);
-    return String(Math.floor(totalSec/3600)).padStart(2,'0')+':'+String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
+    const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
+    const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
+    return h+':'+mn;
   }
-  // Case 5: dateVal 本身帶小數（datetime serial）
+  // Case 3: timeVal 是字串，直接用
+  if(timeVal) return String(timeVal);
+  // Case 4: dateVal 本身帶小數（datetime serial）
   if(typeof dateVal === 'number' && dateVal % 1 !== 0){
     const frac = dateVal % 1;
     const totalSec = Math.round(frac * 86400);
-    return String(Math.floor(totalSec/3600)).padStart(2,'0')+':'+String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
+    const h = String(Math.floor(totalSec/3600)).padStart(2,'0');
+    const mn = String(Math.floor((totalSec%3600)/60)).padStart(2,'0');
+    return h+':'+mn;
   }
   return '';
 }
@@ -11160,8 +11146,8 @@ async function gasLoad(){
       _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
     }
 
-    // inv：本機 HTML 品項清單為主（品項/cat/loc 不被 Sheets 覆蓋）
-    // Sheets 只同步 qty（實際庫存數量可能被操作更新過）
+    // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
+    // 若本機品項數 >= Sheets 品項數，以本機為準並寫回（避免舊資料覆蓋新匯入清單）
     if(d.data.inv && d.data.inv.length>0){
       const sheetInv=d.data.inv.map(row=>({
         ...row,
@@ -11171,38 +11157,41 @@ async function gasLoad(){
         con:  row.con===true||row.con==='true'||row.con==='TRUE',
         loc:  typeof row.loc==='string'?JSON.parse(row.loc):row.loc||{}
       }));
-      // 建立 Sheets 查找表（id → qty, loc），過濾掉 id 為 NaN 的髒資料
-      const sheetMap={};
-      const validSheetInv=sheetInv.filter(i=>Number.isInteger(i.id)&&i.id>0);
-      validSheetInv.forEach(i=>{ sheetMap[i.id]={qty:i.qty, loc:i.loc}; });
-      // 本機品項以 HTML 為準，從 Sheets 同步 qty 和 loc
-      const localIds=new Set(inv.map(i=>i.id));
-      inv=inv.map(i=>{
-        const s=sheetMap[i.id];
-        if(!s) return i;
-        return { ...i, qty:s.qty, loc:s.loc };
-      }).filter(i=>Number.isInteger(i.id)&&i.id>0);
-      // Sheets 有但本機沒有的品項（前端新增的），補入本機
-      const newFromSheet=validSheetInv.filter(i=>!localIds.has(i.id));
-      if(newFromSheet.length>0){
-        inv=[...inv, ...newFromSheet];
-        inv.sort((a,b)=>a.id-b.id);
-        console.log(`從 Sheets 補入 ${newFromSheet.length} 筆新品項`);
-      }
-      // 本機比 Sheets 多時才同步（有新品項尚未寫入 Sheets）
-      if(inv.length > validSheetInv.length){
-        console.log(`本機品項(${inv.length}) > Sheets(${validSheetInv.length})，同步至 Sheets`);
-        _needInvSync=true;
+      if(sheetInv.length >= inv.length){
+        // Sheets 資料較新或相同，以 Sheets 為準
+        // 但 loc 以本機 HTML 為準（避免 Sheets 舊位置覆蓋已更新的位置）
+        const localLocMap={};
+        inv.forEach(i=>{ localLocMap[i.id]=i.loc; });
+        const locChanged=sheetInv.some(i=>{
+          const ll=localLocMap[i.id];
+          const sl=typeof i.loc==='object'?i.loc:{};
+          return ll&&(ll.r!==sl.r||ll.k!==sl.k||ll.lv!==sl.lv);
+        });
+        inv=sheetInv.map(i=>{
+          // 類別以本機為準（避免 Sheets 舊類別覆蓋已更新的分類）
+          const localItem=inv.find(x=>x.id===Number(i.id));
+          return {
+            ...i,
+            cat: localItem ? localItem.cat : i.cat,
+            loc: localLocMap[i.id] || i.loc
+          };
+        });
+        // 若本機 loc 與 Sheets 不同，延遲推送（避免卡住 gasLoad 主流程）
+        if(locChanged){ setTimeout(()=>gasSave(), 2000); }
+      } else {
+        // 本機品項較多（剛匯入新清單），以本機為準並推送到 Sheets
+        console.log(`本機品項(${inv.length})多於 Sheets(${sheetInv.length})，自動同步至 Sheets`);
+        setTimeout(()=>gasSave(), 2000);
       }
     } else {
-      // 首次：把預設值寫入 Sheets
-      _needInvSync=true;
+      // 首次：把預設值寫入 Sheets（延遲執行避免卡主流程）
+      setTimeout(()=>gasSave(), 2000);
     }
 
     if(d.data.logs && d.data.logs.length>0){
       logs=d.data.logs.map(row=>({
         ...row,
-        type: row.type || row.op || row.type_  || '',
+        type: row.type || row.op   || '',
         operator: row.operator || '',
         user: row.user || row.mem  || '',
         pur:  row.pur  || row.note || '',
@@ -11210,12 +11199,12 @@ async function gasLoad(){
         loc:  row.loc  || '',
         qty:  Number(row.qty || 0),
         date: fixSheetDate(row.date || row.ts),
-        time: fixSheetTime(row.date || row.ts, row.time)
+        time: row.time || ''
       }));
     }
 
     if(d.data.brws && d.data.brws.length>0){
-      const rawBrws=d.data.brws.map(row=>({
+      brws=d.data.brws.map(row=>({
         ...row,
         id:  Number(row.id),
         iid: Number(row.iid),
@@ -11226,22 +11215,12 @@ async function gasLoad(){
         time: fixSheetTime(row.date, row.time),
         retD: fixSheetDate(row.retD)
       }));
-      // 去除重複 id（保留最後一筆，通常是最新狀態）
-      const brwsMap=new Map();
-      rawBrws.forEach(b=>{ if(Number.isFinite(b.id)&&b.id>0) brwsMap.set(b.id,b); });
-      brws=Array.from(brwsMap.values());
       // rebuild bseq
-      bseq=brws.reduce((m,b)=>Number.isFinite(b.id)?Math.max(m,b.id):m, 0)+1;
+      bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
     }
 
     _gasLoaded=true;
     showSaved();
-    // 若品項數不一致，立即同步 inv 至 Sheets（設定 _gasLoaded=true 後才能執行）
-    if(window._needInvSync){
-      window._needInvSync=false;
-      console.log('inv 同步中...');
-      gasSaveInvOnly().catch(e=>console.warn('inv 同步失敗',e));
-    }
     go(window._curPage||'inv', null);
   }catch(e){
     console.error('gasLoad error',e);
@@ -11249,97 +11228,6 @@ async function gasLoad(){
     document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
       el.title='無法連線到 Google Sheets，目前使用本機資料，功能不受影響';
     });
-  }
-}
-
-// ── 定時輕量同步（避免競爭：只更新 qty 與 brws，不動 logs）──────────────────
-let _refreshing=false;  // 防止重疊執行
-async function gasRefresh(){
-  if(_refreshing||!_gasLoaded||!_curUser) return;
-  _refreshing=true;
-  try{
-    const d=await jsonpGetWithRetry(GAS_URL+'?action=getAll');
-    if(!d.ok) throw new Error(d.error);
-
-    // config（盤點鎖）
-    if(d.data.config){
-      const cfg=d.data.config;
-      _invLock=cfg.inventoryLock===true||cfg.inventoryLock==='true'||cfg.inventoryLock==='TRUE';
-      _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
-    }
-
-    // inv：更新 qty 和 loc，並補入 Sheets 有但本機沒有的新品項
-    if(d.data.inv && d.data.inv.length>0){
-      const validSheet=d.data.inv.filter(r=>Number.isInteger(Number(r.id))&&Number(r.id)>0);
-      const sheetMap={};
-      validSheet.forEach(r=>{ sheetMap[Number(r.id)]={qty:Number(r.qty), loc:typeof r.loc==='string'?JSON.parse(r.loc):r.loc||{}}; });
-      const localIds=new Set(inv.map(i=>i.id));
-      inv=inv.map(i=>{
-        const s=sheetMap[i.id];
-        if(!s) return i;
-        return { ...i, qty:s.qty, loc:s.loc };  // 同步 qty 和 loc
-      });
-      // 補入 Sheets 新增、本機沒有的品項
-      const newFromSheet=validSheet.filter(r=>!localIds.has(Number(r.id))).map(r=>({
-        ...r, id:Number(r.id), qty:Number(r.qty), min:Number(r.min),
-        con:r.con===true||r.con==='true'||r.con==='TRUE',
-        loc:typeof r.loc==='string'?JSON.parse(r.loc):r.loc||{}
-      }));
-      if(newFromSheet.length>0){
-        inv=[...inv,...newFromSheet].sort((a,b)=>a.id-b.id);
-      }
-    }
-
-    // brws：合併——以 Sheets 為主體，本機尚未推送的新借用紀錄補入
-    if(d.data.brws){
-      const sheetBrws=d.data.brws.map(row=>({
-        ...row,
-        id:  Number(row.id),  iid: Number(row.iid),  qty: Number(row.qty),
-        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE',
-        due:  fixSheetDate(row.due),  date: fixSheetDate(row.date),
-        time: fixSheetTime(row.date, row.time),  retD: fixSheetDate(row.retD)
-      }));
-      const sheetIds=new Set(sheetBrws.map(b=>b.id));
-      // 本機有但 Sheets 還沒有的（剛操作、尚未寫入）→ 保留
-      const localOnly=brws.filter(b=>!sheetIds.has(b.id));
-      brws=[...sheetBrws, ...localOnly];
-      bseq=brws.reduce((m,b)=>Number.isFinite(b.id)?Math.max(m,b.id):m, 0)+1;
-    }
-
-    // logs：以 Sheets 為主體，本機尚未推送的新筆補入（避免洗掉剛操作的紀錄）
-    if(d.data.logs){
-      const sheetLogs=d.data.logs.map(row=>({
-        ...row,
-        type: row.type||row.op||'',
-        operator: row.operator||'',
-        user: row.user||row.mem||'',
-        pur:  row.pur||row.note||'',
-        due:  row.due||'',
-        loc:  row.loc||'',
-        qty:  Number(row.qty||0),
-        date: fixSheetDate(row.date||row.ts),
-        time: fixSheetTime(row.date||row.ts, row.time)
-      }));
-      // 用 date+time+type+user 做識別鍵，找本機有但 Sheets 還沒有的新筆
-      const sheetKeys=new Set(sheetLogs.map(l=>`${l.date}|${l.time}|${l.type}|${l.user}`));
-      const localOnly=logs.filter(l=>{
-        const k=`${l.date}|${l.time}|${l.type}|${l.user}`;
-        return !sheetKeys.has(k);
-      });
-      // 合併：Sheets 資料 + 本機獨有筆，按時間新→舊排序
-      logs=[...sheetLogs, ...localOnly].sort((a,b)=>{
-        const da=(a.date||'')+(a.time||''), db=(b.date||'')+(b.time||'');
-        return da<db?1:da>db?-1:0;
-      });
-    }
-
-    // 重繪當前頁面（不跳頁）
-    if(window._curPage) (pgmap[window._curPage]||pgInv)();
-    applyInvLockUI();
-  }catch(e){
-    console.warn('[gasRefresh] 失敗',e);
-  }finally{
-    _refreshing=false;
   }
 }
 
@@ -11417,7 +11305,6 @@ async function gasSave(){
   }catch(e2){
     console.error('gasSave all methods failed',e2);
     showSaveErr();
-    throw e2;
   }
 }
 
@@ -11440,93 +11327,14 @@ function confirmReset(){
     document.body.appendChild(overlay);
   }, '重設系統', '重設後所有紀錄將清除，此操作無法復原');
 }
-async function gasAppendInv(item){
-  const data=encodeURIComponent(JSON.stringify({...item, loc:JSON.stringify(item.loc)}));
-  try{ await jsonpGetWithRetry(GAS_URL+'?action=appendInv&data='+data); }
-  catch(e){
-    try{ await fetchGet(GAS_URL+'?action=appendInv&data='+data); }
-    catch(e2){ console.warn('appendInv 失敗',e2); }
-  }
-}
-
-async function gasUpdateInvLoc(id, loc){
-  const data=encodeURIComponent(JSON.stringify({id, loc:JSON.stringify(loc)}));
-  try{ await jsonpGetWithRetry(GAS_URL+'?action=updateInvLoc&data='+data); }
-  catch(e){
-    try{ await fetchGet(GAS_URL+'?action=updateInvLoc&data='+data); }
-    catch(e2){ console.warn('updateInvLoc 失敗',e2); }
-  }
-}
-
-// inv 專用寫回：分批 JSONP GET，避免 URL 超長問題
-async function gasSaveInvOnly(){
-  if(!_gasLoaded) throw new Error('_gasLoaded=false');
-  showSaving();
-  const payload=inv.map(i=>({...i, loc:JSON.stringify(i.loc)}));
-
-  // 先嘗試 POST（若 GAS 已部署新版）
-  try{
-    await fetch(GAS_URL,{
-      method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'saveInv', data:payload})
-    });
-    showSaved(); return;
-  }catch(e){ console.warn('gasSaveInvOnly POST failed',e); }
-
-  // 備援：分批 JSONP（每批 40 筆，避免 URL 超長）
-  // 先用 saveInvChunk action 寫入，GAS 尚未支援時 fallback 到 saveAll
-  const CHUNK=40;
-  for(let i=0;i<payload.length;i+=CHUNK){
-    const chunk=payload.slice(i,i+CHUNK);
-    const encoded=encodeURIComponent(JSON.stringify({start:i,rows:chunk,total:payload.length}));
-    try{
-      await jsonpGetWithRetry(GAS_URL+'?action=saveInvChunk&data='+encoded);
-    }catch(e){
-      console.warn(`saveInvChunk batch ${i} failed`,e);
-      throw e;
-    }
-  }
-  showSaved();
-}
-
-async function forceSyncInv(){
-  if(!_gasLoaded){ alert('⚠ 尚未連線 Google Sheets，請稍後再試。'); return; }
-  if(!confirm(`確定要將本機 ${inv.length} 筆庫存品項強制同步至 Google Sheets？\n此操作會覆蓋 Sheets 的 inv 工作表。`)) return;
-  try{
-    await gasSaveInvOnly();
-    alert(`✓ 已同步 ${inv.length} 筆品項至 Google Sheets`);
-  }catch(e){
-    alert('⚠ 同步失敗，請再試一次。');
-    console.error('forceSyncInv failed',e);
-  }
-}
-
 async function doReset(){
-  if(!_gasLoaded){
-    alert('⚠ 尚未連線 Google Sheets，無法執行重設。\n請確認網路連線後再試。');
-    return;
-  }
-  // 清空本機資料
+  // 還原預設庫存數量
   inv.forEach(i=>{ i.qty=30; });
   logs=[];
   brws=[];
   bseq=1;
-  try{
-    showSaving();
-    // 用 JSONP GET 清空 logs 和 brws（空陣列 payload 很小，不會超長）
-    await Promise.all([
-      jsonpGetWithRetry(GAS_URL+'?action=saveLogs&data='+encodeURIComponent(JSON.stringify([]))),
-      jsonpGetWithRetry(GAS_URL+'?action=saveBrws&data='+encodeURIComponent(JSON.stringify([]))),
-    ]);
-    // inv 分批寫（qty 已歸30）
-    await gasSaveInvOnly();
-    showSaved();
-    setTimeout(()=>location.reload(), 800);
-  }catch(e){
-    alert('⚠ 重設失敗：無法寫入 Google Sheets，請再試一次。');
-    console.error('doReset failed',e);
-  }
+  await gasSave();
+  location.reload();
 }
 
 // ── Password guard ─────────────────────────────────────────────────────────
@@ -11565,11 +11373,10 @@ function startAutoLogout(){
     if(_curUser){
       logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
         pur:'自動登出（逾時30分鐘）',due:'',loc:'',date:tdy(),time:ntm()});
-      if(_gasLoaded) gasAppendLog(logs[0]);
+      if(_gasLoaded) gasSave();
     }
     _curUser=null;
     _gasLoaded=false;
-    stopAutoSync();
     sessionStorage.removeItem('pahome_user');
     document.getElementById('invLockBanner')?.remove();
     showLoginScreen();
@@ -11638,32 +11445,23 @@ function doLogin(){
   _curUser={nm:user.nm,role:user.role};
   sessionStorage.setItem('pahome_user',JSON.stringify(_curUser));
   document.getElementById('loginOverlay').remove();
-  // 記錄登入（暫存，待 gasLoad 完成後再合併寫入）
-  const loginEntry={type:'登入',nm:user.nm,qty:0,user:user.nm,
-    pur:'角色：'+roleLabel(user.role),due:'',loc:'',date:tdy(),time:ntm()};
-  logs.unshift(loginEntry);
+  // 記錄登入
+  logs.unshift({type:'登入',nm:user.nm,qty:0,user:user.nm,
+    pur:'角色：'+roleLabel(user.role),due:'',loc:'',date:tdy(),time:ntm()});
   updateUserBadge();
   // 30 分鐘自動登出計時器（設計師不受限）
   if(!isDesigner()) startAutoLogout();
-  startAutoSync();  // 每5分鐘自動同步
-  // 載入資料：完成後補寫登入紀錄（gasLoad 會覆蓋 logs，需重新插入）
-  gasLoad().then(()=>{
-    // 若 Sheets 尚未有此筆（同一人同日同分鐘內），補插到最前面並推送
-    const dup=logs.find(l=>l.type==='登入'&&l.user===loginEntry.user&&l.date===loginEntry.date&&l.time===loginEntry.time);
-    if(!dup){ logs.unshift(loginEntry); }
-    gasAppendLog(loginEntry);
-  }).catch(e=>console.warn('gasLoad失敗',e));
+  // 載入資料
+  gasLoad().catch(e=>console.warn('gasLoad失敗',e));
 }
 
 function doLogout(){
   clearAutoLogout();
-  stopAutoSync();
   if(!confirm('確定要登出嗎？'))return;
   if(_curUser){
-    const logoutEntry={type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
-      pur:'',due:'',loc:'',date:tdy(),time:ntm()};
-    logs.unshift(logoutEntry);
-    if(_gasLoaded) gasAppendLog(logoutEntry);
+    logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
+      pur:'',due:'',loc:'',date:tdy(),time:ntm()});
+    if(_gasLoaded) gasSave();
   }
   _curUser=null;
   sessionStorage.removeItem('pahome_user');
@@ -11861,9 +11659,9 @@ function cpSubmit(){
   setTimeout(()=>t.remove(),2200);
 }
 
-const ROOMS=['庫房一','庫房二','庫房三','庫房四','庫房五','庫房六'];
+const ROOMS=['庫房一','庫房二','庫房三'];
 const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
-const LEVS=['第一層','第二層','第三層','第四層','第五層','第六層'];
+const LEVS=['第一層','第二層','第三層'];
 // ── 使用者資料（role: designer／admin／supervisor／user）─────────────────
 const USERS=[
   {nm:'白雪儀', pwd:'619483', role:'supervisor'},
@@ -11878,7 +11676,6 @@ const USERS=[
   {nm:'鍾文鶯', pwd:'438275', role:'user'},
   {nm:'黃千千', pwd:'093164', role:'user'},
   {nm:'蕭淑滿', pwd:'712839', role:'user'},
-  {nm:'余嘉琪', pwd:'265047', role:'user'},
   {nm:'李孟娟', pwd:'508763', role:'user'},
   {nm:'蔡芸樺', pwd:'684530', role:'user'},
   {nm:'徐暐達', pwd:'391208', role:'user'},
@@ -11912,7 +11709,7 @@ const CAT_META={
   '手工皂相關':{cls:'cat-sen',label:'手工皂相關'},
   '手工藝材料':{cls:'cat-med',label:'手工藝材料'},
   '手工藝材料－剩餘手作材料':{cls:'cat-cog',label:'手工藝材料－剩餘手作材料'},
-  '手工藝工具':{cls:'cat-ex',label:'手工藝工具'},
+  '手工藝相關':{cls:'cat-ex',label:'手工藝相關'},
   '按摩系列':{cls:'cat-adl',label:'按摩系列'},
   '擴香牌／磚器材料組':{cls:'cat-art',label:'擴香牌／磚器材料組'},
   '敲打擊／手搖樂器':{cls:'cat-sen',label:'敲打擊／手搖樂器'},
@@ -11926,188 +11723,187 @@ const CAT_META={
   '行政用品':{cls:'cat-adl',label:'行政用品'},
   '辦公文具用品':{cls:'cat-art',label:'辦公文具用品'},
   '面膜系列':{cls:'cat-sen',label:'面膜系列'},
-  '食農相關':{cls:'cat-sen',label:'食農相關'},
-  '精油系列':{cls:'cat-med',label:'精油系列'}
+  '食農相關':{cls:'cat-sen',label:'食農相關'}
 };
 
 const ls=l=>(!l||(!l.r&&!l.k&&!l.lv))?'—':[l.r,l.k,l.lv].filter(Boolean).join(' › ');
 const tdy=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');};
-const ntm=()=>{const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');};
+const ntm=()=>new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
 const iso=()=>new Date().toISOString().slice(0,10);
 const ovd=d=>{if(!d)return false;const[y,mo,day]=String(d).slice(0,10).split('-').map(Number);const t=new Date();return new Date(y,mo-1,day)<new Date(t.getFullYear(),t.getMonth(),t.getDate());};
 const cb=cat=>{const m=CAT_META[cat];return m?`<span class="b ${m.cls}" style="font-size:10px;padding:1px 7px">${m.label}</span>`:cat};
 
 let inv=[
-  {id:1, nm:'永生花燈罩組：木頭燈座', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
-  {id:2, nm:'永生花燈罩組：長橢圓形燈罩', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
-  {id:3, nm:'永生花燈罩組：大圓玻璃燈罩', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
-  {id:4, nm:'永生花燈罩組：小圓玻璃燈罩', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
-  {id:5, nm:'簡易木質組裝四層架', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:6, nm:'木質方形四腳組合架', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:7, nm:'小棧板', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:8, nm:'裝飾手染巾', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:9, nm:'兒盟HAPPY DAY保溫袋', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架3', lv:'第4層'}},
-  {id:10, nm:'兒盟水泥盆栽小物（盒）', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架3', lv:'第2層'}},
-  {id:11, nm:'水泥盆栽木質圓底盤', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架3', lv:'第2層'}},
-  {id:12, nm:'兒盟課輔提袋', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架4', lv:'第3層'}},
+  {id:1, nm:'永生花燈罩組：木頭燈座', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第1層'}},
+  {id:2, nm:'永生花燈罩組：長橢圓形燈罩', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第2層'}},
+  {id:3, nm:'永生花燈罩組：大圓玻璃燈罩', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第3層'}},
+  {id:4, nm:'永生花燈罩組：小圓玻璃燈罩', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
+  {id:5, nm:'簡易木質組裝四層架', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:6, nm:'木質方形四腳組合架', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:7, nm:'小棧板', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:8, nm:'裝飾手染巾', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:9, nm:'兒盟HAPPY DAY保溫袋', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:10, nm:'兒盟水泥盆栽小物（盒）', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:11, nm:'水泥盆栽木質圓底盤', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:12, nm:'兒盟課輔提袋', con:false, cat:'兒盟', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
 
-  {id:13, nm:'數字乒乓球組（數字1-100，每包5顆）', con:false, cat:'團體活動健康促進', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:14, nm:'傳統LV包袋', con:false, cat:'場地裝置布置器材', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:15, nm:'304鐵製量杯1000cc', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:16, nm:'304鐵製量杯500cc', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:17, nm:'塑膠量杯100ml', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:18, nm:'融皂基布丁杯', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:19, nm:'融皂基容器', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:20, nm:'防熱鐵夾', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:21, nm:'切皂基專用刀', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:22, nm:'鐵盤', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:23, nm:'低吸濕透明皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:24, nm:'低吸濕透明皂基（用過）', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:25, nm:'低吸濕白色皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:26, nm:'低吸濕白色皂基（用過）', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:27, nm:'植萃慕絲皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:28, nm:'植萃慕絲皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:29, nm:'香茅薄荷皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:30, nm:'香茅薄荷皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:31, nm:'絲瓜絡', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:32, nm:'台灣檜木粉', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:33, nm:'台灣柴燒紅檜精油', con:false, cat:'精油系列', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:34, nm:'手工皂模具／擴香石模具', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:35, nm:'塑膠花瓣（手工藝器材料）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第3層'}},
-  {id:36, nm:'各色毛根（紅/朱紅/綠/蔚藍/橙/米/黃/蘭花/粉紅/櫻桃/燃橙/深褐）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第4層'}},
-  {id:37, nm:'禮品貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:39, nm:'洗臉慕斯貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:40, nm:'噴嘴頭', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:41, nm:'噴嘴瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:42, nm:'乳霜瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:43, nm:'滴管', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:44, nm:'矽膠刮刀（手工藝用）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:45, nm:'刮刀板', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:46, nm:'護唇膏空罐', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第3層'}},
-  {id:47, nm:'藤圈', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第4層'}},
-  {id:48, nm:'編織扇', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第4層'}},
-  {id:49, nm:'白布畫框', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第4層'}},
-  {id:50, nm:'漁網袋', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第4層'}},
-  {id:51, nm:'石膏粉', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第4層'}},
-  {id:52, nm:'玉米模型', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第2層'}},
-  {id:53, nm:'手作雲朵包材料線（綠/紫/灰/藍/粉橘/粉紅）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
+  {id:13, nm:'數字乒乓球組（數字1-100，每包5顆）', con:false, cat:'團體活動健康促進', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:14, nm:'傳統LV包袋', con:false, cat:'場地裝置布置器材', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:15, nm:'304鐵製量杯1000cc', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:16, nm:'304鐵製量杯500cc', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:17, nm:'塑膠量杯100ml', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:18, nm:'融皂基布丁杯', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:19, nm:'融皂基容器', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:20, nm:'防熱鐵夾', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:21, nm:'切皂基專用刀', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:22, nm:'鐵盤', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:23, nm:'低吸濕透明皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:24, nm:'低吸濕透明皂基（用過）', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:25, nm:'低吸濕白色皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:26, nm:'低吸濕白色皂基（用過）', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:27, nm:'植萃慕絲皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:28, nm:'植萃慕絲皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:29, nm:'香茅薄荷皂基（完整）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:30, nm:'香茅薄荷皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:31, nm:'絲瓜絡', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:32, nm:'台灣檜木粉', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:34, nm:'手工皂模具／擴香石模具', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:35, nm:'塑膠花瓣（手工藝器材料）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:36, nm:'各色毛根（紅/朱紅/綠/蔚藍/橙/米/黃/蘭花/粉紅/櫻桃/燃橙/深褐）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:37, nm:'禮品貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:39, nm:'洗臉慕斯貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:40, nm:'噴嘴頭', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:41, nm:'噴嘴瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:42, nm:'乳霜瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:43, nm:'滴管', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:44, nm:'矽膠刮刀（手工藝用）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:45, nm:'刮刀板', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:46, nm:'護唇膏空罐', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:47, nm:'藤圈', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:48, nm:'編織扇', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:49, nm:'白布畫框', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:50, nm:'漁網袋', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:51, nm:'石膏粉', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:52, nm:'玉米模型', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:53, nm:'手作雲朵包材料線（綠/紫/灰/藍/粉橘/粉紅）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
 
   {id:54, nm:'手作小燈籠', con:false, cat:'手工藝材料－剩餘手作材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:55, nm:'奶油髮箍（材料）', con:false, cat:'手工藝材料－剩餘手作材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第3層'}},
-  {id:56, nm:'手作香水玫瑰材料（包）', con:false, cat:'手工藝材料－剩餘手作材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第3層'}},
-  {id:57, nm:'木質相框', con:false, cat:'手工藝材料－剩餘手作材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第3層'}},
-  {id:58, nm:'馬賽克混色石子（盒）', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:59, nm:'馬賽克磚洗石棉', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:60, nm:'馬賽克磚方形杯墊模', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:61, nm:'馬賽克磚圓形杯墊模', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:62, nm:'馬賽克磚高寶瓶胚模', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:63, nm:'馬賽克磚矮寶瓶胚模', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:64, nm:'馬賽克磚花朵盆', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:65, nm:'馬賽克磚金色花瓣匙', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:66, nm:'140CC本色布丁燒杯', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:67, nm:'140CC本色布丁杯蓋', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:68, nm:'馬賽克石膏攪拌碗', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:69, nm:'馬賽克石膏攪拌磨平棒', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:70, nm:'馬賽克圓形雙層瀝水籃', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:71, nm:'柿柿如意花束', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:72, nm:'柿柿如意花束', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:73, nm:'塑膠藤蔓', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:74, nm:'手作玉米編織墊', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:75, nm:'LED燈套組', con:false, cat:'手工藝工具', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
-  {id:76, nm:'手部按摩器（已拆）', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:77, nm:'手部按摩器（未拆）', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:78, nm:'臉部按摩玉按摩滾輪', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:79, nm:'耳燭棒', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:80, nm:'蛋糕紙盤（耳燭用）', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:81, nm:'打火機', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:82, nm:'後紙盤', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:83, nm:'擴香牌/磚器材料：電子秤/鐵製攪拌棒/塑膠製攪拌棒/滴管/瓦斯罐/適用模具/塑膠盆/精緻甜杏仁油/甘油.丙三醇/簡易乳化劑/色彩顏料組', con:false, cat:'擴香牌／磚器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:84, nm:'棒棒糖鼓', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:85, nm:'搖鼓（鈴鼓）', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:86, nm:'鑼', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:87, nm:'滑梯手搖鈴', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:88, nm:'三角鐵', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:89, nm:'鈸', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第2層'}},
-  {id:90, nm:'雪花拼裝積木', con:false, cat:'桌遊', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第3層'}},
-  {id:91, nm:'小磚塊建築模型', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第4層'}},
-  {id:92, nm:'防水桌布（短）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:93, nm:'防水桌布（長）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:94, nm:'長桌布（酒紅色）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:95, nm:'長桌布（黃金色）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
+  {id:55, nm:'奶油髮箍（材料）', con:false, cat:'手工藝材料－剩餘手作材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:56, nm:'手作香水玫瑰材料（包）', con:false, cat:'手工藝材料－剩餘手作材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:57, nm:'木質相框', con:false, cat:'手工藝材料－剩餘手作材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:58, nm:'馬賽克混色石子（盒）', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:59, nm:'馬賽克磚洗石棉', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:60, nm:'馬賽克磚方形杯墊模', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:61, nm:'馬賽克磚圓形杯墊模', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:62, nm:'馬賽克磚高寶瓶胚模', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:63, nm:'馬賽克磚矮寶瓶胚模', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:64, nm:'馬賽克磚花朵盆', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:65, nm:'馬賽克磚金色花瓣匙', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:66, nm:'140CC本色布丁燒杯', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:67, nm:'140CC本色布丁杯蓋', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:68, nm:'馬賽克石膏攪拌碗', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:69, nm:'馬賽克石膏攪拌磨平棒', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:70, nm:'馬賽克圓形雙層瀝水籃', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:71, nm:'柿柿如意花束', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:72, nm:'柿柿如意花束', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:73, nm:'塑膠藤蔓', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:74, nm:'手作玉米編織墊', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:75, nm:'LED燈套組', con:false, cat:'手工藝相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:76, nm:'手部按摩器（已拆）', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:77, nm:'手部按摩器（未拆）', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:78, nm:'臉部按摩玉按摩滾輪', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:79, nm:'耳燭棒', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:80, nm:'蛋糕紙盤（耳燭用）', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:81, nm:'打火機', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:82, nm:'後紙盤', con:false, cat:'按摩系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:83, nm:'擴香牌/磚器材料：電子秤/鐵製攪拌棒/塑膠製攪拌棒/滴管/瓦斯罐/適用模具/塑膠盆/精緻甜杏仁油/甘油.丙三醇/簡易乳化劑/色彩顏料組', con:false, cat:'擴香牌／磚器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:84, nm:'棒棒糖鼓', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:85, nm:'搖鼓（鈴鼓）', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:86, nm:'鑼', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:87, nm:'滑梯手搖鈴', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:88, nm:'三角鐵', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:89, nm:'鈸', con:false, cat:'敲打擊／手搖樂器', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:90, nm:'雪花拼裝積木', con:false, cat:'桌遊', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:91, nm:'小磚塊建築模型', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:92, nm:'防水桌布（短）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:93, nm:'防水桌布（長）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:94, nm:'長桌布（酒紅色）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:95, nm:'長桌布（黃金色）', con:false, cat:'場地布置', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:96, nm:'聖誕服裝全套', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房三', k:'', lv:''}},
   {id:97, nm:'聖誕帽', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房三', k:'', lv:''}},
   {id:98, nm:'禮物袋', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房三', k:'', lv:''}},
-  {id:99, nm:'腰鼓（練習專用）', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第1層'}},
-  {id:100, nm:'鼓棒＋紅巾', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:101, nm:'啦啦隊彩球（手持＋亮彩）', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:''}},
+  {id:99, nm:'腰鼓（練習專用）', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:100, nm:'鼓棒＋紅巾', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:101, nm:'啦啦隊彩球（手持＋亮彩）', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:102, nm:'嘻哈毛帽', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:103, nm:'花瓣手搖鈴', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:''}},
-  {id:104, nm:'單朵康乃馨塑膠花束', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
-  {id:105, nm:'康乃馨塑膠花束', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
-  {id:106, nm:'萬聖節角色扮演／佈置裝飾材料', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
-  {id:107, nm:'手作毛根格格髮箍（成品）', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
+  {id:103, nm:'花瓣手搖鈴', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:104, nm:'單朵康乃馨塑膠花束', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:105, nm:'康乃馨塑膠花束', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:106, nm:'萬聖節角色扮演／佈置裝飾材料', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:107, nm:'手作毛根格格髮箍（成品）', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:108, nm:'太鼓服飾', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:109, nm:'玫瑰塑膠花束', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
-  {id:110, nm:'絲巾', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
+  {id:109, nm:'玫瑰塑膠花束', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:110, nm:'絲巾', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:111, nm:'彩帶', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:112, nm:'響板', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:''}},
+  {id:112, nm:'響板', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:113, nm:'紅色旗袍', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:114, nm:'龍蝦造型髮圈', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
+  {id:114, nm:'龍蝦造型髮圈', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
 
-  {id:115, nm:'雙圓頭穴式按摩棒', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:116, nm:'梳子刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:117, nm:'不規則穴式按摩棒', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:118, nm:'魚型刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:119, nm:'穴式按摩刮痧兩用', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:120, nm:'梳子穴位按摩刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:121, nm:'沉香皂', con:true, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架4', lv:'第4層'}},
-  {id:122, nm:'檀香皂', con:true, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架4', lv:'第4層'}},
-  {id:123, nm:'盲盒（創意橡皮抽抽樂）', con:false, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架4', lv:'第4層'}},
-  {id:124, nm:'幸運摸彩箱', con:false, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架1', lv:'第3層'}},
-  {id:125, nm:'烘焙墊', con:false, cat:'食農相關', u:'個', qty:1, min:1, loc:{r:'庫房一', k:'', lv:''}},
-  {id:126, nm:'耳穴模型', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:127, nm:'耳針', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:128, nm:'隱形式耳針', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:129, nm:'夾子（耳穴用）', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:130, nm:'多用彈性探穴筆', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:131, nm:'小春日合', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:132, nm:'黃蜂蠟', con:true, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:133, nm:'珍珠腐植土', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:134, nm:'蜜蠟', con:true, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:135, nm:'百納川薄荷腦100g', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第1層'}},
-  {id:136, nm:'蓑衣套裝＋大斗笠', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:''}},
-  {id:137, nm:'常規斗笠', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:''}},
-  {id:138, nm:'塑膠提袋（蓑衣套組用）', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:''}},
-  {id:139, nm:'協會投票儲存箱', con:false, cat:'行政用品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架1', lv:'第3層'}},
+  {id:115, nm:'雙圓頭穴式按摩棒', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:116, nm:'梳子刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:117, nm:'不規則穴式按摩棒', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:118, nm:'魚型刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:119, nm:'穴式按摩刮痧兩用', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:120, nm:'梳子穴位按摩刮痧板', con:false, cat:'精油芳療模組－穴位按摩刮痧系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:121, nm:'沉香皂', con:true, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:122, nm:'檀香皂', con:true, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:123, nm:'盲盒（創意橡皮抽抽樂）', con:false, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:124, nm:'幸運摸彩箱', con:false, cat:'結緣品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:125, nm:'烘焙墊', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:126, nm:'耳穴模型', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:127, nm:'耳針', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:128, nm:'隱形式耳針', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:129, nm:'夾子（耳穴用）', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:130, nm:'多用彈性探穴筆', con:false, cat:'耳穴按摩－耳穴器材料組', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:131, nm:'小春日合', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:132, nm:'黃蜂蠟', con:true, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:133, nm:'珍珠腐植土', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:134, nm:'蜜蠟', con:true, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:135, nm:'百納川薄荷腦100g', con:false, cat:'膏類組器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:136, nm:'蓑衣套裝＋大斗笠', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'未標明', k:'', lv:''}},
+  {id:137, nm:'常規斗笠', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'未標明', k:'', lv:''}},
+  {id:138, nm:'塑膠提袋（蓑衣套組用）', con:false, cat:'蓑衣套組', u:'個', qty:50, min:1, loc:{r:'未標明', k:'', lv:''}},
+  {id:139, nm:'協會投票儲存箱', con:false, cat:'行政用品', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:140, nm:'學生制服', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房三', k:'', lv:''}},
   {id:141, nm:'學士服／學士帽', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房三', k:'', lv:''}},
   {id:142, nm:'花編網絲帽夾', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:143, nm:'新郎／員外紅帽', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
-  {id:144, nm:'花瓣＋大鈴鐺', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
-  {id:145, nm:'鉛筆／彩繪鉛筆', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第3層'}},
-  {id:146, nm:'大剪刀系列', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第3層'}},
-  {id:147, nm:'備用資料夾', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第3層'}},
-  {id:148, nm:'彩繪類文具', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第3層'}},
-  {id:149, nm:'辦公文具用品（一般類）', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第3層'}},
-  {id:150, nm:'熱敷眼罩', con:false, cat:'面膜系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:151, nm:'梵貞黃金玻尿酸面膜', con:false, cat:'面膜系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第2層'}},
-  {id:152, nm:'矽膠刮刀／料理刮刀', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:153, nm:'多功能電熱鍋', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:154, nm:'食品級粽模', con:true, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:155, nm:'餅乾袋', con:true, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:156, nm:'油力士紙', con:true, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:157, nm:'金億昇165平蓋', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:158, nm:'SANSUI山水旋風氣炸烤箱配件（轉籠夾/烤雞叉組件有缺/層架/網籃/接油盤/炸籃/烤盤）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:159, nm:'尚朋堂4人養生電子鍋', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:160, nm:'不鏽鋼菜盒（淺）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:161, nm:'天然環保竹籤12CM＋自黏袋11CM', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
-  {id:162, nm:'天然環保竹籤20CM＋自黏袋13CM', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第3層'}},
-  {id:163, nm:'PP九格製冰盒', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第3層'}},
+  {id:143, nm:'新郎／員外紅帽', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:144, nm:'花瓣＋大鈴鐺', con:false, cat:'活動服裝表演器材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:145, nm:'鉛筆／彩繪鉛筆', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:146, nm:'大剪刀系列', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:147, nm:'備用資料夾', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:148, nm:'彩繪類文具', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:149, nm:'辦公文具用品（一般類）', con:false, cat:'辦公文具用品', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:150, nm:'熱敷眼罩', con:false, cat:'面膜系列', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:151, nm:'梵貞黃金玻尿酸面膜', con:false, cat:'面膜系列', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:152, nm:'矽膠刮刀／料理刮刀', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:153, nm:'多功能電熱鍋', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:154, nm:'食品級粽模', con:true, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:155, nm:'餅乾袋', con:true, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:156, nm:'油力士紙', con:true, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:157, nm:'金億昇165平蓋', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:158, nm:'SANSUI山水旋風氣炸烤箱配件（轉籠夾/烤雞叉組件有缺/層架/網籃/接油盤/炸籃/烤盤）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:159, nm:'尚朋堂4人養生電子鍋', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:160, nm:'不鏽鋼菜盒（淺）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:161, nm:'天然環保竹籤12CM＋自黏袋11CM', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:162, nm:'天然環保竹籤20CM＋自黏袋13CM', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:163, nm:'PP九格製冰盒', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:164, nm:'170cc烤布丁杯大布雷杯杯蓋', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
-  {id:165, nm:'岩盤', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第1層'}},
-  {id:166, nm:'高品質PP可微波橢圓盤（含蓋）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第3層'}},
-  {id:167, nm:'飯糰模具（3粒/1模具）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'鐵架2', lv:'第2層'}},
+  {id:165, nm:'岩盤', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:166, nm:'高品質PP可微波橢圓盤（含蓋）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
+  {id:167, nm:'飯糰模具（3粒/1模具）', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:168, nm:'圓形砧板', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:169, nm:'方形砧板', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:170, nm:'長條砧板', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
@@ -12126,14 +11922,6 @@ let inv=[
   {id:183, nm:'冰棒模組', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:184, nm:'量米杯', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
   {id:185, nm:'不沾鍋矽膠鍋鏟', con:false, cat:'食農相關', u:'個', qty:50, min:1, loc:{r:'庫房一', k:'', lv:''}},
-  {id:186, nm:'1000圓造型毛巾', con:false, cat:'活動服裝表演器材料', u:'個', qty:0, min:1, loc:{r:'庫房一', k:'鐵架3', lv:'第3層'}},
-  {id:187, nm:'卡拉OK音箱', con:false, cat:'活動服裝表演器材料', u:'個', qty:1, min:1, loc:{r:'庫房一', k:'鐵架1', lv:'第2層'}},
-  {id:188, nm:'彈力球', con:false, cat:'團體活動健康促進', u:'個', qty:0, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第1層'}},
-  {id:189, nm:'拉力器', con:false, cat:'團體活動健康促進', u:'個', qty:0, min:1, loc:{r:'庫房二', k:'鐵架3', lv:'第1層'}},
-  {id:190, nm:'浮力球', con:false, cat:'團體活動健康促進', u:'個', qty:0, min:1, loc:{r:'庫房二', k:'鐵架4', lv:'第1層'}},
-  {id:191, nm:'簡易音響組', con:false, cat:'活動服裝表演器材料', u:'個', qty:1, min:1, loc:{r:'庫房一', k:'鐵架1', lv:'第2層'}},
-  {id:192, nm:'素面手搖鈴', con:false, cat:'活動服裝表演器材料', u:'個', qty:0, min:1, loc:{r:'庫房二', k:'鐵架1', lv:'第4層'}},
-,
 ];
 let logs=[],brws=[],bseq=1;
 let ss=0,sd={item:null,op:'',qty:1,user:'',pur:'',due:''};
@@ -12152,7 +11940,7 @@ function pgInv(){
   const CAT_ICON={
     '佈置裝飾材料':'🪵','兒盟':'🎁','團體活動健康促進':'🏃',
     '場地裝置布置器材':'🏗️','場地布置':'🎪','手工皂相關':'🧼',
-    '手工藝材料':'🧵','手工藝材料－剩餘手作材料':'🗂️','手工藝工具':'✂️',
+    '手工藝材料':'🧵','手工藝材料－剩餘手作材料':'🗂️','手工藝相關':'✂️',
     '按摩系列':'💆','擴香牌／磚器材料組':'🌺','敲打擊／手搖樂器':'🥁',
     '桌遊':'🎲','活動服裝表演器材料':'👗','精油芳療模組－穴位按摩刮痧系列':'🫧',
     '結緣品':'🎀','食農相關':'🥬','耳穴按摩－耳穴器材料組':'👂',
@@ -12252,28 +12040,25 @@ function toggleAllCat(open){
 }
 
 function pgBorrow(){
-  const act=brws.filter(b=>!b.ret).sort((a,b)=>((b.date||'')+(b.time||''))<((a.date||'')+(a.time||''))?-1:1);
-  const done=brws.filter(b=>b.ret).sort((a,b)=>((b.date||'')+(b.time||''))<((a.date||'')+(a.time||''))?-1:1);
-  const od2=act.filter(b=>ovd(b.due));
+  const act=brws.filter(b=>!b.ret),done=brws.filter(b=>b.ret),od2=act.filter(b=>ovd(b.due));
   let h='';
   if(od2.length)h+=`<div class="oa">⚠ 逾期未還：${od2.length} 筆，請盡快聯絡借用人員。</div>`;
   h+=`<div class="sep"><div class="sep-line"></div>借用中（${act.length} 筆）<div class="sep-line"></div></div>`;
   if(!act.length)h+='<div style="font-size:12px;color:#6b5a4e;padding:16px 0;text-align:center;letter-spacing:0.08em">目 前 無 借 用 紀 錄</div>';
   else{
-    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:620px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">預定歸還</th><th style="width:${isDesigner()?'18%':'25%'}">操 作</th>${isDesigner()?'<th style="width:7%"></th>':''}</tr></thead><tbody>`;
+    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:620px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">預定歸還</th><th style="width:25%">操 作</th></tr></thead><tbody>`;
     act.forEach(b=>{const it=inv.find(i=>i.id===b.iid),isOD=ovd(b.due);h+=`<tr>
       <td style="font-family:'Noto Serif TC',serif">${b.nm}</td>
       <td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td>
       <td><span class="${isOD?'b b-od':''}" style="${isOD?'':'color:#6b5a4e'}">${b.due||'—'}${isOD?' ⚠':''}</span></td>
-      <td><button onclick="${inv.find(i=>i.id===b.iid)&&inv.find(i=>i.id===b.iid).u==='ml'?'showMlReturnDialog('+b.id+')':'doRet('+b.id+')'}" style="font-size:10px;padding:4px 10px">歸 還</button></td>
-      ${isDesigner()?`<td style="text-align:center"><button onclick="deleteBrws(${b.id})" style="font-size:10px;padding:2px 6px;background:transparent;border:1px solid #c8a0a0;color:#8b2020;cursor:pointer;border-radius:2px" title="刪除此筆">✕</button></td>`:''}
+      <td><button onclick="doRet(${b.id})" style="font-size:10px;padding:4px 10px">歸 還</button></td>
     </tr>`;});
     h+='</tbody></table>';
   }
   if(done.length){
     h+=`<div class="sep" style="margin-top:20px"><div class="sep-line"></div>已歸還（${done.length} 筆）<div class="sep-line"></div></div>
     <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:580px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">歸 還 日</th><th style="width:25%">狀 態</th></tr></thead><tbody>`;
-    [...done].forEach(b=>{const it=inv.find(i=>i.id===b.iid);h+=`<tr><td style="font-family:'Noto Serif TC',serif">${b.nm}</td><td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
+    [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);h+=`<tr><td style="font-family:'Noto Serif TC',serif">${b.nm}</td><td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
     h+='</tbody></table>';
   }
   document.getElementById('pg').innerHTML=h;
@@ -12288,23 +12073,12 @@ function pgBorrow(){
   });
 }
 
-function doRet(id, retQty){
+function doRet(id){
   const b=brws.find(x=>x.id===id);if(!b)return;
-  const actualRetQty = (retQty !== undefined) ? retQty : b.qty;
-  b.ret=true;b.retD=tdy();b.retQty=actualRetQty;
-  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=actualRetQty;
-  const isMl=it&&it.u==='ml';
-  const purNote=isMl&&actualRetQty<b.qty
-    ?`歸還 ${actualRetQty}ml（借出 ${b.qty}ml，耗用 ${Math.round((b.qty-actualRetQty)*100)/100}ml）`
-    :(b.pur||'歸還');
-  const retLog={type:'歸還',nm:b.nm,qty:actualRetQty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:purNote,due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()};
-  logs.push(retLog);
-  showSaving();
-  Promise.all([
-    gasAppendLog(retLog),
-    it?gasUpdateInv(it.id,it.qty):Promise.resolve(),
-    gasUpdateBrws(b.id,{ret:true,retD:b.retD,retQty:actualRetQty})
-  ]).then(()=>showSaved()).catch(()=>showSaveErr());
+  b.ret=true;b.retD=tdy();
+  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
+  logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
+  gasSave();
   pgBorrow();
 }
 
@@ -12374,7 +12148,7 @@ function step(){
       </div>
       <div class="fr">
         <div><label class="fl">${isBr?'借用':'領用'} 人員姓名</label><select id="sU"><option value="">— 請選擇 —</option>${MEMBERS.map(m=>`<option>${m}</option>`).join('')}</select></div>
-        <div><label class="fl">數量（${i.u}）</label><input type="number" id="sQ" ${i.u==='ml'?'min="0.1" step="0.1" placeholder="請輸入 ml 數量"':'min="1" step="1"'} value="${i.u==='ml'?'':'1'}"></div>
+        <div><label class="fl">數量（${i.u}）</label><input type="number" id="sQ" min="1" value="1"></div>
       </div>
       <div class="fr">
         <div><label class="fl">出庫用途</label><select id="sP">${pList.map(p=>`<option>${p}</option>`).join('')}</select></div>
@@ -12536,7 +12310,7 @@ function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
 // ── 新增品項 ──────────────────────────────────────────────────────────────
 function openAddItem(){
   if(!canWrite()){ alert('⚠ 新增品項需要管理員或以上權限'); return; }
-  const cats=Object.keys(CAT_META);
+  const cats=['佈置裝飾', '佈置裝飾材料', '兒盟獎勵結緣器具', '兒盟課程獎勵結緣物品材料', '兒盟課輔用品具', '團體活動健康促進', '場地裝置布置器材', '手工皂器材料的家', '手工皂器材料組', '手工皂模具', '手工藝器材料', '手工藝材料', '手工藝材料－剩餘手作材料', '手工藝－馬賽克系列', '手工藝／佈置裝飾', '手工藝／佈置裝飾材料', '手工藝／佈置裝飾系列', '按摩系列', '按摩系列－耳燭按摩材料', '擴香牌／磚器材料組', '敲打擊／手搖樂器', '桌遊－益智認知－精細動作－藝術創作', '活動場地裝置布置器材', '節慶活動場佈器材', '節慶活動服裝表演器材', '節慶活動表演器材', '節慶表演器材', '節慶表演器材（母親節／父親節）', '節慶表演器材／佈置裝飾材料', '節慶表演服飾類', '節慶表演花飾類', '節慶／活動表演器材', '精油芳療模組－穴位按摩刮痧系列', '結緣品', '結緣用品類', '美食／食農各類用具', '耳穴按摩－耳穴器材料組', '膏類組器材料', '蓑衣套組', '行政用品', '角色.節慶.活動服飾類', '角色扮演服飾類', '角色表演服飾器材', '角色／節慶活動裝飾類', '辦公文具用品', '面膜系列', '食農.美食電器用品工具器材', '食農用具', '食農相關', '食農／美食器具材料', '食農／美食器材料', '食農／美食器材料（B004）', '食農／美食用品具'];
     const catOpts=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
     const overlay=document.createElement('div');
     overlay.id='addItemOverlay';
@@ -12554,7 +12328,7 @@ function openAddItem(){
           </div>
           <div>
             <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">類 別 <span style="color:#8b2020">*</span></label>
-            <select id="aiCat" onchange="if(this.value==='精油系列'){document.getElementById('aiUnit').value='ml';}else if(document.getElementById('aiUnit').value==='ml'){document.getElementById('aiUnit').value='個';}" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
+            <select id="aiCat" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
               <option value="">請選擇類別</option>
               ${catOpts}
             </select>
@@ -12570,21 +12344,9 @@ function openAddItem(){
               </label>
             </div>
           </div>
-          <div style="display:flex;gap:8px;align-items:flex-end">
-            <div style="flex:1">
-              <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量</label>
-              <input id="aiQty" type="number" value="0" min="0" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410">
-            </div>
-            <div style="flex:0 0 80px">
-              <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">單 位</label>
-              <select id="aiUnit" style="width:100%;padding:8px 6px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410">
-                <option value="個">個</option>
-                <option value="ml">ml</option>
-                <option value="組">組</option>
-                <option value="件">件</option>
-                <option value="套">套</option>
-              </select>
-            </div>
+          <div>
+            <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量</label>
+            <input id="aiQty" type="number" value="0" min="0" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410">
           </div>
           <div>
             <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">存 放 位 置</label>
@@ -12637,9 +12399,9 @@ function confirmAddItem(){
   if(inv.find(i=>i.nm===nm)){err.textContent='品項名稱已存在，請使用不同名稱';err.style.display='block';return;}
   err.style.display='none';
 
-  const newId=inv.reduce((m,i)=>isNaN(i.id)?m:Math.max(m,i.id),0)+1;
+  const newId=inv.reduce((m,i)=>Math.max(m,i.id),0)+1;
   const newItem={
-    id:newId, nm, con, cat, u:document.getElementById('aiUnit')?.value||'個', qty, min:1,
+    id:newId, nm, con, cat, u:'個', qty, min:1,
     loc:{r:r||'', k:k||'', lv:lv||''}
   };
   inv.push(newItem);
@@ -12650,11 +12412,7 @@ function confirmAddItem(){
     CAT_META[cat]={cls,label:cat};
   }
 
-  // 寫入異動紀錄
-  const addLog={type:'新增',nm,qty,user:_curUser?_curUser.nm:'未知',operator:_curUser?_curUser.nm:'未知',pur:cat,due:'',loc:ls({r:r||'',k:k||'',lv:lv||''}),date:tdy(),time:ntm()};
-  logs.push(addLog);
-  if(_gasLoaded) gasAppendLog(addLog);
-  if(_gasLoaded) gasAppendInv(newItem); // 增量追加新品項至 Sheets
+  gasSave();
   document.getElementById('addItemOverlay').remove();
   go('inv',null);
   setTimeout(()=>{
@@ -12733,10 +12491,7 @@ function confirmEditQty(id){
   Promise.all([
     gasAppendLog(editLog),
     gasUpdateInv(item.id,item.qty)
-  ]).then(()=>showSaved()).catch(()=>{
-    showSaveErr();
-    alert('⚠ 儲存失敗，請再試一次或通知設計師。');
-  });
+  ]).then(()=>showSaved()).catch(()=>showSaveErr());
   document.getElementById('editQtyOverlay').remove();
   pgInv();
 }
@@ -12778,13 +12533,9 @@ function confirmDeleteItem(id){
   if(!item)return;
   // 從 inv 移除
   inv=inv.filter(i=>i.id!==id);
-  const delLog={type:'刪除',nm:item.nm,qty:0,user:_curUser?_curUser.nm:'未知',operator:_curUser?_curUser.nm:'未知',pur:'品項已刪除',due:'',loc:'',date:tdy(),time:ntm()};
-  logs.unshift(delLog);
-  showSaving();
-  Promise.all([
-    gasAppendLog(delLog),
-    gasSaveInvOnly()
-  ]).then(()=>showSaved()).catch(()=>showSaveErr());
+  // 記錄異動日誌
+  logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'刪除',qty:0,mem:'管理員',note:'品項已刪除'});
+  gasSave();
   pgInv();
 }
 
@@ -12877,76 +12628,25 @@ function invDoOp(id, op){
   }
 }
 
-function doRetById(bid, retQty){
+function doRetById(bid){
   const b=brws.find(x=>x.id===bid);if(!b||b.ret)return;
-  const actualRetQty = (retQty !== undefined) ? retQty : b.qty;
-  b.ret=true;b.retD=tdy();b.retQty=actualRetQty;
-  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=actualRetQty;
-  const isMl=it&&it.u==='ml';
-  const purNote=isMl&&actualRetQty<b.qty
-    ?`歸還 ${actualRetQty}ml（借出 ${b.qty}ml，耗用 ${Math.round((b.qty-actualRetQty)*100)/100}ml）`
-    :(b.pur||'歸還');
-  const retLog={type:'歸還',nm:b.nm,qty:actualRetQty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:purNote,due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
+  b.ret=true;b.retD=tdy();
+  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
+  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
   logs.push(retLog);
+  // 增量寫入
   showSaving();
   Promise.all([
     gasAppendLog(retLog),
     it?gasUpdateInv(it.id,it.qty):Promise.resolve(),
-    gasUpdateBrws(b.id,{ret:true,retD:b.retD,retQty:actualRetQty})
+    gasUpdateBrws(b.id,{ret:true,retD:b.retD})
   ]).then(()=>showSaved()).catch(()=>showSaveErr());
   pgInv();
+  // Flash toast
   const t=document.createElement('div');
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2a6b5e;color:#fff;padding:10px 24px;font-size:12px;letter-spacing:0.08em;z-index:4000;border-radius:2px;font-family:\'Noto Serif TC\',serif;white-space:nowrap';
-  t.textContent='✓ 歸還完成：'+b.nm+' × '+actualRetQty+(it&&it.u==='ml'?'ml':'');
+  t.textContent='✓ 歸還完成：'+b.nm+' × '+b.qty;
   document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
-}
-
-function showMlReturnDialog(bid){
-  const b=brws.find(x=>x.id===bid);if(!b)return;
-  const it=inv.find(i=>i.id===b.iid);
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.58);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
-  overlay.innerHTML=`
-  <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:min(320px,92vw);box-shadow:0 12px 40px rgba(28,20,16,0.22)">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #ddd6c8">
-      <span style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">精油歸還</span>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="border:none;background:none;font-size:18px;color:#6b5a4e;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px">
-      <div style="font-family:'Noto Serif TC',serif;font-size:12px;color:#1c1410">${b.nm}</div>
-      <div style="font-size:11px;color:#6b5a4e">借出量：<b style="color:#1c1410">${b.qty} ml</b>　借用人：${b.user}</div>
-      <div>
-        <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">實際歸還量（ml）</label>
-        <input id="mlRetQty" type="number" min="0" max="${b.qty}" step="0.1" placeholder="0 ~ ${b.qty} ml"
-          style="width:100%;padding:8px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:16px;color:#1c1410;box-sizing:border-box">
-      </div>
-      <div id="mlRetNote" style="font-size:11px;color:#6b5a4e;min-height:16px"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:7px 16px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e">取 消</button>
-        <button class="btn-primary" onclick="
-          const rq=parseFloat(document.getElementById('mlRetQty').value);
-          if(isNaN(rq)||rq<0){document.getElementById('mlRetNote').textContent='請輸入有效數量';return;}
-          if(rq>${b.qty}){document.getElementById('mlRetNote').textContent='不能超過借出量 ${b.qty}ml';return;}
-          this.closest('[style*=fixed]').remove();
-          doRet(${bid}, rq);
-        " style="padding:7px 16px;font-size:12px">確 認 歸 還</button>
-      </div>
-    </div>
-  </div>`;
-  // 即時顯示耗損量
-  const borrowedQty=b.qty;
-  overlay.querySelector('#mlRetQty').addEventListener('input',function(){
-    const rq=parseFloat(this.value);
-    const note=overlay.querySelector('#mlRetNote');
-    if(!isNaN(rq)&&rq>=0&&rq<=borrowedQty){
-      const used=Math.round((borrowedQty-rq)*100)/100;
-      note.textContent=used>0?('耗用 '+used+' ml，歸還後庫存增加 '+rq+' ml'):'全數歸還，無耗損';
-      note.style.color='#2a6b5e';
-    } else {
-      note.textContent='';
-    }
-  });
-  document.body.appendChild(overlay);
 }
 
 function showReturnPicker(activeBrws){
@@ -12978,71 +12678,20 @@ function selO(op){
     sd.op=op;ss=2;step();
   }
 }
-// 即時查詢 Sheets 上某品項的庫存（借用前防超借用）
-async function gasGetInvQty(id){
-  const d=await jsonpGetWithRetry(GAS_URL+`?action=getInvQty&id=${id}`);
-  if(!d.ok) throw new Error(d.error||'getInvQty failed');
-  return Number(d.qty);
-}
-
 function cfm(){
   if(!guardOp('出入庫')) return;
-  const operator=_curUser?_curUser.nm:'未知';
-  const u=(document.getElementById('sU').value||'').trim();
-  const it=sd.item;
-  const q=it&&it.u==='ml'?parseFloat(document.getElementById('sQ').value)||0:parseInt(document.getElementById('sQ').value)||0;
-  const pur=document.getElementById('sP').value;
-  const due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'';
-  const er=document.getElementById('er');
+  const operator=_curUser?_curUser.nm:'未知';  // 登入者（實際操作人）
+  const u=(document.getElementById('sU').value||'').trim(),q=parseInt(document.getElementById('sQ').value)||0,pur=document.getElementById('sP').value,due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'',er=document.getElementById('er');
   if(!u){er.textContent='請填寫人員姓名';return}
   if(q<=0){er.textContent='數量須大於 0';return}
-  // 本機初步檢查
+  const it=sd.item;
   if(sd.op!=='入庫'&&q>it.qty){er.textContent=`庫存不足，目前僅剩 ${it.qty} ${it.u}`;return}
-
-  // 借用/領用：先向 Sheets 確認即時庫存，防止多人同時借用超額
-  if(sd.op!=='入庫' && _gasLoaded){
-    er.textContent='';
-    const btn=document.querySelector('#pg button.btn-primary');
-    if(btn){btn.disabled=true;btn.textContent='確認中...';}
-    gasGetInvQty(it.id).then(realQty=>{
-      if(btn){btn.disabled=false;btn.textContent=`確 認 ${sd.op}`;}
-      // 以 Sheets 即時 qty 為準
-      if(q>realQty){
-        // 同步修正本機 qty
-        it.qty=realQty;
-        er.textContent=realQty>0
-          ? `庫存已被他人借走，目前僅剩 ${realQty} ${it.u}，請修改數量`
-          : `${it.nm} 庫存已全數借出，無法借用`;
-        // 更新畫面數量顯示
-        const qEl=document.getElementById('sQ');
-        if(qEl&&realQty>0) qEl.max=realQty;
-        return;
-      }
-      // 通過：執行借用
-      _doConfirm(it, q, u, pur, due, operator);
-    }).catch(e=>{
-      if(btn){btn.disabled=false;btn.textContent=`確 認 ${sd.op}`;}
-      console.warn('getInvQty 失敗，以本機資料為準',e);
-      // GAS 查詢失敗時，以本機資料為準繼續執行
-      _doConfirm(it, q, u, pur, due, operator);
-    });
-  } else {
-    // 入庫 或 未連線時直接執行
-    _doConfirm(it, q, u, pur, due, operator);
-  }
-}
-
-function _doConfirm(it, q, u, pur, due, operator){
-  if(sd.op==='入庫') it.qty+=q; else it.qty-=q;
-  sd.qty=q; sd.user=u; sd.pur=pur; sd.due=due;
-  if(sd.op==='借用') brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
-  const opLog={type:sd.op,nm:it.nm,qty:q,user:u,operator,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()};
-  logs.push(opLog);
-  showSaving();
-  const writes=[gasAppendLog(opLog), gasUpdateInv(it.id, it.qty)];
-  if(sd.op==='借用') writes.push(gasAppendBrws(brws[brws.length-1]));
-  Promise.all(writes).then(()=>showSaved()).catch(()=>showSaveErr());
-  ss=3; step();
+  if(sd.op==='入庫')it.qty+=q;else it.qty-=q;
+  sd.qty=q;sd.user=u;sd.pur=pur;sd.due=due;
+  if(sd.op==='借用')brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
+  logs.push({type:sd.op,nm:it.nm,qty:q,user:u,operator,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()});
+  gasSave();
+  ss=3;step();
 }
 
 // ── QR Page ────────────────────────────────────────────────────────────────
@@ -13055,7 +12704,7 @@ const CAT_HEX={
   '手工皂相關':'#5e3a1a',
   '手工藝材料':'#2a6b5e',
   '手工藝材料－剩餘手作材料':'#6b5a2a',
-  '手工藝工具':'#8b2020',
+  '手工藝相關':'#8b2020',
   '按摩系列':'#1a4a6b',
   '擴香牌／磚器材料組':'#4a6b2a',
   '敲打擊／手搖樂器':'#6b2a3a',
@@ -13080,7 +12729,7 @@ const CAT_LIGHT={
   '手工皂相關':'#f4ede8',
   '手工藝材料':'#e8f4f0',
   '手工藝材料－剩餘手作材料':'#f4f0e8',
-  '手工藝工具':'#faeaea',
+  '手工藝相關':'#faeaea',
   '按摩系列':'#e8eef4',
   '擴香牌／磚器材料組':'#eef4e8',
   '敲打擊／手搖樂器':'#f4e8ec',
@@ -13104,7 +12753,7 @@ function pgQR(){
       依類別顯示各品項專屬 QR Code。點擊任意卡片可預覽並列印。
     </div>
     <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap;flex-shrink:0;margin-left:12px">
-      列 印 全 部 ${inv.length} 張 ↗
+      列 印 全 部 185 張 ↗
     </button>
   </div>`;
 
@@ -13279,7 +12928,7 @@ async function printAllQR(){
     return {item,url};
   }));
 
-  if(btn){btn.textContent='列 印 全 部 '+inv.length+' 張 ↗';btn.disabled=false}
+  if(btn){btn.textContent='列 印 全 部 185 張 ↗';btn.disabled=false}
 
   const w=window.open('','_blank','width=900,height=700');
   let cardsHtml=cards.map(({item,url})=>{
@@ -13327,7 +12976,7 @@ async function printAllQR(){
   .st-v{font-size:22px}
 }
 </style></head><body>
-  <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 ${inv.length} 張）</h1>
+  <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 185 張）</h1>
   <div class="grid">${cardsHtml}</div>
   <script>window.onload=()=>{setTimeout(()=>window.print(),600)}<\/script>
   </body></html>`);
@@ -13338,10 +12987,10 @@ function locBld(px,loc){
   const rv=loc&&loc.r?loc.r:'',rkv=loc&&loc.k?loc.k:'',lv=loc&&loc.lv?loc.lv:'';
   return `<div class="loc-box">
     <div style="font-size:10px;color:#b5832a;letter-spacing:0.12em;margin-bottom:8px">儲 存 位 置</div>
-    <div style="display:flex;flex-direction:column;gap:6px">
-      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">場 所</label><select id="${px}R" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
-      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">架 位</label><select id="${px}K" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
-      <div style="display:flex;align-items:center;gap:8px"><label class="fl" style="width:40px;flex-shrink:0">層 數</label><select id="${px}L" onchange="upP('${px}')" style="flex:1;min-width:0"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      <div><label class="fl">場 所</label><select id="${px}R" onchange="upP('${px}')"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div><label class="fl">架 位</label><select id="${px}K" onchange="upP('${px}')"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
+      <div><label class="fl">層 數</label><select id="${px}L" onchange="upP('${px}')"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
     </div>
     <div style="font-size:11px;color:#1c1410;margin-top:8px;padding:5px 8px;background:#f7f3ec;border:1px solid #ddd6c8;letter-spacing:0.04em" id="${px}Pv">${ls(loc)||'尚 未 設 定'}</div>
   </div>`;
@@ -13350,95 +12999,47 @@ function upP(p){const r=document.getElementById(p+'R').value,k=document.getEleme
 function gLoc(p){return{r:document.getElementById(p+'R').value,k:document.getElementById(p+'K').value,lv:document.getElementById(p+'L').value}}
 
 function pgLoc(){
-  const kw=(window._locKw||'').trim().toLowerCase();
-  let h=`
-  <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
-    <input id="locSrch" type="text" placeholder="🔍 搜尋品項名稱…" value="${window._locKw||''}"
-      oninput="window._locKw=this.value;locFilter()"
-      oncompositionend="window._locKw=this.value;locFilter()"
-      style="flex:1;padding:7px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:13px;color:#1c1410;font-family:'Noto Serif TC',serif">
-    <button onclick="window._locKw='';document.getElementById('locSrch').value='';locFilter()" style="padding:6px 12px;border:1px solid #c8b89a;background:transparent;font-size:11px;color:#6b5a4e;cursor:pointer;white-space:nowrap">清 除</button>
-  </div>
-  <div id="locList"></div>
-  <div id="lF" style="margin-top:12px"></div>`;
-  document.getElementById('pg').innerHTML=h;
-  locFilter();
-}
-
-function locFilter(){
-  const kw=(window._locKw||'').trim().toLowerCase();
-  let h=''; let totalShown=0;
+  let h=`<div style="font-size:11px;color:#6b5a4e;letter-spacing:0.06em;margin-bottom:16px">點擊「編輯位置」修改品項的儲存位置設定。</div>`;
   Object.keys(CAT_META).forEach(cat=>{
-    let ci=inv.filter(i=>i.cat===cat);
-    if(kw) ci=ci.filter(i=>i.nm.toLowerCase().includes(kw));
-    if(!ci.length)return;
-    totalShown+=ci.length;
+    const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
-    <table class="tbl" style="margin-bottom:10px"><thead><tr><th style="width:50%">品 項</th><th style="width:50%">儲 存 位 置（點列編輯）</th></tr></thead><tbody>
-    ${ci.map(i=>`<tr onclick="oLE(${i.id})" style="cursor:pointer"><td style="font-family:'Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td></tr>`).join('')}
+    <table class="tbl" style="margin-bottom:10px"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
+    ${ci.map(i=>`<tr><td style="font-family:'Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px">編 輯 位 置</button></td></tr>`).join('')}
     </tbody></table></div>`;
   });
-  if(kw&&totalShown===0) h=`<div style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 品 項</div>`;
-  const listEl=document.getElementById('locList');
-  if(listEl) listEl.innerHTML=h;
+  h+='<div id="lF" style="margin-top:12px"></div>';
+  document.getElementById('pg').innerHTML=h;
+  // Async fill all QR canvases
+  inv.forEach(item=>{
+    const el=document.getElementById('qrc-'+item.id);
+    if(!el)return;
+    const payload=String(item.id);
+    try{
+      new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+  });
 }
 function oLE(id){
   if(!canWrite()){ alert('⚠ 編輯位置需要管理員或以上權限'); return; }
-  const it=inv.find(i=>i.id===id);
-  if(!it)return;
-  // 移除已有的編輯表單
-  document.querySelectorAll('.loc-edit-inline').forEach(el=>el.remove());
-  document.getElementById('lF').innerHTML='';
-
-  const editDiv=document.createElement('div');
-  editDiv.className='loc-edit-inline';
-  editDiv.style.cssText='background:#f7f3ec;border:1px solid #c8bfaf;border-left:3px solid #b5832a;padding:14px;margin:4px 0 8px;box-sizing:border-box;width:100%;overflow:hidden';
-  editDiv.innerHTML=`
-    <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;margin-bottom:10px;letter-spacing:0.08em">編 輯 ── ${it.nm}</div>
-    ${locBld('e',it.loc)}
-    <div class="row-btn" style="margin-top:8px">
-      <button onclick="document.querySelectorAll('.loc-edit-inline').forEach(el=>el.remove())">取 消</button>
-      <button class="btn-primary" onclick="sLE(${id})">儲 存</button>
-    </div>`;
-
-  // 找到點擊的列，插在所屬 table 之後
-  const allRows=document.querySelectorAll('tr');
-  let targetTable=null;
-  allRows.forEach(tr=>{
-    if(tr.getAttribute('onclick')==='oLE('+id+')') targetTable=tr.closest('table');
-  });
-  if(targetTable && targetTable.parentNode){
-    targetTable.parentNode.insertBefore(editDiv, targetTable.nextSibling);
-  } else {
-    document.getElementById('lF').appendChild(editDiv);
-  }
-  upP('e');
-  editDiv.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-async function gasUpdateInvLoc(id, loc){
-  const data=encodeURIComponent(JSON.stringify({id, loc:JSON.stringify(loc)}));
-  try{ await jsonpGetWithRetry(GAS_URL+'?action=updateInvLoc&data='+data); }
-  catch(e){
-    try{ await fetchGet(GAS_URL+'?action=updateInvLoc&data='+data); }
-    catch(e2){ console.warn('updateInvLoc 失敗',e2); }
+  {
+    const it=inv.find(i=>i.id===id);
+    document.getElementById('lF').innerHTML=`
+      <div style="background:#f7f3ec;border:1px solid #c8bfaf;border-left:3px solid #b5832a;padding:14px;margin-top:4px">
+        <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
+        ${locBld('e',it.loc)}
+        <div class="row-btn" style="margin-top:8px">
+          <button onclick="document.getElementById('lF').innerHTML=''">取 消</button>
+          <button class="btn-primary" onclick="sLE(${id})">儲 存</button>
+        </div>
+      </div>`;
+    upP('e');document.getElementById('lF').scrollIntoView({behavior:'smooth'});
   }
 }
-
-function sLE(id){
-  const item=inv.find(i=>i.id===id);
-  item.loc=gLoc('e');
-  showSaving();
-  gasUpdateInvLoc(item.id, item.loc).then(()=>showSaved()).catch(()=>showSaveErr());
-  document.querySelectorAll('.loc-edit-inline').forEach(el=>el.remove());
-  document.getElementById('lF').innerHTML='';
-  locFilter();
-}
+function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');gasSave();document.getElementById('lF').innerHTML='';pgLoc();}
 
 function pgRep(){
-  // 排除登入／登出，只顯示物品操作紀錄
-  const opLogs=logs.filter(l=>l.type!=='登入'&&l.type!=='登出');
-  const nms=['（全部品項）',...new Set(opLogs.map(l=>l.nm).filter(Boolean))];
+  const nms=['（全部品項）',...new Set(logs.map(l=>l.nm).filter(Boolean))];
   nms.sort((a,b)=>a==='（全部品項）'?-1:a.localeCompare(b,'zh-TW'));
   const curNm  =window._repNm  ||'';
   const curFrom=window._repFrom||'';
@@ -13462,15 +13063,10 @@ function pgRep(){
     <button onclick="repClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
-  let rows=[...opLogs];
+  let rows=[...logs].reverse();
   if(curNm)   rows=rows.filter(l=>l.nm===curNm);
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
   if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
-  // 新→舊倒序
-  rows.sort((a,b)=>{
-    const da=(a.date||'')+(a.time||''), db=(b.date||'')+(b.time||'');
-    return da<db?1:da>db?-1:0;
-  });
 
   if(curNm||curFrom||curTo){
     const total=rows.length;
@@ -13486,35 +13082,29 @@ function pgRep(){
   }
 
   h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:14%">日期／時間</th><th style="width:8%">操 作</th>
+    <th style="width:12%">時 間</th><th style="width:8%">操 作</th>
     <th style="width:16%">品 項</th><th style="width:6%">數 量</th>
     <th style="width:18%">人 員</th><th style="width:13%">用 途</th>
-    <th style="width:11%">歸 還 日</th><th style="width:${isDesigner()?'10%':'14%'}">位 置</th>
-    ${isDesigner()?'<th style="width:4%"></th>':''}
+    <th style="width:11%">歸 還 日</th><th style="width:16%">位 置</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
-    h+=`<tr><td colspan="${isDesigner()?9:8}" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${opLogs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
+    h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
   } else {
     rows.forEach(l=>{
-      const typeMap={'新增':'b-in','入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
-      const tp=l.type||'';
-      const cls=typeMap[tp]||'b-u';
+      const typeMap={'入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
+      const cls=typeMap[l.type]||'b-u';
       // 只取日期部分（前10碼），去除時間
       const dateOnly=(l.date||'').slice(0,10);
       const dueOnly =(l.due ||'').slice(0,10);
-      if(!tp) return; // type 空白的筆略過不顯示
-      const logKey=encodeURIComponent(JSON.stringify({date:l.date,time:l.time,type:l.type,user:l.user}));
       h+=`<tr>
-        <td style="color:#6b5a4e;font-size:11px;line-height:1.5">${dateOnly||'—'}<br><span style="color:#9a8a7a">${l.time||'—'}</span></td>
-        <td><span class="b ${cls}">${tp}</span></td>
-        <td style="font-family:'Noto Serif TC',serif">${l.nm||'—'}</td>
-        <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty||0}</td>
-        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${(tp==='登入'||tp==='登出')?'—':(l.pur||'—')}</td>
+        <td style="color:#6b5a4e">${dateOnly||'—'}</td>
+        <td><span class="b ${cls}">${l.type}</span></td>
+        <td style="font-family:'Noto Serif TC',serif">${l.nm}</td>
+        <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
+        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#6b5a4e">（'+l.operator+'操作）</span>':''}</td><td>${l.pur||'—'}</td>
         <td>${dueOnly||'—'}</td>
-        <td><span class="lb">${l.loc||'—'}</span></td>
-        ${isDesigner()?`<td style="text-align:center"><button onclick="deleteLog('${logKey}')" style="font-size:10px;padding:2px 6px;background:transparent;border:1px solid #c8a0a0;color:#8b2020;cursor:pointer;border-radius:2px" title="刪除此筆">✕</button></td>`:''}
-      </tr>`;
+        <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
     });
   }
   h+='</tbody></table></div>';
@@ -13529,116 +13119,6 @@ function pgRep(){
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
-// ── 登入狀況（設計師專用）────────────────────────────────────────────────────
-function pgLoginLog(){
-  if(!isDesigner()){ go('inv',null); return; }
-
-  const curUser = window._llUser  || '';
-  const curFrom = window._llFrom  || '';
-  const curTo   = window._llTo    || '';
-
-  // 從 logs 篩出登入 / 登出紀錄
-  let rows = logs.filter(l=>l.type==='登入'||l.type==='登出');
-  if(curUser) rows = rows.filter(l=>l.user===curUser);
-  if(curFrom) rows = rows.filter(l=>l.date&&l.date>=curFrom);
-  if(curTo)   rows = rows.filter(l=>l.date&&l.date<=curTo);
-  // 按日期時間新→舊
-  rows.sort((a,b)=>{
-    const da=(a.date||'')+(a.time||''), db=(b.date||'')+(b.time||'');
-    return da<db?1:da>db?-1:0;
-  });
-
-  // 所有曾登入過的人員名單（供篩選）
-  const members=[...new Set(logs.filter(l=>l.type==='登入'||l.type==='登出').map(l=>l.user).filter(Boolean))].sort();
-
-  let h=`
-  <div style="padding:14px 16px 6px">
-    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end">
-      <div>
-        <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px;letter-spacing:0.06em">人 員</div>
-        <select onchange="window._llUser=this.value;pgLoginLog()" style="padding:5px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410;min-width:110px">
-          <option value="">（全部人員）</option>
-          ${members.map(m=>`<option value="${m}"${m===curUser?' selected':''}>${m}</option>`).join('')}
-        </select>
-      </div>
-      <div>
-        <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px;letter-spacing:0.06em">起 始 日 期</div>
-        <input type="date" value="${curFrom}" onchange="window._llFrom=this.value;pgLoginLog()" style="padding:5px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
-      </div>
-      <div>
-        <div style="font-size:10px;color:#6b5a4e;margin-bottom:3px;letter-spacing:0.06em">結 束 日 期</div>
-        <input type="date" value="${curTo}" onchange="window._llTo=this.value;pgLoginLog()" style="padding:5px 8px;border:1px solid #c8b89a;background:#faf7f2;font-size:12px;color:#1c1410">
-      </div>
-      <button onclick="window._llUser='';window._llFrom='';window._llTo='';pgLoginLog()" style="padding:5px 14px;border:1px solid #c8b89a;background:transparent;font-size:11px;color:#6b5a4e;cursor:pointer;letter-spacing:0.06em">清 除</button>
-    </div>
-    <div style="font-size:10px;color:#9a8a7a;margin-top:8px;letter-spacing:0.04em">共 <b style="color:#1c1410">${rows.length}</b> 筆登入／登出紀錄</div>
-  </div>
-  <div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:18%">日期／時間</th>
-    <th style="width:8%">類 型</th>
-    <th style="width:18%">人 員</th>
-    <th style="width:18%">角 色</th>
-    <th style="width:38%">備 註</th>
-  </tr></thead><tbody>`;
-
-  if(!rows.length){
-    h+=`<tr><td colspan="5" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">查 無 符 合 紀 錄</td></tr>`;
-  } else {
-    const typeMap={'登入':'b-in','登出':'b-w'};
-    rows.forEach(l=>{
-      const cls=typeMap[l.type]||'b-u';
-      // pur 欄存角色資訊（登入時）或備註（自動登出）
-      const purTxt=l.pur||'—';
-      // 嘗試從 pur 取角色，格式為「角色：XXX」
-      const roleMatch=purTxt.match(/角色[：:](.+)/);
-      const roleTxt=roleMatch?roleMatch[1]:'—';
-      const noteTxt=roleMatch?'—':purTxt;
-      h+=`<tr>
-        <td style="color:#6b5a4e;font-size:11px;line-height:1.5">${(l.date||'').slice(0,10)||'—'}<br><span style="color:#9a8a7a">${l.time||'—'}</span></td>
-        <td><span class="b ${cls}">${l.type}</span></td>
-        <td style="font-family:'Noto Serif TC',serif">${l.user||'—'}</td>
-        <td>${l.type==='登入'?roleTxt:'—'}</td>
-        <td style="font-size:11px;color:#6b5a4e">${l.type==='登出'?noteTxt:'—'}</td>
-      </tr>`;
-    });
-  }
-
-  h+='</tbody></table></div>';
-  document.getElementById('pg').innerHTML=h;
-}
-
-// ── 設計師刪除單筆紀錄 ────────────────────────────────────────────────────────
-function deleteLog(keyEncoded){
-  if(!isDesigner()) return;
-  if(!confirm('確定刪除這筆異動紀錄？此操作無法復原。')) return;
-  const key=JSON.parse(decodeURIComponent(keyEncoded));
-  // 本機刪除
-  const idx=logs.findIndex(l=>l.date===key.date&&l.time===key.time&&l.type===key.type&&l.user===key.user);
-  if(idx>=0) logs.splice(idx,1);
-  // 推送到 Sheets
-  if(_gasLoaded){
-    const data=encodeURIComponent(JSON.stringify(key));
-    jsonpGetWithRetry(GAS_URL+'?action=deleteLog&data='+data)
-      .then(()=>{ showSaved(); pgRep(); })
-      .catch(()=>{ showSaveErr(); pgRep(); });
-  } else { pgRep(); }
-}
-
-function deleteBrws(id){
-  if(!isDesigner()) return;
-  if(!confirm('確定刪除這筆借用紀錄？此操作無法復原。')) return;
-  id=Number(id);
-  // 本機刪除
-  brws=brws.filter(b=>b.id!==id);
-  // 推送到 Sheets
-  if(_gasLoaded){
-    const data=encodeURIComponent(JSON.stringify({id}));
-    jsonpGetWithRetry(GAS_URL+'?action=deleteBrws&data='+data)
-      .then(()=>{ showSaved(); pgBorrow(); })
-      .catch(()=>{ showSaveErr(); pgBorrow(); });
-  } else { pgBorrow(); }
-}
-
 function repFilter(){
   window._repNm  =document.getElementById('repNm')?.value||'';
   window._repFrom=document.getElementById('repFrom')?.value||'';
@@ -13650,8 +13130,8 @@ function repClear(){
   pgRep();
 }
 
-const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep,loginlog:pgLoginLog};
-const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄',loginlog:'登 入 狀 況'};
+const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep};
+const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄'};
 // Mobile nav mapping: pg → bottom-nav button index (only 5 tabs; loc maps to borrow tab)
 const MOB_IDX={inv:0,scan:1,borrow:2,qr:3,loc:2,rep:4};
 const DSK_IDX={inv:0,scan:1,borrow:2,qr:3,loc:4,rep:5};
@@ -13676,7 +13156,6 @@ function go(pg,el){
 
   document.getElementById('pgt').textContent=ttmap[pg]||pg;
   document.getElementById('srchWrap').style.display=pg==='inv'?'flex':'none';
-  updateUserBadge();
   // Scroll to top on page change (mobile)
   const body=document.getElementById('pg');
   if(body)body.scrollTop=0;
@@ -13737,20 +13216,7 @@ let _invLock=false;
 let _invLockInfo={by:'',at:''};
 
 let _syncInterval=null;
-const AUTO_SYNC_MIN=5;  // 每5分鐘自動從 Sheets 重新讀取
-
-function startAutoSync(){
-  stopAutoSync();
-  _syncInterval=setInterval(()=>{
-    if(!_curUser||!_gasLoaded) return;
-    console.log('[autoSync] 定時輕量同步');
-    gasRefresh();
-  }, AUTO_SYNC_MIN * 60 * 1000);
-}
-
-function stopAutoSync(){
-  if(_syncInterval){ clearInterval(_syncInterval); _syncInterval=null; }
-}
+let _syncMinutes=3;
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
 // 檢查 session
@@ -13763,7 +13229,6 @@ if(!_curUser){
 } else {
   updateUserBadge();
   if(!isDesigner()) startAutoLogout();
-  startAutoSync();  // 每5分鐘自動同步
   if(!checkURLItem()) go('inv',null);
   gasLoad().catch(e=>console.warn('gasLoad失敗',e));
 }
