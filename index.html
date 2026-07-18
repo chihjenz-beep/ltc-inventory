@@ -13137,8 +13137,98 @@ function repClear(){
   pgRep();
 }
 
-const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep};
-const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄'};
+function pgLoginlog(){
+  const nms=['（全部人員）',...new Set(logs.filter(l=>l.type==='登入'||l.type==='登出').map(l=>l.nm).filter(Boolean))];
+  nms.sort((a,b)=>a==='（全部人員）'?-1:a.localeCompare(b,'zh-TW'));
+  const curNm  =window._loginNm  ||'';
+  const curFrom=window._loginFrom||'';
+  const curTo  =window._loginTo  ||'';
+
+  let h=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:14px;padding:12px 14px;background:rgba(180,150,100,0.08);border-radius:4px;border:1px solid rgba(180,150,100,0.2)">
+    <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;flex:1">
+      <label style="font-size:10px;color:#6b5a4e;letter-spacing:0.08em">人　員</label>
+      <select id="loginNmSel" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:12px">
+        ${nms.map(n=>`<option value="${n==='（全部人員）'?'':n}" ${(curNm===''&&n==='（全部人員）')||(curNm===n)?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <label style="font-size:10px;color:#6b5a4e;letter-spacing:0.08em">起始日期</label>
+      <input type="date" id="loginFromSel" value="${curFrom}" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:12px">
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <label style="font-size:10px;color:#6b5a4e;letter-spacing:0.08em">結束日期</label>
+      <input type="date" id="loginToSel" value="${curTo}" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:12px">
+    </div>
+    <button onclick="loginFilterClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
+  </div>`;
+
+  // 目前在線（依每位人員最近一筆登入/登出紀錄推估，logs 為新到舊排序）
+  const lastByUser={};
+  logs.filter(l=>l.type==='登入'||l.type==='登出').forEach(l=>{
+    if(!lastByUser[l.nm]) lastByUser[l.nm]=l;
+  });
+  const onlineList=Object.values(lastByUser).filter(l=>l.type==='登入');
+  h+=`<div style="margin-bottom:14px">
+    <div style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;margin-bottom:6px">目 前 在 線（依最近一次登入/登出紀錄推估）</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${onlineList.length?onlineList.map(l=>`<span class="lb" style="background:rgba(60,120,90,0.12);color:#2a6b5e;border-color:rgba(60,120,90,0.3)">${l.nm}　${(l.date||'').slice(5)} ${l.time||''}</span>`).join(''):'<span style="font-size:11px;color:#9a8a80">目前無在線紀錄</span>'}
+    </div>
+  </div>`;
+
+  let rows=logs.filter(l=>l.type==='登入'||l.type==='登出');
+  if(curNm)   rows=rows.filter(l=>l.nm===curNm);
+  if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
+  if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
+
+  if(curNm||curFrom||curTo){
+    const total=rows.length;
+    const inQ =rows.filter(l=>l.type==='登入').length;
+    const outQ=rows.filter(l=>l.type==='登出').length;
+    h+=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:#6b5a4e">
+      <span>共 <b style="color:#1c1410">${total}</b> 筆</span>
+      <span>登入 <b style="color:#2a6b5e">${inQ}</b></span>
+      <span>登出 <b style="color:#8b6914">${outQ}</b></span>
+    </div>`;
+  }
+
+  h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
+    <th style="width:14%">日 期</th><th style="width:10%">時 間</th>
+    <th style="width:10%">動 作</th><th style="width:20%">人 員</th>
+    <th style="width:16%">角 色</th><th style="width:30%">備 註</th>
+  </tr></thead><tbody>`;
+
+  if(!rows.length){
+    h+=`<tr><td colspan="6" style="text-align:center;padding:30px;color:#6b5a4e;font-family:'Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 登 入 紀 錄'}</td></tr>`;
+  } else {
+    rows.forEach(l=>{
+      const cls=l.type==='登入'?'b-in':'b-w';
+      const dateOnly=(l.date||'').slice(0,10);
+      const u=USERS.find(u=>u.nm===l.nm);
+      h+=`<tr>
+        <td style="color:#6b5a4e">${dateOnly||'—'}</td>
+        <td style="color:#6b5a4e">${l.time||'—'}</td>
+        <td><span class="b ${cls}">${l.type}</span></td>
+        <td>${l.nm||'—'}</td>
+        <td>${u?roleLabel(u.role):'—'}</td>
+        <td style="color:#6b5a4e">${l.pur||'—'}</td></tr>`;
+    });
+  }
+  h+='</tbody></table></div>';
+  document.getElementById('pg').innerHTML=h;
+}
+function loginFilter(){
+  window._loginNm  =document.getElementById('loginNmSel')?.value||'';
+  window._loginFrom=document.getElementById('loginFromSel')?.value||'';
+  window._loginTo  =document.getElementById('loginToSel')?.value||'';
+  pgLoginlog();
+}
+function loginFilterClear(){
+  window._loginNm='';window._loginFrom='';window._loginTo='';
+  pgLoginlog();
+}
+
+const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep,loginlog:pgLoginlog};
+const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄',loginlog:'登 入 狀 況'};
 // Mobile nav mapping: pg → bottom-nav button index (only 5 tabs; loc maps to borrow tab)
 const MOB_IDX={inv:0,scan:1,borrow:2,qr:3,loc:2,rep:4};
 const DSK_IDX={inv:0,scan:1,borrow:2,qr:3,loc:4,rep:5};
