@@ -11774,12 +11774,12 @@ let inv=[
   {id:30, nm:'香茅薄荷皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:31, nm:'絲瓜絡', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:32, nm:'台灣檜木粉', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'精油系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:34, nm:'手工皂模具／擴香石模具', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:35, nm:'塑膠花瓣（手工藝器材料）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:36, nm:'各色毛根（紅/朱紅/綠/蔚藍/橙/米/黃/蘭花/粉紅/櫻桃/燃橙/深褐）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:37, nm:'禮品貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'精油系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:39, nm:'洗臉慕斯貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:40, nm:'噴嘴頭', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:41, nm:'噴嘴瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
@@ -13162,7 +13162,7 @@ function pgLoginlog(){
     <button onclick="loginFilterClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
-  let rows=logs.filter(l=>l.type==='登入'||l.type==='登出');
+  let rows=[...logs].reverse().filter(l=>l.type==='登入'||l.type==='登出');
   if(curNm)   rows=rows.filter(l=>l.nm===curNm);
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
   if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
