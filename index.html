@@ -12141,18 +12141,6 @@ function pgInv(){
   const ac=brws.filter(b=>!b.ret).length;
   const od2=brws.filter(b=>!b.ret&&ovd(b.due)).length;
 
-  // 類別圖示對照
-  const CAT_ICON={
-    '佈置裝飾材料':'🪵','兒盟':'🎁','團體活動健康促進':'🏃',
-    '場地布置':'🎪','手工皂相關':'🧼',
-    '手工藝材料':'🧵','手工藝材料－剩餘手作材料':'🗂️','手工藝相關':'✂️','手工藝工具':'🧰',
-    '按摩系列':'💆','擴香牌／磚器材料組':'🌺','敲打擊／手搖樂器':'🥁',
-    '桌遊':'🎲','活動服裝表演器材料':'👗','芳療模組－穴位按摩刮痧':'🫧',
-    '結緣品':'🎀','食農相關':'🥬','耳穴按摩－耳穴器材料組':'👂',
-    '膏類組器材料':'🧪','蓑衣套組':'🌾','行政用品':'📋',
-    '辦公文具用品':'✏️','面膜系列':'😮'
-  };
-
   function rows(arr,catCol){return arr.map(i=>{
     const bq=brws.filter(b=>b.iid===i.id&&!b.ret).reduce((s,b)=>s+b.qty,0);
     const stClass=stc(i);
@@ -12189,11 +12177,9 @@ function pgInv(){
   let catIdx=0;
   Object.keys(CAT_META).forEach(cat=>{
     const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
-    const catCol=CAT_HEX[cat]||'#b5832a';
-    const catLight=CAT_LIGHT[cat]||'#faeeda';
-    const icon=CAT_ICON[cat]||'📁';
-    const lowCount=ci.filter(i=>stc(i)!=='b-ok').length;
-    const warnBadge=lowCount>0?`<span style="font-size:9px;background:#fff3;color:#fff;padding:1px 7px;border-radius:10px;margin-left:6px;border:1px solid #fff5">⚠ ${lowCount}</span>`:'';
+    const catCol=catHex(cat);
+    const catLight=catLightBg(cat);
+    const icon=catIcon(cat);
     const catId='cat_'+catIdx++;
     h+=`
     <div style="margin-bottom:10px;border-radius:3px;overflow:hidden;box-shadow:0 1px 4px rgba(28,20,16,0.10)">
@@ -12202,7 +12188,6 @@ function pgInv(){
         <div style="display:flex;align-items:center;gap:7px">
           <span style="font-size:16px;line-height:1">${icon}</span>
           <span style="font-family:'Noto Serif TC',serif;font-size:12px;color:#fff;letter-spacing:0.08em;font-weight:500">${cat}</span>
-          ${warnBadge}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:10px;color:rgba(255,255,255,0.8)">${ci.length} 項</span>
@@ -12807,7 +12792,7 @@ function selI(id){sd.item=inv.find(i=>i.id===id);ss=1;step()}
 // ── 庫存總覽快速操作（點擊列） ─────────────────────────────────────────────
 function invQuickAction(id){
   const item=inv.find(i=>i.id===id);if(!item)return;
-  const catCol=CAT_HEX[item.cat]||'#b5832a';
+  const catCol=catHex(item.cat);
   const bq=brws.filter(b=>b.iid===id&&!b.ret).reduce((s,b)=>s+b.qty,0);
   const ops=item.con?[
     {op:'入庫',ic:'↓',sub:'補充材料入庫',cls:'b-in'},
@@ -12961,57 +12946,68 @@ function cfm(){
   ss=3;step();
 }
 
-// ── QR Page ────────────────────────────────────────────────────────────────
+// ── 類別視覺識別（可愛化統一配色）─────────────────────────────────────────
+// 每個類別都給一個專屬圖示＋主色＋淺底色，維持整體風格一致。
+// 若未來新增了不在下方列表中的類別，CAT_PALETTE 會依名稱自動配上
+// 固定但不重複（依序循環）的可愛配色，不會再落回單調的預設灰／金色。
+const CAT_ICON={
+  '兒盟':'🎁','團體活動健康促進':'🤸','場地布置':'🎪',
+  '手工皂':'🧼','手工藝-1':'🎨','手工藝-2':'🧵',
+  '按摩系列':'💆','擴香牌材料組':'🌺','桌遊':'🎲',
+  '活動服裝表演器材料':'👗','穴位按摩刮痧':'🪷','精油系列':'🌸',
+  '耳穴按摩材料':'👂','膏類材料':'🧴','行政用品':'📋',
+  '辦公文具用品':'✏️','面膜系列':'🫧','食農相關':'🥬',
+  // 舊版類別名稱（相容保留，避免資料尚未同步時退回預設樣式）
+  '佈置裝飾材料':'🪵','手工皂相關':'🧼','手工藝材料':'🧵',
+  '手工藝材料－剩餘手作材料':'🗂️','手工藝相關':'🎨','手工藝工具':'🧰',
+  '擴香牌／磚器材料組':'🌺','敲打擊／手搖樂器':'🥁',
+  '芳療模組－穴位按摩刮痧':'🪷','結緣品':'🎀',
+  '耳穴按摩－耳穴器材料組':'👂','膏類組器材料':'🧴','蓑衣套組':'🌾',
+  '場地裝置布置器材':'🎪'
+};
 const CAT_HEX={
-  '佈置裝飾材料':'#7f4c0f',
-  '兒盟':'#2e6b3e',
-  '團體活動健康促進':'#2a5a8a',
-  '場地布置':'#6b2a6b',
-  '手工皂相關':'#5e3a1a',
-  '手工藝材料':'#2a6b5e',
-  '手工藝材料－剩餘手作材料':'#6b5a2a',
-  '手工藝相關':'#8b2020',
-  '手工藝工具':'#4a3a6b',
-  '按摩系列':'#1a4a6b',
-  '擴香牌／磚器材料組':'#4a6b2a',
-  '敲打擊／手搖樂器':'#6b2a3a',
-  '桌遊':'#2a4a6b',
-  '活動服裝表演器材料':'#6b3a2a',
-  '芳療模組－穴位按摩刮痧':'#3a5a4a',
-  '結緣品':'#7a3a6b',
-  '食農相關':'#2a6b2a',
-  '耳穴按摩－耳穴器材料組':'#6b4a2a',
-  '膏類組器材料':'#4a2a6b',
-  '蓑衣套組':'#5a6b2a',
-  '行政用品':'#6b6b2a',
-  '辦公文具用品':'#2a6b6b',
-  '面膜系列':'#4a4a6b'
+  '兒盟':'#3c9163','團體活動健康促進':'#3d90c9','場地布置':'#9c4fa8',
+  '手工皂':'#c98a4f','手工藝-1':'#e0784f','手工藝-2':'#3fae95',
+  '按摩系列':'#6a7fd6','擴香牌材料組':'#d9668f','桌遊':'#4f8fd6',
+  '活動服裝表演器材料':'#a8455a','穴位按摩刮痧':'#5a9c8a','精油系列':'#c17fc9',
+  '耳穴按摩材料':'#d99060','膏類材料':'#4fae7d','行政用品':'#a89142',
+  '辦公文具用品':'#3f9ca0','面膜系列':'#8a72c9','食農相關':'#4f9e4f',
+  '佈置裝飾材料':'#7f4c0f','手工皂相關':'#c98a4f','手工藝材料':'#3fae95',
+  '手工藝材料－剩餘手作材料':'#6b5a2a','手工藝相關':'#e0784f','手工藝工具':'#4a3a6b',
+  '擴香牌／磚器材料組':'#d9668f','敲打擊／手搖樂器':'#b1594f',
+  '芳療模組－穴位按摩刮痧':'#5a9c8a','結緣品':'#7a3a6b',
+  '耳穴按摩－耳穴器材料組':'#d99060','膏類組器材料':'#4fae7d','蓑衣套組':'#5a6b2a',
+  '場地裝置布置器材':'#9c4fa8'
 };
 const CAT_LIGHT={
-  '佈置裝飾材料':'#faeeda',
-  '兒盟':'#e8f4ea',
-  '團體活動健康促進':'#e8f0fa',
-  '場地布置':'#f4e8f4',
-  '手工皂相關':'#f4ede8',
-  '手工藝材料':'#e8f4f0',
-  '手工藝材料－剩餘手作材料':'#f4f0e8',
-  '手工藝相關':'#faeaea',
-  '手工藝工具':'#ece8f4',
-  '按摩系列':'#e8eef4',
-  '擴香牌／磚器材料組':'#eef4e8',
-  '敲打擊／手搖樂器':'#f4e8ec',
-  '桌遊':'#e8eef4',
-  '活動服裝表演器材料':'#f4ede8',
-  '芳療模組－穴位按摩刮痧':'#e8f0ec',
-  '結緣品':'#f4e8f0',
-  '食農相關':'#e8f4e8',
-  '耳穴按摩－耳穴器材料組':'#f4ede8',
-  '膏類組器材料':'#ece8f4',
-  '蓑衣套組':'#eff4e8',
-  '行政用品':'#f4f4e8',
-  '辦公文具用品':'#e8f4f4',
-  '面膜系列':'#eeeef4'
+  '兒盟':'#eafaf0','團體活動健康促進':'#e8f4fc','場地布置':'#f6ecfa',
+  '手工皂':'#fbf1e5','手工藝-1':'#fdece3','手工藝-2':'#e5f8f3',
+  '按摩系列':'#eef0fc','擴香牌材料組':'#fcecf1','桌遊':'#eaf3fc',
+  '活動服裝表演器材料':'#f9eaec','穴位按摩刮痧':'#eaf6f2','精油系列':'#f8ecf9',
+  '耳穴按摩材料':'#fcf0e6','膏類材料':'#e6f8ee','行政用品':'#f8f5e5',
+  '辦公文具用品':'#e5f6f7','面膜系列':'#f0ecfa','食農相關':'#eaf8ea',
+  '佈置裝飾材料':'#faeeda','手工皂相關':'#fbf1e5','手工藝材料':'#e5f8f3',
+  '手工藝材料－剩餘手作材料':'#f4f0e8','手工藝相關':'#fdece3','手工藝工具':'#ece8f4',
+  '擴香牌／磚器材料組':'#fcecf1','敲打擊／手搖樂器':'#fbecea',
+  '芳療模組－穴位按摩刮痧':'#eaf6f2','結緣品':'#f4e8f0',
+  '耳穴按摩－耳穴器材料組':'#fcf0e6','膏類組器材料':'#e6f8ee','蓑衣套組':'#eff4e8',
+  '場地裝置布置器材':'#f6ecfa'
 };
+// 給未列在上方的新類別使用的可愛配色循環表（圖示＋主色＋淺底色一組）
+const CAT_PALETTE=[
+  {icon:'🌷',hex:'#c9648f',light:'#fbeaf1'},
+  {icon:'🍡',hex:'#d68a4a',light:'#fcefe2'},
+  {icon:'🐣',hex:'#c9a83f',light:'#faf6e3'},
+  {icon:'🍀',hex:'#4a9c6e',light:'#e7f7ee'},
+  {icon:'🫐',hex:'#5a7fc9',light:'#e9eefb'},
+  {icon:'🦋',hex:'#8a63c9',light:'#f0eafb'},
+  {icon:'🍑',hex:'#d9755f',light:'#fbece7'},
+  {icon:'🌙',hex:'#4a6b9c',light:'#e8eef7'}
+];
+function _catHash(cat){let h=0;for(let i=0;i<cat.length;i++){h=(h*31+cat.charCodeAt(i))>>>0;}return h;}
+function catIcon(cat){return CAT_ICON[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETTE.length].icon;}
+function catHex(cat){return CAT_HEX[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETTE.length].hex;}
+function catLightBg(cat){return CAT_LIGHT[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETTE.length].light;}
 
 function pgQR(){
   let h=`
@@ -13030,7 +13026,7 @@ function pgQR(){
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px" class="qr-grid-mobile">`;
     ci.forEach(i=>{
-      const catCol=CAT_HEX[cat]||'#888';
+      const catCol=catHex(cat);
       h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(28,20,16,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
           <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
@@ -13041,7 +13037,7 @@ function pgQR(){
         <div style="font-family:'Noto Serif TC',serif;font-size:11px;color:#1c1410;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${i.nm}</div>
         <div style="font-size:9px;color:#6b5a4e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${ls(i.loc)}</div>
         <div style="text-align:center;margin-top:5px">
-          <span style="font-size:9px;background:${CAT_LIGHT[cat]||'#f5f5f0'};color:${catCol};padding:1px 6px;border-radius:10px;border:1px solid ${catCol}40">${i.con?'消耗品':'非消耗品'}</span>
+          <span style="font-size:9px;background:${catLightBg(cat)};color:${catCol};padding:1px 6px;border-radius:10px;border:1px solid ${catCol}40">${i.con?'消耗品':'非消耗品'}</span>
         </div>
       </div>`;
     });
@@ -13063,8 +13059,8 @@ function pgQR(){
 // ── Print single card preview ──────────────────────────────────────────────
 function previewCard(id){
   const item=inv.find(i=>i.id===id);if(!item)return;
-  const catCol=CAT_HEX[item.cat]||'#888';
-  const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+  const catCol=catHex(item.cat);
+  const catLight=catLightBg(item.cat);
   const nature=item.con?'消耗品':'非消耗品';
 
   // Build preview modal
@@ -13128,8 +13124,8 @@ function previewCard(id){
 
 // ── Print helpers ──────────────────────────────────────────────────────────
 function buildPrintCard(item, qrDataUrl){
-  const catCol=CAT_HEX[item.cat]||'#888';
-  const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+  const catCol=catHex(item.cat);
+  const catLight=catLightBg(item.cat);
   const nature=item.con?'消耗品':'非消耗品';
   return `
   <div class="card">
@@ -13151,8 +13147,8 @@ function getQRDataUrl(item, size){
 async function printSingleCard(id){
   const item=inv.find(i=>i.id===id);if(!item)return;
   const url=await getQRDataUrl(item,200);
-  const catCol=CAT_HEX[item.cat]||'#888';
-  const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+  const catCol=catHex(item.cat);
+  const catLight=catLightBg(item.cat);
   const nature=item.con?'消耗品':'非消耗品';
   const w=window.open('','_blank','width=400,height=550');
   w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -13199,8 +13195,8 @@ async function printAllQR(){
 
   const w=window.open('','_blank','width=900,height=700');
   let cardsHtml=cards.map(({item,url})=>{
-    const catCol=CAT_HEX[item.cat]||'#888';
-    const catLight=CAT_LIGHT[item.cat]||'#f5f5f0';
+    const catCol=catHex(item.cat);
+    const catLight=catLightBg(item.cat);
     const nature=item.con?'消耗品':'非消耗品';
     return `<div class="card">
       <div class="bar" style="background:${catCol}">${item.cat}</div>
