@@ -11187,11 +11187,10 @@ async function gasLoad(){
           return ll&&(ll.r!==sl.r||ll.k!==sl.k||ll.lv!==sl.lv);
         });
         inv=sheetInv.map(i=>{
-          // 類別以本機為準（避免 Sheets 舊類別覆蓋已更新的分類）
-          const localItem=inv.find(x=>x.id===Number(i.id));
+          // 分類以 Sheets 為準（分類異動主要透過直接編輯 Sheets 或類別管理／變更類別
+          // 功能完成，這兩者最終都會寫回 Sheets，故此處不應該再用本機舊值覆蓋）
           return {
             ...i,
-            cat: localItem ? localItem.cat : i.cat,
             loc: localLocMap[i.id] || i.loc
           };
         });
@@ -11247,6 +11246,19 @@ async function gasLoad(){
     document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
       el.title='無法連線到 Google Sheets，目前使用本機資料，功能不受影響';
     });
+  }
+}
+
+// ── 強制同步庫存：捨棄本機快取，直接重新從 Sheets 讀取一次 ────────────────
+async function forceSyncInv(){
+  if(!confirm('確定要強制同步嗎？將會以 Google Sheets 上的最新資料為準重新載入。'))return;
+  showSaving();
+  try{
+    await gasLoad();
+    alert('✓ 已完成同步');
+  }catch(e){
+    console.error('forceSyncInv 失敗',e);
+    alert('⚠ 同步失敗，請檢查網路連線後再試一次');
   }
 }
 
