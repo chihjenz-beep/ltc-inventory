@@ -12685,6 +12685,64 @@ function confirmEditQty(id){
   pgInv();
 }
 
+function changeItemCat(id){
+  document.getElementById('invActionModal')?.remove();
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  if(!canWrite()){ alert('⚠ 變更類別需要管理員或以上權限'); return; }
+  const cats=Object.keys(CAT_META).sort((a,b)=>a.localeCompare(b,'zh-TW'));
+  const overlay=document.createElement('div');
+  overlay.id='changeCatOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:340px;border-left:4px solid #5a7a9a">
+      <div style="padding:14px 18px;border-bottom:1px solid #ddd6c8">
+        <div style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">🏷 變 更 類 別</div>
+        <div style="font-size:11px;color:#6b5a4e;margin-top:3px">${item.nm}</div>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:4px">目 前 類 別</label>
+          <div style="font-size:12px;color:#6b5a4e">${item.cat}</div>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:6px">變 更 為</label>
+          <select id="ccSel" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:13px">
+            ${cats.map(c=>`<option value="${c}" ${c===item.cat?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div id="ccErr" style="font-size:11px;color:#8b2020;display:none"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById('changeCatOverlay').remove()" style="padding:7px 18px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e;letter-spacing:0.04em">取 消</button>
+          <button onclick="confirmChangeItemCat(${id})" style="padding:7px 20px;font-size:12px;background:#5a7a9a;color:#fff;border:1px solid #5a7a9a;cursor:pointer;letter-spacing:0.04em">確 認 變 更</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function confirmChangeItemCat(id){
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  const sel=document.getElementById('ccSel');
+  const newCat=sel?sel.value:'';
+  const err=document.getElementById('ccErr');
+  if(!newCat||!CAT_META[newCat]){ err.textContent='請選擇有效的類別'; err.style.display='block'; return; }
+  if(newCat===item.cat){ document.getElementById('changeCatOverlay').remove(); return; }
+  const oldCat=item.cat;
+  item.cat=newCat;
+  const operator=_curUser?_curUser.nm:'未知';
+  const editLog={type:'調整',nm:item.nm,qty:0,
+    user:operator,operator:operator,
+    pur:`變更類別：「${oldCat}」→「${newCat}」`,
+    due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+  logs.unshift(editLog);
+  gasAppendLog(editLog).catch(e=>console.warn('紀錄寫入失敗',e));
+  if(_gasLoaded) gasSave();
+  document.getElementById('changeCatOverlay').remove();
+  pgInv();
+}
+
 function deleteItem(id){
   document.getElementById('invActionModal')?.remove();
   const item=inv.find(i=>i.id===id);
@@ -12772,6 +12830,10 @@ function invQuickAction(id){
       <button onclick="editQty(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(181,131,42,0.08)'" onmouseout="this.style.background='transparent'">
         ✏ 修 改 數 量
+      </button>
+      <button onclick="changeItemCat(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px solid rgba(90,122,154,0.4);color:#5a7a9a;cursor:pointer;letter-spacing:0.06em"
+        onmouseover="this.style.background='rgba(90,122,154,0.08)'" onmouseout="this.style.background='transparent'">
+        🏷 變 更 類 別
       </button>
       <button onclick="deleteItem(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(139,32,32,0.06)'" onmouseout="this.style.background='transparent'">
