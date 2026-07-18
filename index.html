@@ -11451,23 +11451,35 @@ function doLogin(){
   _curUser={nm:user.nm,role:user.role};
   sessionStorage.setItem('pahome_user',JSON.stringify(_curUser));
   document.getElementById('loginOverlay').remove();
-  // 記錄登入
-  logs.unshift({type:'登入',nm:user.nm,qty:0,user:user.nm,
-    pur:'角色：'+roleLabel(user.role),due:'',loc:'',date:tdy(),time:ntm()});
   updateUserBadge();
   // 30 分鐘自動登出計時器（設計師不受限）
   if(!isDesigner()) startAutoLogout();
-  // 載入資料
-  gasLoad().catch(e=>console.warn('gasLoad失敗',e));
+  // 先載入最新資料（會整批覆蓋 logs），載入完成後才補上本次登入紀錄，
+  // 並用增量寫入存回 Sheets，避免登入紀錄被隨後的 gasLoad 覆蓋而遺失
+  gasLoad().catch(e=>console.warn('gasLoad失敗',e)).finally(()=>{
+    const loginLog={type:'登入',nm:user.nm,qty:0,user:user.nm,
+      pur:'角色：'+roleLabel(user.role),due:'',loc:'',date:tdy(),time:ntm()};
+    logs.unshift(loginLog);
+    gasAppendLog(loginLog).catch(e=>console.warn('登入紀錄寫入失敗',e));
+    if(window._curPage==='loginlog') pgLoginlog();
+  });
 }
 
 function doLogout(){
   clearAutoLogout();
   if(!confirm('確定要登出嗎？'))return;
   if(_curUser){
-    logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
-      pur:'',due:'',loc:'',date:tdy(),time:ntm()});
-    if(_gasLoaded) gasSave();
+    const logoutLog={type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
+      pur:'',due:'',loc:'',date:tdy(),time:ntm()};
+    logs.unshift(logoutLog);
+    if(_gasLoaded){
+      gasAppendLog(logoutLog).catch(e=>console.warn('登出紀錄寫入失敗',e)).finally(()=>{
+        _curUser=null;
+        sessionStorage.removeItem('pahome_user');
+        location.reload();
+      });
+      return;
+    }
   }
   _curUser=null;
   sessionStorage.removeItem('pahome_user');
