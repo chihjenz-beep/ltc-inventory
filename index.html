@@ -10929,6 +10929,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="doLogout();closeDrawer()" style="color:#8b2020">⏏ 登 出</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
+      <div class="nav sys-section" onclick="go('catmanage',this);closeDrawer()" style="color:#5a7a9a">🏷 類 別 管 理</div>
       <div class="nav sys-section" onclick="forceSyncInv();closeDrawer()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
@@ -10960,6 +10961,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
       <div class="nav" onclick="doLogout()" style="color:#8b2020">⏏ 登 出</div>
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
+      <div class="nav sys-section" onclick="go('catmanage',this)" style="color:#5a7a9a">🏷 類 別 管 理</div>
       <div class="nav sys-section" onclick="forceSyncInv()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#8b2020">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
@@ -11150,6 +11152,17 @@ async function gasLoad(){
       const cfg=d.data.config;
       _invLock=cfg.inventoryLock===true||cfg.inventoryLock==='true'||cfg.inventoryLock==='TRUE';
       _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
+      // 還原類別清單（新增／改名／刪除的持久化）；後端若未原樣保存 cats 欄位，
+      // cfg.cats 會是 undefined，此時保留目前的 CAT_META（本機預設）不變
+      if(cfg.cats){
+        try{
+          const savedCats=typeof cfg.cats==='string'?JSON.parse(cfg.cats):cfg.cats;
+          if(savedCats && typeof savedCats==='object' && Object.keys(savedCats).length){
+            Object.keys(CAT_META).forEach(k=>delete CAT_META[k]);
+            Object.assign(CAT_META, savedCats);
+          }
+        }catch(e){ console.warn('類別清單解析失敗，使用本機預設',e); }
+      }
     }
 
     // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
@@ -11563,9 +11576,166 @@ function unlockInvWithAuth(){
 }
 
 async function saveLockConfig(locked,by,at){
-  const encoded=encodeURIComponent(JSON.stringify({inventoryLock:locked,lockBy:by,lockAt:at}));
+  const encoded=encodeURIComponent(JSON.stringify({inventoryLock:locked,lockBy:by,lockAt:at,cats:JSON.stringify(CAT_META)}));
   try{ await jsonpGetWithRetry(GAS_URL+'?action=saveConfig&data='+encoded); }
   catch(e){ console.warn('saveLockConfig失敗',e); }
+}
+
+// ── 類別管理（新增／改名／刪除）────────────────────────────────────────────
+// 類別清單（CAT_META）透過 saveConfig 與盤點鎖定共用同一個 config 物件持久化，
+// 需後端 GAS 的 saveConfig/getAll 原樣保存並回傳 cats 欄位，才能跨裝置同步；
+// 若後端只認得固定欄位，類別異動將只存在於目前這個瀏覽器，重新整理後會還原。
+const CAT_CLS_CYCLE=['cat-cog','cat-ex','cat-adl','cat-art','cat-sen','cat-med'];
+
+async function pushCatConfig(){
+  await saveLockConfig(_invLock, _invLockInfo.by||'', _invLockInfo.at||'');
+}
+
+function addCategory(){
+  if(!isDesigner()){ alert('⚠ 類別管理僅設計師可操作'); return; }
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.7);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;border-left:4px solid var(--gold);padding:22px 24px;max-width:340px;width:100%">
+      <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410;margin-bottom:14px;letter-spacing:0.08em">＋ 新 增 類 別</div>
+      <input id="newCatInput" type="text" placeholder="輸入新類別名稱" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:13px;margin-bottom:6px">
+      <div id="newCatErr" style="display:none;color:#8b2020;font-size:11px;margin-bottom:6px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
+        <button onclick="confirmAddCategory()" style="font-size:11px;padding:7px 16px;background:var(--gold);color:#fff;border-color:var(--gold)">新 增</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(()=>document.getElementById('newCatInput')?.focus(),50);
+}
+
+function confirmAddCategory(){
+  const input=document.getElementById('newCatInput');
+  const err=document.getElementById('newCatErr');
+  const name=(input.value||'').trim();
+  if(!name){ err.textContent='請輸入類別名稱'; err.style.display='block'; return; }
+  if(CAT_META[name]){ err.textContent='此類別已存在'; err.style.display='block'; return; }
+  const cls=CAT_CLS_CYCLE[Object.keys(CAT_META).length % CAT_CLS_CYCLE.length];
+  CAT_META[name]={cls, label:name};
+  const by=_curUser?_curUser.nm:'管理員';
+  logs.unshift({type:'系統',nm:'新增類別',qty:0,user:by,pur:`新增類別：${name}`,due:'',loc:'',date:tdy(),time:ntm()});
+  gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
+  pushCatConfig();
+  input.closest('div[style*=fixed]').remove();
+  if(window._curPage==='catmanage') pgCatManage();
+}
+
+function renameCategory(oldName){
+  if(!isDesigner()){ alert('⚠ 類別管理僅設計師可操作'); return; }
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.7);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;border-left:4px solid var(--gold);padding:22px 24px;max-width:340px;width:100%">
+      <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410;margin-bottom:14px;letter-spacing:0.08em">✎ 類 別 改 名</div>
+      <div style="font-size:11px;color:#6b5a4e;margin-bottom:8px">原名稱：${oldName}</div>
+      <input id="renCatInput" type="text" value="${oldName}" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:13px;margin-bottom:6px">
+      <div id="renCatErr" style="display:none;color:#8b2020;font-size:11px;margin-bottom:6px"></div>
+      <div style="font-size:10px;color:#9a8a80;margin-bottom:6px">改名後，此類別下的所有品項會自動更新為新名稱</div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
+        <button onclick="confirmRenameCategory('${oldName.replace(/'/g,"\\'")}')" style="font-size:11px;padding:7px 16px;background:var(--gold);color:#fff;border-color:var(--gold)">確 認 改 名</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(()=>{ const el=document.getElementById('renCatInput'); el?.focus(); el?.select(); },50);
+}
+
+function confirmRenameCategory(oldName){
+  const input=document.getElementById('renCatInput');
+  const err=document.getElementById('renCatErr');
+  const newName=(input.value||'').trim();
+  if(!newName){ err.textContent='請輸入類別名稱'; err.style.display='block'; return; }
+  if(newName===oldName){ input.closest('div[style*=fixed]').remove(); return; }
+  if(CAT_META[newName]){ err.textContent='此類別名稱已存在'; err.style.display='block'; return; }
+  const meta=CAT_META[oldName];
+  delete CAT_META[oldName];
+  CAT_META[newName]={cls:meta.cls, label:newName};
+  const affected=inv.filter(i=>i.cat===oldName);
+  affected.forEach(i=>{ i.cat=newName; });
+  const by=_curUser?_curUser.nm:'管理員';
+  logs.unshift({type:'系統',nm:'類別改名',qty:0,user:by,pur:`「${oldName}」→「${newName}」（影響 ${affected.length} 筆品項）`,due:'',loc:'',date:tdy(),time:ntm()});
+  gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
+  pushCatConfig();
+  if(affected.length && _gasLoaded) gasSave();
+  input.closest('div[style*=fixed]').remove();
+  if(window._curPage==='catmanage') pgCatManage();
+}
+
+function deleteCategory(name){
+  if(!isDesigner()){ alert('⚠ 類別管理僅設計師可操作'); return; }
+  const affected=inv.filter(i=>i.cat===name);
+  const others=Object.keys(CAT_META).filter(c=>c!==name);
+  if(!others.length){ alert('⚠ 至少需保留一個類別'); return; }
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.7);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;border-left:4px solid #8b2020;padding:22px 24px;max-width:360px;width:100%">
+      <div style="font-family:'Noto Serif TC',serif;font-size:14px;color:#1c1410;margin-bottom:10px;letter-spacing:0.08em">刪 除 類 別：${name}</div>
+      ${affected.length?`
+        <div style="font-size:12px;color:#8b2020;line-height:1.7;margin-bottom:10px">此類別下還有 <b>${affected.length}</b> 筆品項，請先選擇要搬移到的類別：</div>
+        <select id="delCatTarget" style="width:100%;padding:8px 10px;border:1px solid #c8b89a;border-radius:3px;background:#faf7f2;color:#1c1410;font-size:13px;margin-bottom:10px">
+          ${others.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+      `:`<div style="font-size:12px;color:#6b5a4e;margin-bottom:10px">此類別目前沒有品項使用，確定要刪除嗎？</div>`}
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
+        <button onclick="confirmDeleteCategory('${name.replace(/'/g,"\\'")}')" style="font-size:11px;padding:7px 16px;background:#8b2020;color:#fff;border-color:#8b2020">確 認 刪 除</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function confirmDeleteCategory(name){
+  const affected=inv.filter(i=>i.cat===name);
+  let movedTo='';
+  if(affected.length){
+    const sel=document.getElementById('delCatTarget');
+    movedTo=sel?sel.value:'';
+    if(!movedTo){ alert('請選擇搬移目標類別'); return; }
+    affected.forEach(i=>{ i.cat=movedTo; });
+  }
+  delete CAT_META[name];
+  const by=_curUser?_curUser.nm:'管理員';
+  logs.unshift({type:'系統',nm:'刪除類別',qty:0,user:by,
+    pur:`刪除類別：${name}${affected.length?`（${affected.length} 筆品項已搬移至「${movedTo}」）`:''}`,
+    due:'',loc:'',date:tdy(),time:ntm()});
+  gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
+  pushCatConfig();
+  if(affected.length && _gasLoaded) gasSave();
+  document.querySelectorAll('div[style*="position:fixed"]').forEach(el=>{
+    if(el.textContent.includes('刪 除 類 別')) el.remove();
+  });
+  if(window._curPage==='catmanage') pgCatManage();
+}
+
+function pgCatManage(){
+  const catKeys=Object.keys(CAT_META).sort((a,b)=>a.localeCompare(b,'zh-TW'));
+  let h=`<div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+    <button onclick="addCategory()" style="padding:7px 18px;border:1px solid var(--gold);border-radius:3px;background:var(--gold);color:#fff;font-size:12px;cursor:pointer;letter-spacing:0.06em">＋ 新 增 類 別</button>
+  </div>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr>
+    <th style="width:15%">樣 式</th><th style="width:39%">類 別 名 稱</th>
+    <th style="width:16%">品 項 數</th><th style="width:30%">操 作</th>
+  </tr></thead><tbody>`;
+  catKeys.forEach(c=>{
+    const cnt=inv.filter(i=>i.cat===c).length;
+    h+=`<tr>
+      <td>${cb(c)}</td>
+      <td>${c}</td>
+      <td style="color:#6b5a4e">${cnt} 筆</td>
+      <td>
+        <button onclick="renameCategory('${c.replace(/'/g,"\\'")}')" style="padding:4px 10px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;margin-right:6px">改 名</button>
+        <button onclick="deleteCategory('${c.replace(/'/g,"\\'")}')" style="padding:4px 10px;border:1px solid #8b2020;border-radius:3px;background:transparent;color:#8b2020;font-size:11px;cursor:pointer">刪 除</button>
+      </td>
+    </tr>`;
+  });
+  h+='</tbody></table></div>';
+  document.getElementById('pg').innerHTML=h;
 }
 
 function guardOp(opName){
@@ -13226,8 +13396,8 @@ function loginFilterClear(){
   pgLoginlog();
 }
 
-const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep,loginlog:pgLoginlog};
-const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄',loginlog:'登 入 狀 況'};
+const pgmap={inv:pgInv,scan:pgScan,borrow:pgBorrow,qr:pgQR,loc:pgLoc,rep:pgRep,loginlog:pgLoginlog,catmanage:pgCatManage};
+const ttmap={inv:'庫 存 總 覽',scan:'掃 描 出 入 庫',borrow:'借 用 管 理',qr:'品 項 QR Code',loc:'位 置 管 理',rep:'異 動 紀 錄',loginlog:'登 入 狀 況',catmanage:'類 別 管 理'};
 // Mobile nav mapping: pg → bottom-nav button index (only 5 tabs; loc maps to borrow tab)
 const MOB_IDX={inv:0,scan:1,borrow:2,qr:3,loc:2,rep:4};
 const DSK_IDX={inv:0,scan:1,borrow:2,qr:3,loc:4,rep:5};
