@@ -13162,19 +13162,6 @@ function pgLoginlog(){
     <button onclick="loginFilterClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
-  // 目前在線（依每位人員最近一筆登入/登出紀錄推估，logs 為新到舊排序）
-  const lastByUser={};
-  logs.filter(l=>l.type==='登入'||l.type==='登出').forEach(l=>{
-    if(!lastByUser[l.nm]) lastByUser[l.nm]=l;
-  });
-  const onlineList=Object.values(lastByUser).filter(l=>l.type==='登入');
-  h+=`<div style="margin-bottom:14px">
-    <div style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;margin-bottom:6px">目 前 在 線（依最近一次登入/登出紀錄推估）</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px">
-      ${onlineList.length?onlineList.map(l=>`<span class="lb" style="background:rgba(60,120,90,0.12);color:#2a6b5e;border-color:rgba(60,120,90,0.3)">${l.nm}　${(l.date||'').slice(5)} ${l.time||''}</span>`).join(''):'<span style="font-size:11px;color:#9a8a80">目前無在線紀錄</span>'}
-    </div>
-  </div>`;
-
   let rows=logs.filter(l=>l.type==='登入'||l.type==='登出');
   if(curNm)   rows=rows.filter(l=>l.nm===curNm);
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
