@@ -11446,7 +11446,7 @@ function showLoginScreen(){
         </div>
         <div style="margin-bottom:16px">
           <label style="font-size:11px;color:#6b5a4e;letter-spacing:0.08em;display:block;margin-bottom:5px">密 碼</label>
-          <input id="loginPwd" type="password" maxlength="6" placeholder="請輸入 6 位數字密碼"
+          <input id="loginPwd" type="password" maxlength="3" placeholder="請輸入 3 位數字密碼"
             style="width:100%;padding:9px 10px;border:1px solid #c8b89a;background:#faf7f2;font-size:14px;color:#1c1410;letter-spacing:0.2em"
             onkeydown="if(event.key==='Enter')doLogin()">
         </div>
@@ -11864,28 +11864,28 @@ const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
 const LEVS=['第一層','第二層','第三層'];
 // ── 使用者資料（role: designer／admin／supervisor／user）─────────────────
 const USERS=[
-  {nm:'白雪儀', pwd:'619483', role:'supervisor'},
-  {nm:'翁美慧', pwd:'735024', role:'admin'},
-  {nm:'曾麗惠', pwd:'147308', role:'admin'},
-  {nm:'蔡尚文', pwd:'326574', role:'admin'},
-  {nm:'高麗君', pwd:'204857', role:'user'},
-  {nm:'蔡雅安', pwd:'371650', role:'user'},
-  {nm:'潘淑凰', pwd:'563742', role:'user'},
-  {nm:'顏淑萍', pwd:'820491', role:'user'},
-  {nm:'陳韻筑', pwd:'956120', role:'user'},
-  {nm:'鍾文鶯', pwd:'438275', role:'user'},
-  {nm:'黃千千', pwd:'093164', role:'user'},
-  {nm:'蕭淑滿', pwd:'712839', role:'user'},
-  {nm:'李孟娟', pwd:'508763', role:'user'},
-  {nm:'蔡芸樺', pwd:'684530', role:'user'},
-  {nm:'徐暐達', pwd:'391208', role:'user'},
-  {nm:'臧妘惠', pwd:'150673', role:'user'},
-  {nm:'張淑貞', pwd:'847291', role:'user'},
-  {nm:'袁子晏', pwd:'709438', role:'user'},
-  {nm:'侯妙薇', pwd:'573816', role:'user'},
-  {nm:'侯雅琳', pwd:'961250', role:'user'},
-  {nm:'黃靚',   pwd:'438097', role:'user'},
-  {nm:'林智仁', pwd:'4281',   role:'designer'},
+  {nm:'白雪儀', pwd:'619', role:'supervisor'},
+  {nm:'翁美慧', pwd:'735', role:'admin'},
+  {nm:'曾麗惠', pwd:'147', role:'admin'},
+  {nm:'蔡尚文', pwd:'326', role:'admin'},
+  {nm:'高麗君', pwd:'204', role:'user'},
+  {nm:'蔡雅安', pwd:'371', role:'user'},
+  {nm:'潘淑凰', pwd:'563', role:'user'},
+  {nm:'顏淑萍', pwd:'820', role:'user'},
+  {nm:'陳韻筑', pwd:'956', role:'user'},
+  {nm:'鍾文鶯', pwd:'438', role:'user'},
+  {nm:'黃千千', pwd:'093', role:'user'},
+  {nm:'蕭淑滿', pwd:'712', role:'user'},
+  {nm:'李孟娟', pwd:'508', role:'user'},
+  {nm:'蔡芸樺', pwd:'684', role:'user'},
+  {nm:'徐暐達', pwd:'391', role:'user'},
+  {nm:'臧妘惠', pwd:'150', role:'user'},
+  {nm:'張淑貞', pwd:'847', role:'user'},
+  {nm:'袁子晏', pwd:'709', role:'user'},
+  {nm:'侯妙薇', pwd:'573', role:'user'},
+  {nm:'侯雅琳', pwd:'961', role:'user'},
+  {nm:'黃靚',   pwd:'438', role:'user'},
+  {nm:'林智仁', pwd:'428', role:'designer'},
 ];
 const MEMBERS=USERS.map(u=>u.nm);
 
