@@ -13,6 +13,10 @@
 <meta name="apple-mobile-web-app-title" content="平安家園庫存">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="description" content="平安家園長照站活動物品庫存管理系統">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="icon" href="icon-512.png" sizes="512x512" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
 
@@ -10895,6 +10899,8 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   font-size:9px;color:var(--sage);letter-spacing:0.08em;
 }
 .stor-dot{width:6px;height:6px;border-radius:50%;background:var(--sage)}
+.spin-ico{display:inline-block;animation:pahome-spin 0.9s linear infinite}
+@keyframes pahome-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @media (pointer:coarse){
   .nav,.mob-nav-btn,.tc,.item-card,.nav-item{min-height:44px}
   input,select,button{min-height:40px}
@@ -10902,10 +10908,60 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 }
 
 /* Safe area for notch phones */
+
+/* ── APP-LIKE FEEL (PWA) ─────────────────────────────────────────────── */
+html{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+body{overscroll-behavior-y:none}
+button,.nav,.mob-nav-btn,.item-card,.tc,select,input[type=button]{
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;
+}
+input,textarea{-webkit-user-select:text;user-select:text}
+button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
+  transform:scale(0.96);transition:transform 0.08s ease;
+}
+.drawer{padding-top:env(safe-area-inset-top)}
+
+/* Standalone (installed PWA) — 幫 iOS/Android 狀態列預留空間 */
+@media (display-mode: standalone){
+  .topbar{padding-top:calc(10px + env(safe-area-inset-top))}
+  .sb-hd{padding-top:calc(22px + env(safe-area-inset-top))}
+  .mob-nav{padding-bottom:calc(env(safe-area-inset-bottom))}
+}
+
+/* 安裝提示條 */
+.install-bar{
+  display:none;position:fixed;left:12px;right:12px;
+  bottom:calc(70px + env(safe-area-inset-bottom));
+  z-index:250;background:var(--ink);color:var(--paper);
+  border-radius:12px;padding:10px 12px;
+  align-items:center;gap:10px;
+  box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  font-size:12px;letter-spacing:0.04em;
+}
+.install-bar.show{display:flex}
+.install-bar .ico{font-size:18px}
+.install-bar .txt{flex:1;line-height:1.4}
+.install-bar button{
+  font-size:11px;padding:6px 12px;border-radius:8px;
+  background:var(--gold);border:none;color:#1c1410;font-weight:700;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.install-bar .close{
+  background:none;color:var(--paper);font-size:16px;padding:4px 6px;font-weight:400;
+}
+@media (min-width:641px){.install-bar{left:auto;right:20px;bottom:20px;width:300px}}
 </style>
 </head>
 <body>
 <div class="app">
+
+  <!-- PWA 安裝提示條 -->
+  <div class="install-bar" id="installBar">
+    <span class="ico">📲</span>
+    <span class="txt">將本系統加入主畫面，像 App 一樣開啟使用</span>
+    <button onclick="doInstallPwa()">安裝</button>
+    <button class="close" onclick="dismissInstallBar()" aria-label="關閉">✕</button>
+  </div>
 
   <!-- MOBILE DRAWER OVERLAY -->
   <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
@@ -11145,6 +11201,7 @@ async function jsonpGetWithRetry(url, retries=1, timeout=6000){
 }
 
 async function gasLoad(){
+  showSyncing();
   try{
     const d=await jsonpGetWithRetry(GAS_URL+'?action=getAll');
     if(!d.ok) throw new Error(d.error);
@@ -11382,6 +11439,17 @@ const AUTO_LOGOUT_MIN=30;
 
 function startAutoLogout(){
   clearAutoLogout();
+  const totalMs=AUTO_LOGOUT_MIN*60*1000;
+  const warnLeadMs=5*60*1000;
+  const start=Number(localStorage.getItem('pahome_session_start'))||Date.now();
+  const elapsed=Date.now()-start;
+  const remainLogout=totalMs-elapsed;
+  const remainWarn=remainLogout-warnLeadMs;
+  if(remainLogout<=0){
+    // 距上次登入/延長已超過 30 分鐘（例如背景放置很久），直接登出
+    _forceAutoLogout();
+    return;
+  }
   // 25 分鐘時警告
   _autoLogoutWarnTimer=setTimeout(()=>{
     if(!_curUser) return;
@@ -11396,23 +11464,24 @@ function startAutoLogout(){
         <button onclick="extendSession()" class="btn-primary" style="padding:8px 24px;font-size:12px;letter-spacing:0.08em">繼 續 使 用</button>
       </div>`;
     document.body.appendChild(overlay);
-  }, 25*60*1000);
+  }, Math.max(0,remainWarn));
   // 30 分鐘強制登出
-  _autoLogoutTimer=setTimeout(()=>{
-    document.getElementById('autoLogoutWarn')?.remove();
-    if(!_curUser) return;
-    if(_curUser){
-      logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
-        pur:'自動登出（逾時30分鐘）',due:'',loc:'',date:tdy(),time:ntm()});
-      if(_gasLoaded) gasSave();
-    }
-    _curUser=null;
-    _gasLoaded=false;
-    sessionStorage.removeItem('pahome_user');
-    document.getElementById('invLockBanner')?.remove();
-    showLoginScreen();
-    alert('⏰ 已自動登出（閒置超過 30 分鐘）');
-  }, AUTO_LOGOUT_MIN*60*1000);
+  _autoLogoutTimer=setTimeout(()=>{ _forceAutoLogout(); }, remainLogout);
+}
+
+function _forceAutoLogout(){
+  document.getElementById('autoLogoutWarn')?.remove();
+  if(!_curUser) return;
+  logs.unshift({type:'登出',nm:_curUser.nm,qty:0,user:_curUser.nm,
+    pur:'自動登出（逾時30分鐘）',due:'',loc:'',date:tdy(),time:ntm()});
+  if(_gasLoaded) gasSave();
+  _curUser=null;
+  _gasLoaded=false;
+  localStorage.removeItem('pahome_user');
+  localStorage.removeItem('pahome_session_start');
+  document.getElementById('invLockBanner')?.remove();
+  showLoginScreen();
+  alert('⏰ 已自動登出（閒置超過 30 分鐘）');
 }
 
 function clearAutoLogout(){
@@ -11422,6 +11491,7 @@ function clearAutoLogout(){
 
 function extendSession(){
   document.getElementById('autoLogoutWarn')?.remove();
+  localStorage.setItem('pahome_session_start', String(Date.now()));
   startAutoLogout(); // 重新計時
 }
 
@@ -11474,7 +11544,8 @@ function doLogin(){
     document.getElementById('loginPwd').focus();return;
   }
   _curUser={nm:user.nm,role:user.role};
-  sessionStorage.setItem('pahome_user',JSON.stringify(_curUser));
+  localStorage.setItem('pahome_user',JSON.stringify(_curUser));
+  localStorage.setItem('pahome_session_start', String(Date.now()));
   document.getElementById('loginOverlay').remove();
   updateUserBadge();
   // 30 分鐘自動登出計時器（設計師不受限）
@@ -11500,14 +11571,16 @@ function doLogout(){
     if(_gasLoaded){
       gasAppendLog(logoutLog).catch(e=>console.warn('登出紀錄寫入失敗',e)).finally(()=>{
         _curUser=null;
-        sessionStorage.removeItem('pahome_user');
+        localStorage.removeItem('pahome_user');
+        localStorage.removeItem('pahome_session_start');
         location.reload();
       });
       return;
     }
   }
   _curUser=null;
-  sessionStorage.removeItem('pahome_user');
+  localStorage.removeItem('pahome_user');
+  localStorage.removeItem('pahome_session_start');
   location.reload();
 }
 
@@ -13534,6 +13607,12 @@ function _setBadge(txt,color){
 function showSaving(){ _setBadge('⏳ 儲存中…','var(--gold)'); }
 function showSaved(){  _setBadge('✓ 已同步',  'var(--sage)'); }
 function showSaveErr(){ _setBadge('⚠ 同步失敗','var(--red-seal)'); }
+function showSyncing(){
+  document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
+    el.innerHTML='<span class="spin-ico">⟳</span> 同步中…';
+    el.style.color='var(--gold)';
+  });
+}
 
 function checkURLItem(){
   const params=new URLSearchParams(window.location.search);
@@ -13559,9 +13638,19 @@ let _syncInterval=null;
 let _syncMinutes=3;
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
-// 檢查 session
-const _savedUser=sessionStorage.getItem('pahome_user');
+// 檢查 session（改用 localStorage，讓切到背景/被系統回收分頁後再打開不會強制重新登入）
+const _savedUser=localStorage.getItem('pahome_user');
 if(_savedUser){ try{_curUser=JSON.parse(_savedUser);}catch(e){_curUser=null;} }
+
+// 若已超過 30 分鐘未延長 session，視同逾時，直接清除並要求重新登入（一般使用者）
+if(_curUser && _curUser.role!=='designer'){
+  const start=Number(localStorage.getItem('pahome_session_start'))||0;
+  if(!start || Date.now()-start >= AUTO_LOGOUT_MIN*60*1000){
+    _curUser=null;
+    localStorage.removeItem('pahome_user');
+    localStorage.removeItem('pahome_session_start');
+  }
+}
 
 if(!_curUser){
   if(!checkURLItem()) go('inv',null);
@@ -13572,6 +13661,44 @@ if(!_curUser){
   if(!checkURLItem()) go('inv',null);
   gasLoad().catch(e=>console.warn('gasLoad失敗',e));
 }
+
+// ── PWA：Service Worker 註冊 + 安裝提示 ─────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(e=>console.warn('SW註冊失敗',e));
+  });
+}
+
+let _deferredInstallPrompt=null;
+const _isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;
+
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();
+  _deferredInstallPrompt=e;
+  if(!_isStandalone() && !sessionStorage.getItem('pahome_install_dismissed')){
+    document.getElementById('installBar')?.classList.add('show');
+  }
+});
+
+function doInstallPwa(){
+  const bar=document.getElementById('installBar');
+  if(_deferredInstallPrompt){
+    _deferredInstallPrompt.prompt();
+    _deferredInstallPrompt.userChoice.finally(()=>{
+      _deferredInstallPrompt=null;
+      bar?.classList.remove('show');
+    });
+  } else {
+    bar?.classList.remove('show');
+  }
+}
+function dismissInstallBar(){
+  document.getElementById('installBar')?.classList.remove('show');
+  sessionStorage.setItem('pahome_install_dismissed','1');
+}
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('installBar')?.classList.remove('show');
+});
 </script>
 </body>
 </html>
