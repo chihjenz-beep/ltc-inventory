@@ -11067,7 +11067,24 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
 
 </div>
 
+<!-- Firebase SDK（compat 版本，直接用全域 firebase 物件，不需要打包工具） -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <script>
+// ── Firebase 專案設定（inventory-eeaeb，手帳系統專用）───────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAHrl-M0vMTWr_548dC4Rmu5mQdzGYaS9Y",
+  authDomain: "inventory-eeaeb.firebaseapp.com",
+  databaseURL: "https://inventory-eeaeb-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "inventory-eeaeb",
+  storageBucket: "inventory-eeaeb.firebasestorage.app",
+  messagingSenderId: "1040383024327",
+  appId: "1:1040383024327:web:34b1956e03a86b3d4332e2"
+};
+firebase.initializeApp(firebaseConfig);
+const fbDb = firebase.database();
+
 // ── 預先產生的 QR Code（base64 PNG，離線可用）────────────────────────────
 const QR_B64 = {
   1: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQgAAAEICAIAAAAslP2oAAAE+0lEQVR4nO3dwYrtRBRAUVv8EUH//4Oe4A/0rAdv6ljYEQrqUBV7raH0yw3xbgpSNzkfP78+fwH+7dfTJwA3EgYEYUAQBgRhQBAGBGFAEAYEYUAQBgRhQBAGBGFAEAYEYUD4bfUf/Pn7HxPnsd2Pv//K/756/k/HebLr+uz63Onr8PbvwxMrBgRhQBAGBGFAEAYEYUAQBoTlfYwnq/eJd5neN1jdH5j+3FXT+xtP3v59sGJAEAYEYUAQBgRhQBAGBGFA2LaP8eQt98V33e+ffo5i13Gm92eevOX7YMWAIAwIwoAgDAjCgCAMCMKAML6PcZvbnn+4zdvPfxcrBgRhQBAGBGFAEAYEYUAQBoRvt49x2zyHU8978N+sGBCEAUEYEIQBQRgQhAFBGBDG9zFu+x3/6r7B298fNX2cVbd9H55YMSAIA4IwIAgDgjAgCAOCMCBs28d4y+/+p+deT8+puO18Vj/3LawYEIQBQRgQhAFBGBCEAUEYED5+fn2ePodXum2OxPR+yFueo9jFigFBGBCEAUEYEIQBQRgQhAFheR/ju/1ef3ou+PTxVz/3yan3WU1f5ydWDAjCgCAMCMKAIAwIwoAgDAjj8zFOPbdwap/k1H39t+xLvOV9VlYMCMKAIAwIwoAgDAjCgCAMCMfmfL/leYPV40/v25x6v9Op/YRd+ySrrBgQhAFBGBCEAUEYEIQBQRgQxvcxnkzPbZh+TuCUXfsk0/swtz1v471SsIEwIAgDgjAgCAOCMCAIA8Lr53y//bmO1c89NV9i1annVXYd34oBQRgQhAFBGBCEAUEYEIQB4dg+xlvmZvxf51g/OXU+p74PT6wYEIQBQRgQhAFBGBCEAUEYEJbfK3Xb/ebb9iV2ue35iifT53lqDroVA4IwIAgDgjAgCAOCMCAIA8L4fIzp5xNu25e4bf9h+nructt1s2JAEAYEYUAQBgRhQBAGBGFAGH+v1PTc7lW37XtMO7UvtHr8266zFQOCMCAIA4IwIAgDgjAgCAPC8j7GbXOmT83TuO09Wm/ZV9llen/GigFBGBCEAUEYEIQBQRgQhAFh23ulTv3uf3p+wqn52dOfe9v88l3/v3btm1kxIAgDgjAgCAOCMCAIA4IwIIzPx3jLPOxTcxjecv63zQ+Zfi7FigFBGBCEAUEYEIQBQRgQhAFhfB/jya7nIt7+u/9Vbz//t5ynFQOCMCAIA4IwIAgDgjAgCAPC+Jzv25x6buG2+/en5m2/5fhWDAjCgCAMCMKAIAwIwoAgDAjLz2Oc+n38qtvmcK/aNb9i19+vHufU9fdeKRgkDAjCgCAMCMKAIAwIwoCw7b1S9g32mp5Hfuq6PbntfKwYEIQBQRgQhAFBGBCEAUEYEMbnY9x2f3rV9PyNVdPX8+n4t80DeeK9UjBIGBCEAUEYEIQBQRgQhAHh2Jzvtzg1X3yXXfs/09fhyan3VlkxIAgDgjAgCAOCMCAIA4IwIHy7fYxd862nj/Pk1H39U/O5d/39KisGBGFAEAYEYUAQBgRhQBAGhPF9jFPvg5q2el//tr9fNb3fctucDSsGBGFAEAYEYUAQBgRhQBAGhI+fX59L/+DUnIRVp+733/bcwpO3zAX3Xim4iDAgCAOCMCAIA4IwIAgDwvI+BnwHVgwIwoAgDAjCgCAMCMKAIAwIwoAgDAjCgCAMCMKAIAwIwoAgDAj/AJpLMAO12QUwAAAAAElFTkSuQmCC",
@@ -11203,112 +11220,106 @@ async function jsonpGetWithRetry(url, retries=1, timeout=6000){
 async function gasLoad(){
   showSyncing();
   try{
-    const d=await jsonpGetWithRetry(GAS_URL+'?action=getAll');
-    if(!d.ok) throw new Error(d.error);
-    if(d.data.config){
-      const cfg=d.data.config;
-      _invLock=cfg.inventoryLock===true||cfg.inventoryLock==='true'||cfg.inventoryLock==='TRUE';
+    const snap=await fbDb.ref('/').once('value');
+    const d=snap.val()||{};
+
+    if(d.config){
+      const cfg=d.config;
+      _invLock=cfg.inventoryLock===true;
       _invLockInfo={by:cfg.lockBy||'',at:cfg.lockAt||''};
-      // 還原類別清單（新增／改名／刪除的持久化）；後端若未原樣保存 cats 欄位，
-      // cfg.cats 會是 undefined，此時保留目前的 CAT_META（本機預設）不變
-      if(cfg.cats){
-        try{
-          const savedCats=typeof cfg.cats==='string'?JSON.parse(cfg.cats):cfg.cats;
-          if(savedCats && typeof savedCats==='object' && Object.keys(savedCats).length){
-            Object.keys(CAT_META).forEach(k=>delete CAT_META[k]);
-            Object.assign(CAT_META, savedCats);
-          }
-        }catch(e){ console.warn('類別清單解析失敗，使用本機預設',e); }
+      if(cfg.cats && typeof cfg.cats==='object' && Object.keys(cfg.cats).length){
+        Object.keys(CAT_META).forEach(k=>delete CAT_META[k]);
+        Object.assign(CAT_META, cfg.cats);
       }
     }
 
-    // inv：若 Sheets 有資料就用，否則用預設值（首次使用）
-    // 若本機品項數 >= Sheets 品項數，以本機為準並寫回（避免舊資料覆蓋新匯入清單）
-    if(d.data.inv && d.data.inv.length>0){
-      const sheetInv=d.data.inv.map(row=>({
+    // inv：Firebase 以 id 為 key 儲存，天生就是「單筆位置」，
+    // 不會有 Sheets 時代「整包覆蓋」的風險
+    if(d.inv && Object.keys(d.inv).length>0){
+      inv=Object.values(d.inv).map(row=>({
         ...row,
-        id:   Number(row.id),
-        qty:  Number(row.qty),
-        min:  Number(row.min),
-        con:  row.con===true||row.con==='true'||row.con==='TRUE',
-        loc:  typeof row.loc==='string'?JSON.parse(row.loc):row.loc||{}
+        id:  Number(row.id),
+        qty: Number(row.qty),
+        min: Number(row.min),
+        con: row.con===true,
+        loc: row.loc || {}
       }));
-      if(sheetInv.length >= inv.length){
-        // Sheets 資料較新或相同，以 Sheets 為準
-        // 但 loc 以本機 HTML 為準（避免 Sheets 舊位置覆蓋已更新的位置）
-        const localLocMap={};
-        inv.forEach(i=>{ localLocMap[i.id]=i.loc; });
-        const locChanged=sheetInv.some(i=>{
-          const ll=localLocMap[i.id];
-          const sl=typeof i.loc==='object'?i.loc:{};
-          return ll&&(ll.r!==sl.r||ll.k!==sl.k||ll.lv!==sl.lv);
-        });
-        inv=sheetInv.map(i=>{
-          // 分類以 Sheets 為準（分類異動主要透過直接編輯 Sheets 或類別管理／變更類別
-          // 功能完成，這兩者最終都會寫回 Sheets，故此處不應該再用本機舊值覆蓋）
-          return {
-            ...i,
-            loc: localLocMap[i.id] || i.loc
-          };
-        });
-        // 若本機 loc 與 Sheets 不同，延遲推送（避免卡住 gasLoad 主流程）
-        if(locChanged){ setTimeout(()=>gasSave(), 2000); }
-      } else {
-        // 本機品項較多（剛匯入新清單），以本機為準並推送到 Sheets
-        console.log(`本機品項(${inv.length})多於 Sheets(${sheetInv.length})，自動同步至 Sheets`);
-        setTimeout(()=>gasSave(), 2000);
-      }
     } else {
-      // 首次：把預設值寫入 Sheets（延遲執行避免卡主流程）
-      setTimeout(()=>gasSave(), 2000);
+      // Firebase 是空的（尚未搬遷資料）：先用內建預設值，並提示執行搬遷
+      console.warn('Firebase 尚無庫存資料，如尚未搬遷請執行 migrateFromSheetsToFirebase()');
     }
 
-    if(d.data.logs && d.data.logs.length>0){
-      logs=d.data.logs.map(row=>({
+    if(d.logs && Object.keys(d.logs).length>0){
+      logs=Object.entries(d.logs).map(([key,row])=>({
         ...row,
-        type: row.type || row.op   || '',
-        operator: row.operator || '',
-        user: row.user || row.mem  || '',
-        pur:  row.pur  || row.note || '',
-        due:  row.due  || '',
-        loc:  row.loc  || '',
-        qty:  Number(row.qty || 0),
-        date: fixSheetDate(row.date || row.ts),
-        time: row.time || ''
-      }));
+        _fbKey: key,
+        qty: Number(row.qty||0)
+      })).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
     }
 
-    if(d.data.brws && d.data.brws.length>0){
-      brws=d.data.brws.map(row=>({
+    if(d.brws && Object.keys(d.brws).length>0){
+      brws=Object.values(d.brws).map(row=>({
         ...row,
         id:  Number(row.id),
         iid: Number(row.iid),
         qty: Number(row.qty),
-        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE',
-        due:  fixSheetDate(row.due),
-        date: fixSheetDate(row.date),
-        time: fixSheetTime(row.date, row.time),
-        retD: fixSheetDate(row.retD)
+        ret: row.ret===true
       }));
-      // rebuild bseq
       bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
     }
 
     _gasLoaded=true;
     showSaved();
     go(window._curPage||'inv', null);
+
+    // 即時監聽：其他裝置的異動會自動同步過來，不用手動重新整理
+    _startRealtimeListeners();
+
   }catch(e){
     console.error('gasLoad error',e);
     _setBadge('📴 離線模式','#6b5a4e');
     document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
-      el.title='無法連線到 Google Sheets，目前使用本機資料，功能不受影響';
+      el.title='無法連線到 Firebase，目前使用本機資料，功能不受影響';
     });
   }
 }
 
-// ── 強制同步庫存：捨棄本機快取，直接重新從 Sheets 讀取一次 ────────────────
+// 即時監聽（僅註冊一次）：其他人異動時自動更新畫面上的資料
+let _realtimeStarted=false;
+function _startRealtimeListeners(){
+  if(_realtimeStarted) return;
+  _realtimeStarted=true;
+
+  fbDb.ref('inv').on('value', snap=>{
+    const d=snap.val()||{};
+    if(!Object.keys(d).length) return;
+    inv=Object.values(d).map(row=>({
+      ...row, id:Number(row.id), qty:Number(row.qty), min:Number(row.min),
+      con:row.con===true, loc:row.loc||{}
+    }));
+    if(['inv','loc'].includes(window._curPage)) go(window._curPage,null);
+  });
+
+  fbDb.ref('brws').on('value', snap=>{
+    const d=snap.val()||{};
+    brws=Object.values(d).map(row=>({
+      ...row, id:Number(row.id), iid:Number(row.iid), qty:Number(row.qty), ret:row.ret===true
+    }));
+    bseq=brws.reduce((m,b)=>Math.max(m,b.id),0)+1;
+    if(window._curPage==='borrow') go('borrow',null);
+  });
+
+  fbDb.ref('logs').on('value', snap=>{
+    const d=snap.val()||{};
+    logs=Object.entries(d).map(([key,row])=>({...row,_fbKey:key,qty:Number(row.qty||0)}))
+      .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+    if(window._curPage==='rep') go('rep',null);
+  });
+}
+
+// ── 強制同步庫存：捨棄本機快取，直接重新從 Firebase 讀取一次 ────────────────
 async function forceSyncInv(){
-  if(!confirm('確定要強制同步嗎？將會以 Google Sheets 上的最新資料為準重新載入。'))return;
+  if(!confirm('確定要強制同步嗎？將會以 Firebase 上的最新資料為準重新載入。'))return;
   showSaving();
   try{
     await gasLoad();
@@ -11319,82 +11330,133 @@ async function forceSyncInv(){
   }
 }
 
-// ── 寫回 Google Sheets（雙軌機制：JSONP GET 優先，no-cors POST 備援）────
+// ── 寫回 Firebase（單筆／增量寫入，天生不會覆蓋其他人的資料）──────────────
 
-// ── 增量寫入（避免多人同時操作時資料覆蓋）────────────────────────────────
+function _clean(obj){
+  // Firebase 不接受 undefined 值，寫入前先清掉
+  return JSON.parse(JSON.stringify(obj));
+}
+
 async function gasAppendLog(logRow){
-  const data=encodeURIComponent(JSON.stringify({...logRow,loc:logRow.loc||''}));
   try{
-    await jsonpGetWithRetry(GAS_URL+'?action=appendLog&data='+data);
-  }catch(e){
-    try{ await fetchGet(GAS_URL+'?action=appendLog&data='+data); }
-    catch(e2){ console.warn('appendLog 失敗',e2); }
-  }
+    const ref=fbDb.ref('logs').push();
+    await ref.set(_clean({...logRow, loc:logRow.loc||''}));
+    logRow._fbKey=ref.key; // 標記已同步，避免 gasSave() 重複寫入
+    return true;
+  }catch(e){ console.warn('gasAppendLog 失敗',e); return false; }
 }
 
 async function gasUpdateInv(id, qty){
-  const data=encodeURIComponent(JSON.stringify({id, qty}));
   try{
-    await jsonpGetWithRetry(GAS_URL+'?action=updateInv&data='+data);
-  }catch(e){
-    try{ await fetchGet(GAS_URL+'?action=updateInv&data='+data); }
-    catch(e2){ console.warn('updateInv 失敗',e2); }
-  }
+    await fbDb.ref('inv/'+id+'/qty').set(qty);
+    return true;
+  }catch(e){ console.warn('gasUpdateInv 失敗',e); return false; }
+}
+
+// 單一品項照片存檔（獨立小請求，只更新這一筆的 img 欄位）
+async function gasUpdateItemImg(id, img){
+  try{
+    await fbDb.ref('inv/'+id+'/img').set(img||null);
+    return true;
+  }catch(e){ console.warn('gasUpdateItemImg 失敗',e); return false; }
 }
 
 async function gasAppendBrws(bRow){
-  const data=encodeURIComponent(JSON.stringify(bRow));
   try{
-    await jsonpGetWithRetry(GAS_URL+'?action=appendBrws&data='+data);
-  }catch(e){
-    try{ await fetchGet(GAS_URL+'?action=appendBrws&data='+data); }
-    catch(e2){ console.warn('appendBrws 失敗',e2); }
-  }
+    await fbDb.ref('brws/'+bRow.id).set(_clean(bRow));
+    return true;
+  }catch(e){ console.warn('gasAppendBrws 失敗',e); return false; }
 }
 
 async function gasUpdateBrws(bid, fields){
-  const data=encodeURIComponent(JSON.stringify({id:bid, ...fields}));
   try{
-    await jsonpGetWithRetry(GAS_URL+'?action=updateBrws&data='+data);
-  }catch(e){
-    try{ await fetchGet(GAS_URL+'?action=updateBrws&data='+data); }
-    catch(e2){ console.warn('updateBrws 失敗',e2); }
-  }
+    await fbDb.ref('brws/'+bid).update(_clean(fields));
+    return true;
+  }catch(e){ console.warn('gasUpdateBrws 失敗',e); return false; }
 }
 
+// gasSave()：把目前畫面上的 inv / brws 整份「以 id 為路徑」寫回 Firebase，
+// 以及把尚未同步過的 logs 逐筆 push 上去。
+// 因為每筆資料都是各自獨立的路徑（inv/<id>、brws/<id>），
+// 這裡即使把全部品項一起送出，也只會更新各自對應的節點，
+// 不會像過去 Google Sheets「整批清空重寫」那樣蓋掉別人剛存的資料。
 async function gasSave(){
   if(!_gasLoaded){
     console.warn('gasSave 已阻擋：_gasLoaded=false');
-    alert('⚠ 尚未連線 Google Sheets\n操作已取消，請稍後再試。');
+    alert('⚠ 尚未連線 Firebase\n操作已取消，請稍後再試。');
     return;
   }
   showSaving();
-  const makePayload=()=>({
-    inv:  inv.map(i=>({...i, loc:JSON.stringify(i.loc)})),
-    logs: logs,
-    brws: brws
-  });
-  // 方法一：JSONP GET（與 gasLoad 相同機制，相容所有手機瀏覽器）
-  // 注意：GAS 端的 doGet 需處理 action=saveAll&data=...
   try{
-    const encoded=encodeURIComponent(JSON.stringify(makePayload()));
-    await jsonpGetWithRetry(GAS_URL+'?action=saveAll&data='+encoded);
-    showSaved();return;
-  }catch(e){ console.warn('gasSave JSONP failed, trying POST',e); }
-  // 方法二：no-cors POST 備援（部分環境 JSONP 被擋時使用）
-  try{
-    await fetch(GAS_URL,{
-      method:'POST',
-      mode:'no-cors',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'saveAll',data:makePayload()})
+    const invUpdate={};
+    inv.forEach(i=>{ invUpdate['inv/'+i.id]=_clean(i); });
+
+    const brwsUpdate={};
+    brws.forEach(b=>{ brwsUpdate['brws/'+b.id]=_clean(b); });
+
+    const logPromises=[];
+    logs.forEach(l=>{
+      if(!l._fbKey){
+        const ref=fbDb.ref('logs').push();
+        const {_fbKey, ...clean}=l;
+        logPromises.push(ref.set(_clean(clean)).then(()=>{ l._fbKey=ref.key; }));
+      }
     });
+
+    await fbDb.ref().update({...invUpdate, ...brwsUpdate});
+    await Promise.all(logPromises);
     showSaved();
-  }catch(e2){
-    console.error('gasSave all methods failed',e2);
+  }catch(e){
+    console.error('gasSave 失敗',e);
     showSaveErr();
   }
 }
+
+// ── 一次性搬遷工具：把舊 Google Sheets 資料匯入 Firebase ────────────────────
+// 使用方式：在瀏覽器主控台（F12）貼上 migrateFromSheetsToFirebase() 執行一次即可。
+// 只需執行一次；重複執行 inv/brws 會安全覆蓋同 id 資料，但 logs 會重複新增。
+async function migrateFromSheetsToFirebase(){
+  if(!confirm('確定要把 Google Sheets 的資料匯入 Firebase 嗎？\n建議只執行一次。'))return;
+  try{
+    const res=await fetch(GAS_URL+'?action=getAll');
+    const d=await res.json();
+    if(!d.ok) throw new Error(d.error||'讀取失敗');
+
+    const invUpdate={};
+    (d.data.inv||[]).forEach(row=>{
+      const id=Number(row.id);
+      invUpdate['inv/'+id]=_clean({
+        ...row, id,
+        qty: Number(row.qty),
+        min: Number(row.min),
+        con: row.con===true||row.con==='true'||row.con==='TRUE',
+        loc: typeof row.loc==='string'?(row.loc?JSON.parse(row.loc):{}):(row.loc||{})
+      });
+    });
+
+    const brwsUpdate={};
+    (d.data.brws||[]).forEach(row=>{
+      const id=Number(row.id);
+      brwsUpdate['brws/'+id]=_clean({
+        ...row, id, iid:Number(row.iid), qty:Number(row.qty),
+        ret: row.ret===true||row.ret==='true'||row.ret==='TRUE'
+      });
+    });
+
+    await fbDb.ref().update({...invUpdate, ...brwsUpdate});
+
+    // logs 用 push 逐筆寫入（沒有天然的唯一 id）
+    for(const row of (d.data.logs||[])){
+      await fbDb.ref('logs').push().set(_clean(row));
+    }
+
+    alert(`✓ 搬遷完成！品項 ${Object.keys(invUpdate).length} 筆、借用 ${Object.keys(brwsUpdate).length} 筆、紀錄 ${(d.data.logs||[]).length} 筆`);
+  }catch(e){
+    console.error('migrateFromSheetsToFirebase 失敗',e);
+    alert('⚠ 搬遷失敗：'+e.message);
+  }
+}
+
 
 function confirmReset(){
   withAuth(()=>{
@@ -11421,6 +11483,10 @@ async function doReset(){
   logs=[];
   brws=[];
   bseq=1;
+  try{
+    await fbDb.ref('logs').set(null);
+    await fbDb.ref('brws').set(null);
+  }catch(e){ console.warn('清空 logs/brws 失敗',e); }
   await gasSave();
   location.reload();
 }
@@ -11661,9 +11727,9 @@ function unlockInvWithAuth(){
 }
 
 async function saveLockConfig(locked,by,at){
-  const encoded=encodeURIComponent(JSON.stringify({inventoryLock:locked,lockBy:by,lockAt:at,cats:JSON.stringify(CAT_META)}));
-  try{ await jsonpGetWithRetry(GAS_URL+'?action=saveConfig&data='+encoded); }
-  catch(e){ console.warn('saveLockConfig失敗',e); }
+  try{
+    await fbDb.ref('config').update(_clean({inventoryLock:locked, lockBy:by, lockAt:at, cats:CAT_META}));
+  }catch(e){ console.warn('saveLockConfig失敗',e); }
 }
 
 // ── 類別管理（新增／改名／刪除）────────────────────────────────────────────
@@ -12856,6 +12922,7 @@ function confirmDeleteItem(id){
   inv=inv.filter(i=>i.id!==id);
   // 記錄異動日誌
   logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'刪除',qty:0,mem:'管理員',note:'品項已刪除'});
+  fbDb.ref('inv/'+id).remove().catch(e=>console.warn('Firebase 刪除品項失敗',e));
   gasSave();
   pgInv();
 }
@@ -13104,6 +13171,9 @@ function pgQR(){
         <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
           <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
         </div>
+        <div class="qr-photo-wrap" onclick="event.stopPropagation();openPhotoUpload(${i.id})" title="點擊上傳／更換照片" style="width:44px;height:44px;margin:0 auto 4px;border-radius:50%;overflow:hidden;border:1px solid ${i.img?'var(--border-light)':'#ddd6c8'};background:${i.img?'#fff':'#faf7f2'};display:flex;align-items:center;justify-content:center;cursor:pointer">
+          ${i.img?`<img src="${i.img}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:14px;color:#c8b89a">📷</span>`}
+        </div>
         <div style="margin:0 auto 6px;width:64px;height:64px;display:flex;align-items:center;justify-content:center">
           <div id="qrc-${i.id}" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center"></div>
         </div>
@@ -13127,6 +13197,95 @@ function pgQR(){
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
+}
+
+// ── 品項照片：上傳／編輯／刪除 ───────────────────────────────────────────────
+function openPhotoUpload(id){
+  if(!canWrite()){ alert('⚠ 上傳照片需要管理員或以上權限'); return; }
+  const item=inv.find(i=>i.id===id); if(!item) return;
+  const overlay=document.createElement('div');
+  overlay.id='photoUploadOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(28,20,16,0.72);z-index:4000;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+  overlay.innerHTML=`
+    <div style="background:#f7f3ec;border:1px solid #c8bfaf;width:100%;max-width:320px;border-left:4px solid var(--gold)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #ddd6c8">
+        <span style="font-family:'Noto Serif TC',serif;font-size:13px;color:#1c1410;letter-spacing:0.08em">📷 品項照片 ── ${item.nm}</span>
+        <button onclick="document.getElementById('photoUploadOverlay').remove()" style="border:none;background:none;font-size:18px;color:#6b5a4e;cursor:pointer">✕</button>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px;align-items:center">
+        <div id="photoPreviewBox" style="width:140px;height:140px;border-radius:6px;overflow:hidden;border:1px solid #ddd6c8;background:#faf7f2;display:flex;align-items:center;justify-content:center">
+          ${item.img?`<img id="photoPreviewImg" src="${item.img}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:28px;color:#c8b89a">📷</span>`}
+        </div>
+        <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="font-size:11px" onchange="handlePhotoFile(event)">
+        <div id="photoErr" style="font-size:11px;color:#8b2020;display:none"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;width:100%;padding-top:4px">
+          ${item.img?`<button onclick="removePhoto(${id})" style="padding:7px 14px;border:1px dashed rgba(139,32,32,0.35);background:transparent;font-size:11px;cursor:pointer;color:var(--red-seal)">移 除 照 片</button>`:''}
+          <button onclick="document.getElementById('photoUploadOverlay').remove()" style="padding:7px 14px;border:1px solid #c8b89a;background:transparent;font-size:12px;cursor:pointer;color:#6b5a4e">取 消</button>
+          <button id="photoSaveBtn" onclick="savePhoto(${id})" class="btn-primary" style="padding:7px 18px;font-size:12px" ${item.img?'':'disabled'}>儲 存</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+let _pendingPhotoDataUrl=null;
+
+function handlePhotoFile(evt){
+  const file=evt.target.files&&evt.target.files[0];
+  const err=document.getElementById('photoErr');
+  err.style.display='none';
+  if(!file) return;
+  const img=new Image();
+  const reader=new FileReader();
+  reader.onload=e=>{
+    img.onload=()=>{
+      // 縮圖壓縮：長邊最大 320px，JPEG 品質 0.62，避免試算表儲存格過大
+      const maxSide=320;
+      let w=img.width, h=img.height;
+      if(w>h && w>maxSide){ h=Math.round(h*maxSide/w); w=maxSide; }
+      else if(h>=w && h>maxSide){ w=Math.round(w*maxSide/h); h=maxSide; }
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      let dataUrl=canvas.toDataURL('image/jpeg',0.62);
+      if(dataUrl.length>45000){
+        dataUrl=canvas.toDataURL('image/jpeg',0.4);
+      }
+      if(dataUrl.length>45000){
+        err.textContent='照片檔案過大，請換一張較簡單的照片再試';
+        err.style.display='block';
+        return;
+      }
+      _pendingPhotoDataUrl=dataUrl;
+      document.getElementById('photoPreviewBox').innerHTML=`<img id="photoPreviewImg" src="${dataUrl}" style="width:100%;height:100%;object-fit:cover">`;
+      const saveBtn=document.getElementById('photoSaveBtn');
+      if(saveBtn) saveBtn.disabled=false;
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePhoto(id){
+  const item=inv.find(i=>i.id===id); if(!item) return;
+  if(!_pendingPhotoDataUrl){ document.getElementById('photoUploadOverlay')?.remove(); return; }
+  item.img=_pendingPhotoDataUrl;
+  _pendingPhotoDataUrl=null;
+  document.getElementById('photoUploadOverlay')?.remove();
+  showSaving();
+  gasUpdateItemImg(id,item.img).then(ok=>ok?showSaved():showSaveErr());
+  if(window._curPage==='qr') pgQR();
+}
+
+function removePhoto(id){
+  const item=inv.find(i=>i.id===id); if(!item) return;
+  if(!confirm('確定要移除此品項的照片嗎？')) return;
+  delete item.img;
+  document.getElementById('photoUploadOverlay')?.remove();
+  showSaving();
+  gasUpdateItemImg(id,'').then(ok=>ok?showSaved():showSaveErr());
+  if(window._curPage==='qr') pgQR();
 }
 
 // ── Print single card preview ──────────────────────────────────────────────
