@@ -13011,22 +13011,47 @@ function invQuickAction(id){
         <div style="font-size:9px;color:#6b5a4e">${o.sub}</div>
       </div>`).join('')}
     </div>
-    <div style="padding:10px 16px 14px 16px;border-top:1px solid #ede8e0;display:flex;gap:8px">
-      <button onclick="editQty(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
+    <div style="padding:10px 16px 14px 16px;border-top:1px solid #ede8e0;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button onclick="editQty(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(181,131,42,0.08)'" onmouseout="this.style.background='transparent'">
         ✏ 修 改 數 量
       </button>
-      <button onclick="changeItemCat(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px solid rgba(90,122,154,0.4);color:#5a7a9a;cursor:pointer;letter-spacing:0.06em"
+      <button onclick="changeItemCat(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(90,122,154,0.4);color:#5a7a9a;cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(90,122,154,0.08)'" onmouseout="this.style.background='transparent'">
         🏷 變 更 類 別
       </button>
-      <button onclick="deleteItem(${id})" style="flex:1;padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
+      <button onclick="toggleItemCon(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(42,107,94,0.4);color:#2a6b5e;cursor:pointer;letter-spacing:0.06em"
+        onmouseover="this.style.background='rgba(42,107,94,0.08)'" onmouseout="this.style.background='transparent'">
+        🔁 ${item.con?'改 為 非 消 耗':'改 為 消 耗 品'}
+      </button>
+      <button onclick="deleteItem(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(139,32,32,0.06)'" onmouseout="this.style.background='transparent'">
         🗑 刪 除 品 項
       </button>
     </div>
   </div>`;
   document.body.appendChild(overlay);
+}
+
+function toggleItemCon(id){
+  document.getElementById('invActionModal')?.remove();
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  if(!canWrite()){ alert('⚠ 變更消耗性質需要管理員或以上權限'); return; }
+  const newCon=!item.con;
+  if(!confirm(`確定要把「${item.nm}」改為${newCon?'消耗品':'非消耗品'}嗎？`))return;
+  const oldCon=item.con;
+  item.con=newCon;
+  const operator=_curUser?_curUser.nm:'未知';
+  const editLog={type:'調整',nm:item.nm,qty:0,
+    user:operator,operator:operator,
+    pur:`變更消耗性質：「${oldCon?'消耗品':'非消耗品'}」→「${newCon?'消耗品':'非消耗品'}」`,
+    due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+  logs.unshift(editLog);
+  showSaving();
+  gasAppendLog(editLog).catch(e=>console.warn('紀錄寫入失敗',e));
+  fbDb.ref('inv/'+id+'/con').set(newCon).then(()=>showSaved()).catch(()=>showSaveErr());
+  pgInv();
 }
 
 function invReturnAction(id){
