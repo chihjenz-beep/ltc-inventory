@@ -11447,14 +11447,57 @@ async function migrateFromSheetsToFirebase(){
     await fbDb.ref().update({...invUpdate, ...brwsUpdate});
 
     // logs 用 push 逐筆寫入（沒有天然的唯一 id）
+    // 單筆寫入失敗不中斷整個迴圈，避免像上次那樣中途卡住漏掉後面的資料
+    let logOk=0, logFail=0;
     for(const row of (d.data.logs||[])){
-      await fbDb.ref('logs').push().set(_clean(row));
+      try{
+        await fbDb.ref('logs').push().set(_clean(row));
+        logOk++;
+      }catch(e){
+        logFail++;
+        console.warn('單筆紀錄寫入失敗，繼續下一筆',row,e);
+      }
     }
 
-    alert(`✓ 搬遷完成！品項 ${Object.keys(invUpdate).length} 筆、借用 ${Object.keys(brwsUpdate).length} 筆、紀錄 ${(d.data.logs||[]).length} 筆`);
+    alert(`✓ 搬遷完成！品項 ${Object.keys(invUpdate).length} 筆、借用 ${Object.keys(brwsUpdate).length} 筆、紀錄 ${logOk} 筆${logFail?`（${logFail} 筆失敗，可再執行一次 migrateMissingLogs() 補齊）`:''}`);
   }catch(e){
     console.error('migrateFromSheetsToFirebase 失敗',e);
     alert('⚠ 搬遷失敗：'+e.message);
+  }
+}
+
+// ── 補齊遺漏的異動紀錄：比對 Sheets 與 Firebase 現有資料，只新增缺少的那些 ──
+// 使用方式：F12 主控台輸入 migrateMissingLogs() 執行
+async function migrateMissingLogs(){
+  if(!confirm('確定要比對並補齊 Google Sheets 裡、但 Firebase 目前缺少的異動紀錄嗎？\n已存在的不會重複新增。'))return;
+  try{
+    const res=await fetch(GAS_URL+'?action=getAll');
+    const d=await res.json();
+    if(!d.ok) throw new Error(d.error||'讀取失敗');
+
+    const sheetLogs=d.data.logs||[];
+    // 用 日期+時間+品項+人員+類型 組合當作是否已存在的比對依據
+    const existingKeys=new Set(logs.map(l=>`${l.date}|${l.time}|${l.nm}|${l.user}|${l.type}`));
+
+    let added=0, skipped=0, failed=0;
+    for(const row of sheetLogs){
+      const key=`${row.date}|${row.time}|${row.nm}|${row.user}|${row.type}`;
+      if(existingKeys.has(key)){ skipped++; continue; }
+      try{
+        await fbDb.ref('logs').push().set(_clean(row));
+        existingKeys.add(key); // 避免同一批裡的重複列再被加一次
+        added++;
+      }catch(e){
+        failed++;
+        console.warn('補值失敗',row,e);
+      }
+    }
+
+    alert(`✓ 補齊完成！新增 ${added} 筆、略過已存在 ${skipped} 筆${failed?`、失敗 ${failed} 筆`:''}`);
+    await gasLoad(); // 重新載入，畫面立即更新
+  }catch(e){
+    console.error('migrateMissingLogs 失敗',e);
+    alert('⚠ 補齊失敗：'+e.message);
   }
 }
 
