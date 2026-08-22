@@ -13602,7 +13602,7 @@ function pgRep(){
     <button onclick="repClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
-  let rows=[...logs].reverse();
+  let rows=logs.filter(l=>l.type!=='登入'&&l.type!=='登出');
   if(curNm)   rows=rows.filter(l=>l.nm===curNm);
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
   if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
@@ -13694,7 +13694,7 @@ function pgLoginlog(){
     <button onclick="loginFilterClear()" style="padding:5px 14px;border:1px solid #c8b89a;border-radius:3px;background:transparent;color:#6b5a4e;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
-  let rows=[...logs].reverse().filter(l=>l.type==='登入'||l.type==='登出');
+  let rows=logs.filter(l=>l.type==='登入'||l.type==='登出');
   if(curNm)   rows=rows.filter(l=>l.nm===curNm);
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
   if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
