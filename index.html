@@ -13646,6 +13646,18 @@ function pgRep(){
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
   if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
 
+  // 異動紀錄固定由新到舊排列；同一時間則保留原始順序，避免資料順序不穩定。
+  const logSortKey=l=>{
+    const source=`${l.date||''} ${l.time||''}`;
+    const dm=source.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    const tm=source.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if(!dm)return '0000-00-00T00:00:00';
+    const d=`${dm[1]}-${String(dm[2]).padStart(2,'0')}-${String(dm[3]).padStart(2,'0')}`;
+    const t=tm?`${String(tm[1]).padStart(2,'0')}:${tm[2]}:${tm[3]||'00'}`:'00:00:00';
+    return `${d}T${t}`;
+  };
+  rows=rows.map((l,i)=>({l,i})).sort((a,b)=>logSortKey(b.l).localeCompare(logSortKey(a.l))||a.i-b.i).map(x=>x.l);
+
   if(curNm||curFrom||curTo){
     const total=rows.length;
     const inQ =rows.filter(l=>l.type==='入庫').reduce((s,l)=>s+Number(l.qty),0);
@@ -13672,11 +13684,11 @@ function pgRep(){
     rows.forEach(l=>{
       const typeMap={'入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
       const cls=typeMap[l.type]||'b-u';
-      // 只取日期部分（前10碼），去除時間
       const dateOnly=(l.date||'').slice(0,10);
+      const timeOnly=(l.time||'').slice(0,8);
       const dueOnly =(l.due ||'').slice(0,10);
       h+=`<tr>
-        <td style="color:#6b5a4e">${dateOnly||'—'}</td>
+        <td style="color:#6b5a4e">${dateOnly||'—'}${timeOnly?`<div style="font-size:9px;opacity:.75;letter-spacing:0">${timeOnly}</div>`:''}</td>
         <td><span class="b ${cls}">${l.type}</span></td>
         <td style="font-family:'Noto Serif TC',serif">${l.nm}</td>
         <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
