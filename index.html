@@ -10915,6 +10915,16 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .tbl td{padding:9px 8px}
 }
 
+/* 位置編輯視窗：固定在 viewport，不讓背景內容跟著手機觸控一起捲動 */
+html.loc-editor-open,body.loc-editor-open{overflow:hidden !important;height:100% !important;overscroll-behavior:none !important}
+body.loc-editor-open .body{overflow:hidden !important;touch-action:none}
+#locEditOverlay{height:100dvh;min-height:100dvh;box-sizing:border-box;overscroll-behavior:contain;touch-action:none}
+#locEditOverlay>div{box-sizing:border-box;touch-action:auto}
+@media(max-width:640px){
+  #locEditOverlay{align-items:flex-start !important;padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom)) !important;overflow:hidden !important}
+  #locEditOverlay>div{width:100% !important;max-width:none !important;max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;overflow-y:auto !important;-webkit-overflow-scrolling:touch}
+}
+
 /* Safe area for notch phones */
 
 /* ── APP-LIKE FEEL (PWA) ─────────────────────────────────────────────── */
@@ -13705,7 +13715,13 @@ function pgLoc(){
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
-function closeLocEditor(){ document.getElementById('locEditOverlay')?.remove(); }
+function closeLocEditor(){
+  document.getElementById('locEditOverlay')?.remove();
+  document.documentElement.classList.remove('loc-editor-open');
+  document.body.classList.remove('loc-editor-open');
+  const appBody=document.querySelector('.body');
+  if(appBody) appBody.style.overflowY='';
+}
 function oLE(id){
   if(!canWrite()){ alert('⚠ 編輯位置需要管理員或以上權限'); return; }
   const it=inv.find(i=>i.id===id);
@@ -13724,6 +13740,10 @@ function oLE(id){
       </div>
     </div>`;
   overlay.addEventListener('click',event=>{if(event.target===overlay)closeLocEditor();});
+  document.documentElement.classList.add('loc-editor-open');
+  document.body.classList.add('loc-editor-open');
+  const appBody=document.querySelector('.body');
+  if(appBody) appBody.style.overflowY='hidden';
   document.body.appendChild(overlay);
   upP('e');
   setTimeout(()=>document.getElementById('eR')?.focus(),50);
