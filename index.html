@@ -11769,7 +11769,7 @@ function startInvLock(){
   {
     const now=new Date();
     const at=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-    const by=_curUser?_curUser.nm:'管理員';
+    const by=currentOperator();
     _invLock=true; _invLockInfo={by,at};
     saveLockConfig(true,by,at);
     applyInvLockUI();
@@ -11781,7 +11781,7 @@ function startInvLock(){
 function unlockInvWithAuth(){
   if(!isDesigner()){ alert('⚠ 解除盤點鎖定僅設計師可操作'); return; }
   {
-    const by=_curUser?_curUser.nm:'管理員';
+    const by=currentOperator();
     _invLock=false; _invLockInfo={by:'',at:''};
     saveLockConfig(false,'','');
     applyInvLockUI();
@@ -11832,7 +11832,7 @@ function confirmAddCategory(){
   if(CAT_META[name]){ err.textContent='此類別已存在'; err.style.display='block'; return; }
   const cls=CAT_CLS_CYCLE[Object.keys(CAT_META).length % CAT_CLS_CYCLE.length];
   CAT_META[name]={cls, label:name};
-  const by=_curUser?_curUser.nm:'管理員';
+  const by=currentOperator();
   logs.unshift({type:'系統',nm:'新增類別',qty:0,user:by,pur:`新增類別：${name}`,due:'',loc:'',date:tdy(),time:ntm()});
   gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
   pushCatConfig();
@@ -11872,7 +11872,7 @@ function confirmRenameCategory(oldName){
   CAT_META[newName]={cls:meta.cls, label:newName};
   const affected=inv.filter(i=>i.cat===oldName);
   affected.forEach(i=>{ i.cat=newName; });
-  const by=_curUser?_curUser.nm:'管理員';
+  const by=currentOperator();
   logs.unshift({type:'系統',nm:'類別改名',qty:0,user:by,pur:`「${oldName}」→「${newName}」（影響 ${affected.length} 筆品項）`,due:'',loc:'',date:tdy(),time:ntm()});
   gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
   pushCatConfig();
@@ -11915,7 +11915,7 @@ function confirmDeleteCategory(name){
     affected.forEach(i=>{ i.cat=movedTo; });
   }
   delete CAT_META[name];
-  const by=_curUser?_curUser.nm:'管理員';
+  const by=currentOperator();
   logs.unshift({type:'系統',nm:'刪除類別',qty:0,user:by,
     pur:`刪除類別：${name}${affected.length?`（${affected.length} 筆品項已搬移至「${movedTo}」）`:''}`,
     due:'',loc:'',date:tdy(),time:ntm()});
@@ -12100,6 +12100,12 @@ function canWrite(){ return _curUser&&['designer','admin','supervisor'].includes
 function isDesigner(){ return _curUser&&_curUser.role==='designer'; }
 function isAdminPlus(){ return _curUser&&['designer','admin'].includes(_curUser.role); }
 function roleLabel(role){ return {designer:'設計師',admin:'管理員',supervisor:'監察員',user:'使用者'}[role]||role; }
+// 異動紀錄中的操作人員一律從目前登入者的「姓名」取得，不能使用角色名稱當作姓名。
+function currentOperator(){
+  const candidate=String(_curUser?.nm||_curUser?.name||'').trim();
+  const matched=USERS.find(u=>u.nm===candidate);
+  return matched?matched.nm:'未知';
+}
 const PC=['日常活動','課程使用','個別訓練','團體活動','其他'];
 const PN=['認知訓練課','運動復健課','團體活動','個別借用','其他'];
 
@@ -12542,7 +12548,7 @@ function doRet(id){
   const b=brws.find(x=>x.id===id);if(!b)return;
   b.ret=true;b.retD=tdy();
   const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
-  logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
+  logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:currentOperator(),pur:b.pur||'歸還',due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
   gasSave();
   pgBorrow();
 }
@@ -12955,7 +12961,7 @@ function confirmEditQty(id){
   }
   const oldQty=item.qty;
   item.qty=newQty;
-  const operator=_curUser?_curUser.nm:'未知';
+  const operator=currentOperator();
   const editLog={type:'調整',nm:item.nm,qty:newQty-oldQty,
     user:operator,operator:operator,
     pur:(note||'數量調整')+`（${oldQty}→${newQty}）`,
@@ -13016,7 +13022,7 @@ function confirmChangeItemCat(id){
   if(newCat===item.cat){ document.getElementById('changeCatOverlay').remove(); return; }
   const oldCat=item.cat;
   item.cat=newCat;
-  const operator=_curUser?_curUser.nm:'未知';
+  const operator=currentOperator();
   const editLog={type:'調整',nm:item.nm,qty:0,
     user:operator,operator:operator,
     pur:`變更類別：「${oldCat}」→「${newCat}」`,
@@ -13066,7 +13072,7 @@ function confirmDeleteItem(id){
   // 從 inv 移除
   inv=inv.filter(i=>i.id!==id);
   // 使用報表共用格式記錄異動，避免舊版 op／mem／note 欄位造成 undefined。
-  const operator=_curUser?_curUser.nm:'未知';
+  const operator=currentOperator();
   const deleteLog={type:'刪除',iid:id,nm:item.nm,qty:0,user:operator,operator,
     pur:'品項已刪除',due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
   logs.unshift(deleteLog);
@@ -13157,7 +13163,7 @@ function toggleItemCon(id){
   if(!confirm(`確定要把「${item.nm}」改為${newCon?'消耗品':'非消耗品'}嗎？`))return;
   const oldCon=item.con;
   item.con=newCon;
-  const operator=_curUser?_curUser.nm:'未知';
+  const operator=currentOperator();
   const editLog={type:'調整',nm:item.nm,qty:0,
     user:operator,operator:operator,
     pur:`變更消耗性質：「${oldCon?'消耗品':'非消耗品'}」→「${newCon?'消耗品':'非消耗品'}」`,
@@ -13208,7 +13214,7 @@ function doRetById(bid){
   const b=brws.find(x=>x.id===bid);if(!b||b.ret)return;
   b.ret=true;b.retD=tdy();
   const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
-  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:_curUser?_curUser.nm:'未知',pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
+  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:currentOperator(),pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
   logs.push(retLog);
   // 增量寫入
   showSaving();
@@ -13256,7 +13262,7 @@ function selO(op){
 }
 function cfm(){
   if(!guardOp('出入庫')) return;
-  const operator=_curUser?_curUser.nm:'未知';  // 登入者（實際操作人）
+  const operator=currentOperator();  // 登入者（實際操作人）
   const u=(document.getElementById('sU').value||'').trim(),q=parseInt(document.getElementById('sQ').value)||0,pur=document.getElementById('sP').value,due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'',er=document.getElementById('er');
   if(!u){er.textContent='請填寫人員姓名';return}
   if(q<=0){er.textContent='數量須大於 0';return}
@@ -13688,7 +13694,6 @@ function pgLoc(){
     ${ci.map(i=>`<tr><td onclick="oLE(${i.id})" title="點擊編輯位置" style="font-family:'Playfair Display','Noto Serif TC',serif;cursor:pointer">${i.nm}</td><td onclick="oLE(${i.id})" title="點擊編輯位置" style="cursor:pointer"><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px;white-space:nowrap">編 輯 位 置</button></td></tr>`).join('')}
     </tbody></table></div>`;
   });
-  h+='<div id="lF" style="margin-top:12px"></div>';
   document.getElementById('pg').innerHTML=h;
   // Async fill all QR canvases
   inv.forEach(item=>{
@@ -13700,22 +13705,28 @@ function pgLoc(){
     }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
   });
 }
+function closeLocEditor(){ document.getElementById('locEditOverlay')?.remove(); }
 function oLE(id){
   if(!canWrite()){ alert('⚠ 編輯位置需要管理員或以上權限'); return; }
-  {
-    const it=inv.find(i=>i.id===id);
-    if(!it)return;
-    document.getElementById('lF').innerHTML=`
-      <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:3px solid #b5832a;padding:14px;margin-top:4px">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
-        ${locBld('e',it.loc)}
-        <div class="row-btn" style="margin-top:8px">
-          <button onclick="document.getElementById('lF').innerHTML=''">取 消</button>
-          <button class="btn-primary" onclick="sLE(${id})">儲 存</button>
-        </div>
-      </div>`;
-    upP('e');document.getElementById('lF').scrollIntoView({behavior:'smooth'});
-  }
+  const it=inv.find(i=>i.id===id);
+  if(!it)return;
+  closeLocEditor();
+  const overlay=document.createElement('div');
+  overlay.id='locEditOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:3600;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+  overlay.innerHTML=`
+    <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:3px solid #b5832a;padding:14px;width:100%;max-width:760px;max-height:calc(100vh - 32px);overflow-y:auto;box-shadow:0 8px 28px rgba(43,32,22,0.28)">
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
+      ${locBld('e',it.loc)}
+      <div class="row-btn" style="margin-top:8px">
+        <button onclick="closeLocEditor()">取 消</button>
+        <button class="btn-primary" onclick="sLE(${id})">儲 存</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)closeLocEditor();});
+  document.body.appendChild(overlay);
+  upP('e');
+  setTimeout(()=>document.getElementById('eR')?.focus(),50);
 }
 async function sLE(id){
   const it=inv.find(i=>i.id===id);
@@ -13728,10 +13739,10 @@ async function sLE(id){
   const oldLoc={...(it.loc||{})};
   const newLoc=gLoc('e');
   const same=oldLoc.r===newLoc.r&&oldLoc.k===newLoc.k&&oldLoc.lv===newLoc.lv;
-  document.getElementById('lF').innerHTML='';
+  closeLocEditor();
   if(same){ pgLoc(); return; }
 
-  const operator=_curUser?_curUser.nm:'未知';
+  const operator=currentOperator();
   const locLog={type:'調整',iid:it.id,nm:it.nm,qty:0,user:operator,operator,
     pur:`變更位置：「${ls(oldLoc)}」→「${ls(newLoc)}」`,due:'',loc:ls(newLoc),date:tdy(),time:ntm()};
   it.loc=newLoc;
@@ -14016,9 +14027,22 @@ let _syncInterval=null;
 let _syncMinutes=3;
 
 // ── 啟動 ──────────────────────────────────────────────────────────────────
-// 檢查 session（改用 localStorage，讓切到背景/被系統回收分頁後再打開不會強制重新登入）
+// 檢查 session（改用 localStorage，讓切到背景/被系統回收分頁後再打開不會強制重新登入）。
+// 還原時只接受 USERS 清單中的真實姓名，避免舊版把「管理員」角色誤當成登入者。
 const _savedUser=localStorage.getItem('pahome_user');
-if(_savedUser){ try{_curUser=JSON.parse(_savedUser);}catch(e){_curUser=null;} }
+if(_savedUser){
+  try{
+    const saved=JSON.parse(_savedUser);
+    const savedName=String(saved?.nm||saved?.name||'').trim();
+    const matched=USERS.find(u=>u.nm===savedName);
+    _curUser=matched?{nm:matched.nm,role:matched.role}:null;
+    if(_curUser) localStorage.setItem('pahome_user',JSON.stringify(_curUser));
+    else localStorage.removeItem('pahome_user');
+  }catch(e){
+    _curUser=null;
+    localStorage.removeItem('pahome_user');
+  }
+}
 
 // 若已超過 30 分鐘未延長 session，視同逾時，直接清除並要求重新登入（一般使用者）
 if(_curUser && _curUser.role!=='designer'){
