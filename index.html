@@ -13243,7 +13243,7 @@ function pgQR(){
       依類別顯示各品項專屬 QR Code。點擊任意卡片可預覽並列印。
     </div>
     <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap;flex-shrink:0;margin-left:12px">
-      列 印 全 部 185 張 ↗
+      列 印 全 部 ${inv.length} 張 ↗
     </button>
   </div>`;
 
@@ -13510,7 +13510,7 @@ async function printAllQR(){
     return {item,url};
   }));
 
-  if(btn){btn.textContent='列 印 全 部 185 張 ↗';btn.disabled=false}
+  if(btn){btn.textContent=`列 印 全 部 ${inv.length} 張 ↗`;btn.disabled=false}
 
   const w=window.open('','_blank','width=900,height=700');
   let cardsHtml=cards.map(({item,url})=>{
@@ -13558,7 +13558,7 @@ async function printAllQR(){
   .st-v{font-size:22px}
 }
 </style></head><body>
-  <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 185 張）</h1>
+  <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 ${inv.length} 張）</h1>
   <div class="grid">${cardsHtml}</div>
   <script>window.onload=()=>{setTimeout(()=>window.print(),600)}<\/script>
   </body></html>`);
@@ -13586,8 +13586,9 @@ function pgLoc(){
     const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
-    <table class="tbl" style="margin-bottom:10px"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
-    ${ci.map(i=>`<tr><td style="font-family:'Playfair Display','Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px">編 輯 位 置</button></td></tr>`).join('')}
+    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px">
+    <table class="tbl" style="min-width:480px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
+    ${ci.map(i=>`<tr><td style="font-family:'Playfair Display','Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px;white-space:nowrap">編 輯 位 置</button></td></tr>`).join('')}
     </tbody></table></div>`;
   });
   h+='<div id="lF" style="margin-top:12px"></div>';
