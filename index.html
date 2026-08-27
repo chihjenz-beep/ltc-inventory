@@ -10852,6 +10852,24 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   position:fixed;inset:0;background:rgba(43,32,22,0.9);
   z-index:2000;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
+  padding:16px;box-sizing:border-box;overflow:hidden;overscroll-behavior:contain;
+}
+.cam-error-box{
+  width:min(340px,calc(100vw - 32px));
+  box-sizing:border-box;padding:22px 18px;
+  background:#f3ead9;border:1px solid var(--gold);
+  text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.28);
+}
+.cam-error-icon{font-size:28px;color:var(--gold);margin-bottom:8px}
+.cam-error-actions{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.cam-error-actions .cam-close{margin-top:0;min-width:100px}
+.cam-retry{background:var(--gold);border-color:var(--gold);color:#fff}
+@media(max-width:640px){
+  .cam-overlay{padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}
+  .cam-box{width:min(640px,calc(100vw - 20px))}
+  .cam-box video{max-height:46dvh !important}
+  .cam-label{font-size:14px;margin-top:12px}
+  .cam-hint,.cam-result{font-size:11px}
 }
 .cam-box{
   position:relative;width:min(320px,85vw);
@@ -12661,10 +12679,29 @@ function step(){
   }
 }
 // ── Camera QR Scanner ──────────────────────────────────────────────────────
-let camStream=null,camAnim=null;
+let camStream=null,camAnim=null,camRequestInFlight=false,installBarWasShown=false;
 
-function openCam(){
-  // Build overlay
+function hideInstallBarForCamera(){
+  const bar=document.getElementById('installBar');
+  installBarWasShown=!!bar?.classList.contains('show');
+  bar?.classList.remove('show');
+}
+function restoreInstallBarAfterCamera(){
+  if(installBarWasShown) document.getElementById('installBar')?.classList.add('show');
+  installBarWasShown=false;
+}
+function cameraErrorText(err){
+  if(!window.isSecureContext) return '⚠ 相機需要在 HTTPS 網址下使用，請確認目前是以 https:// 開啟。';
+  if(!navigator.mediaDevices?.getUserMedia) return '⚠ 此瀏覽器不支援網頁相機，請改用最新版 Chrome。';
+  if(err?.name==='NotAllowedError'||err?.name==='SecurityError') return '⚠ 相機權限未開啟，請在瀏覽器的網站設定中允許相機後，再按「重試」。';
+  if(err?.name==='NotFoundError') return '⚠ 找不到相機裝置。';
+  if(err?.name==='NotReadableError') return '⚠ 相機可能正被其他應用程式使用，請關閉其他相機或掃描程式後再試。';
+  return '⚠ 無法開啟相機，請確認瀏覽器相機權限後再試。';
+}
+function renderCameraOverlay(stream){
+  // openCam 已在請求權限前移除舊 overlay；這裡只清理殘留 DOM，不能呼叫 closeCam，
+  // 否則會把相機啟動期間刻意隱藏的安裝提示條重新顯示出來。
+  document.getElementById('camOverlay')?.remove();
   const overlay=document.createElement('div');
   overlay.className='cam-overlay';
   overlay.id='camOverlay';
@@ -12681,35 +12718,63 @@ function openCam(){
     <div class="cam-result" id="camResult">掃描中…</div>
     <button class="cam-close" onclick="closeCam()">關 閉 相 機</button>`;
   document.body.appendChild(overlay);
-
-  // Android Chrome：降低解析度請求，提升辨識速度與相容性
-  const constraints={video:{
-    facingMode:{ideal:'environment'},
-    width:{ideal:640},height:{ideal:480}
-  }};
-  navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
-    camStream=stream;
-    const vid=document.getElementById('camVid');
-    vid.srcObject=stream;
-    const tryPlay=()=>{
-      const p=vid.play();
-      if(p&&p.catch) p.catch(err=>{
-        console.warn('相機視訊播放被擋，重試中',err);
-        // 部分 Android 瀏覽器會擋非同步觸發的 play()，短暫延遲後再試一次
-        setTimeout(()=>vid.play().catch(e2=>console.warn('相機視訊仍無法播放',e2)),150);
-      });
-    };
-    tryPlay();
-    vid.addEventListener('loadedmetadata',()=>{ tryPlay(); startScanLoop(vid); });
-    vid.addEventListener('canplay',tryPlay,{once:true});
-  }).catch(err=>{
-    const r=document.getElementById('camResult');
-    if(r){
-      if(err.name==='NotAllowedError')r.textContent='⚠ 請允許相機權限後重試';
-      else if(err.name==='NotFoundError')r.textContent='⚠ 找不到相機裝置';
-      else r.textContent='⚠ 無法開啟相機：'+err.message;
+  const vid=document.getElementById('camVid');
+  vid.srcObject=stream;
+  const tryPlay=()=>{
+    const p=vid.play();
+    if(p&&p.catch) p.catch(err=>{
+      console.warn('相機視訊播放被擋，重試中',err);
+      setTimeout(()=>vid.play().catch(e2=>console.warn('相機視訊仍無法播放',e2)),150);
+    });
+  };
+  tryPlay();
+  vid.addEventListener('loadedmetadata',()=>{ tryPlay(); startScanLoop(vid); },{once:true});
+  vid.addEventListener('canplay',tryPlay,{once:true});
+}
+function renderCameraError(err){
+  closeCam();
+  const overlay=document.createElement('div');
+  overlay.className='cam-overlay';
+  overlay.id='camOverlay';
+  overlay.innerHTML=`
+    <div class="cam-error-box">
+      <div class="cam-error-icon">⚠</div>
+      <div class="cam-label">無法開啟相機</div>
+      <div class="cam-result">${cameraErrorText(err)}</div>
+      <div class="cam-error-actions">
+        <button class="cam-close" onclick="closeCam()">關 閉</button>
+        <button class="cam-close cam-retry" onclick="openCam()">重 試</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+async function openCam(){
+  if(camRequestInFlight||camStream)return;
+  camRequestInFlight=true;
+  // 重試時先移除錯誤 overlay，避免它被 Android 視為重疊對話框而阻擋權限請求。
+  document.getElementById('camOverlay')?.remove();
+  hideInstallBarForCamera();
+  try{
+    if(!window.isSecureContext) throw Object.assign(new Error('相機需要 HTTPS'),{name:'SecurityError'});
+    if(!navigator.mediaDevices?.getUserMedia) throw Object.assign(new Error('瀏覽器不支援相機'),{name:'NotSupportedError'});
+    // 在建立網頁 overlay 前先請求權限，避免 Android 將網頁重疊視窗判定為阻擋中的對話框。
+    const constraints={video:{facingMode:{ideal:'environment'},width:{ideal:640},height:{ideal:480}},audio:false};
+    let stream;
+    try{
+      stream=await navigator.mediaDevices.getUserMedia(constraints);
+    }catch(err){
+      // 部分手機不接受解析度或 facingMode 條件，改用最基本的 video 請求再試一次。
+      if(err?.name==='OverconstrainedError') stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+      else throw err;
     }
-  });
+    camStream=stream;
+    renderCameraOverlay(stream);
+  }catch(err){
+    console.warn('相機權限／啟動失敗',err);
+    renderCameraError(err);
+  }finally{
+    camRequestInFlight=false;
+  }
 }
 
 function startScanLoop(vid){
@@ -12787,12 +12852,12 @@ function handleQRResult(raw){
 
 function closeCam(){
   // camAnim 可能是 setTimeout id 或 rAF id，兩者都取消
-  cancelAnimationFrame(camAnim);
-  clearTimeout(camAnim);
+  if(camAnim){cancelAnimationFrame(camAnim);clearTimeout(camAnim);}
   camAnim=null;
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
   const o=document.getElementById('camOverlay');
   if(o)o.remove();
+  restoreInstallBarAfterCamera();
 }
 
 function sim(){selI(inv[Math.floor(Math.random()*inv.length)].id)}
@@ -13400,18 +13465,24 @@ function pgQR(){
 }
 
 // ── 品項照片：上傳／編輯／刪除 ───────────────────────────────────────────────
+function closePhotoUpload(){
+  _pendingPhotoDataUrl=null;
+  document.getElementById('photoUploadOverlay')?.remove();
+}
 function openPhotoUpload(id){
   if(!canWrite()){ alert('⚠ 上傳照片需要管理員或以上權限'); return; }
   const item=inv.find(i=>i.id===id); if(!item) return;
+  // 每次開啟都清除上一個品項尚未儲存的照片，避免誤存到其他品項。
+  _pendingPhotoDataUrl=null;
   const overlay=document.createElement('div');
   overlay.id='photoUploadOverlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:4000;display:flex;align-items:center;justify-content:center;padding:16px';
-  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+  overlay.onclick=e=>{if(e.target===overlay)closePhotoUpload()};
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:320px;border-left:4px solid var(--gold)">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a">
         <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">📷 品項照片 ── ${item.nm}</span>
-        <button onclick="document.getElementById('photoUploadOverlay').remove()" style="border:none;background:none;font-size:18px;color:#7a6650;cursor:pointer">✕</button>
+        <button onclick="closePhotoUpload()" style="border:none;background:none;font-size:18px;color:#7a6650;cursor:pointer">✕</button>
       </div>
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px;align-items:center">
         <div id="photoPreviewBox" style="width:140px;height:140px;border-radius:6px;overflow:hidden;border:1px solid #d8c49a;background:#f8f0dc;display:flex;align-items:center;justify-content:center">
@@ -13421,7 +13492,7 @@ function openPhotoUpload(id){
         <div id="photoErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end;width:100%;padding-top:4px">
           ${item.img?`<button onclick="removePhoto(${id})" style="padding:7px 14px;border:1px dashed rgba(139,32,32,0.35);background:transparent;font-size:11px;cursor:pointer;color:var(--red-seal)">移 除 照 片</button>`:''}
-          <button onclick="document.getElementById('photoUploadOverlay').remove()" style="padding:7px 14px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650">取 消</button>
+          <button onclick="closePhotoUpload()" style="padding:7px 14px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650">取 消</button>
           <button id="photoSaveBtn" onclick="savePhoto(${id})" class="btn-primary" style="padding:7px 18px;font-size:12px" ${item.img?'':'disabled'}>儲 存</button>
         </div>
       </div>
@@ -13469,7 +13540,7 @@ function handlePhotoFile(evt){
 
 function savePhoto(id){
   const item=inv.find(i=>i.id===id); if(!item) return;
-  if(!_pendingPhotoDataUrl){ document.getElementById('photoUploadOverlay')?.remove(); return; }
+  if(!_pendingPhotoDataUrl){ closePhotoUpload(); return; }
   item.img=_pendingPhotoDataUrl;
   _pendingPhotoDataUrl=null;
   document.getElementById('photoUploadOverlay')?.remove();
@@ -13482,6 +13553,7 @@ function removePhoto(id){
   const item=inv.find(i=>i.id===id); if(!item) return;
   if(!confirm('確定要移除此品項的照片嗎？')) return;
   delete item.img;
+  _pendingPhotoDataUrl=null;
   document.getElementById('photoUploadOverlay')?.remove();
   showSaving();
   gasUpdateItemImg(id,'').then(ok=>ok?showSaved():showSaveErr());
