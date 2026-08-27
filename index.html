@@ -11106,6 +11106,7 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
 <!-- Firebase SDK（compat 版本，直接用全域 firebase 物件，不需要打包工具） -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
 // ── Firebase 專案設定（inventory-eeaeb，手帳系統專用）───────────────────────
@@ -11120,6 +11121,29 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const fbDb = firebase.database();
+const fbAuth = firebase.auth();
+let _firebaseAuthReady=null;
+
+// Anonymous Auth：正式資料庫規則可使用 auth != null，避免完全公開讀寫。
+// 目前人員姓名／密碼仍由應用程式登入辨識，Firebase 匿名帳號不代表特定人員。
+function ensureFirebaseAuth(){
+  if(_firebaseAuthReady)return _firebaseAuthReady;
+  _firebaseAuthReady=new Promise((resolve,reject)=>{
+    let settled=false;
+    const unsubscribe=fbAuth.onAuthStateChanged(user=>{
+      if(settled)return;
+      if(user){settled=true;unsubscribe();resolve(user);return;}
+      fbAuth.signInAnonymously().catch(err=>{
+        if(settled)return;
+        settled=true;unsubscribe();_firebaseAuthReady=null;reject(err);
+      });
+    },err=>{
+      if(settled)return;
+      settled=true;unsubscribe();_firebaseAuthReady=null;reject(err);
+    });
+  });
+  return _firebaseAuthReady;
+}
 
 // ── 預先產生的 QR Code（base64 PNG，離線可用）────────────────────────────
 const QR_B64 = {
@@ -11151,7 +11175,14 @@ const GAS_URL='https://script.google.com/macros/s/AKfycbxVtFo8o958SXsE8AEOk8bFRx
 
 // 密碼仍用 localStorage（純本機管理，不需共享）
 const LS_PWD='pahome_pwd';
-function getPwd(){return localStorage.getItem(LS_PWD)||'0000';}
+function userPwdKey(nm){return LS_PWD+'_'+encodeURIComponent(String(nm||'guest'));}
+function getPwd(){
+  const nm=String(_curUser?.nm||'').trim();
+  const personal=nm?localStorage.getItem(userPwdKey(nm)):null;
+  if(personal)return personal;
+  const matched=USERS.find(u=>u.nm===nm);
+  return matched?String(matched.pwd):localStorage.getItem(LS_PWD)||'0000';
+}
 
 // ── 儲存狀態提示 ──────────────────────────────────────────────────────────
 
@@ -11254,8 +11285,9 @@ async function jsonpGetWithRetry(url, retries=1, timeout=6000){
 }
 
 async function gasLoad(){
-  showSyncing();
   try{
+    await ensureFirebaseAuth();
+    showSyncing();
     const snap=await fbDb.ref('/').once('value');
     const d=snap.val()||{};
 
@@ -11365,6 +11397,7 @@ function _clean(obj){
 
 async function gasAppendLog(logRow){
   try{
+    await ensureFirebaseAuth();
     const ref=fbDb.ref('logs').push();
     const normalized=logStoragePayload({...logRow,loc:logRow.loc||''});
     await ref.set(_clean(normalized));
@@ -11378,6 +11411,7 @@ async function gasAppendLog(logRow){
 
 // 位置與異動紀錄使用同一個 multi-location update，確保不會只改到位置卻漏掉紀錄。
 async function gasUpdateInvLocAndLog(id,loc,logRow){
+  await ensureFirebaseAuth();
   if(!_gasLoaded) throw new Error('Firebase 尚未完成同步');
   const logRef=fbDb.ref('logs').push();
     if(!Number.isFinite(Number(id))||Number(id)<=0) throw new Error('無效的品項編號');
@@ -11393,6 +11427,7 @@ async function gasUpdateInvLocAndLog(id,loc,logRow){
 
 async function gasUpdateInv(id, qty){
   try{
+    await ensureFirebaseAuth();
     await fbDb.ref('inv/'+id+'/qty').set(qty);
     return true;
   }catch(e){ console.warn('gasUpdateInv 失敗',e); return false; }
@@ -11401,6 +11436,7 @@ async function gasUpdateInv(id, qty){
 // 單一品項照片存檔（獨立小請求，只更新這一筆的 img 欄位）
 async function gasUpdateItemImg(id, img){
   try{
+    await ensureFirebaseAuth();
     await fbDb.ref('inv/'+id+'/img').set(img||null);
     return true;
   }catch(e){ console.warn('gasUpdateItemImg 失敗',e); return false; }
@@ -11408,6 +11444,7 @@ async function gasUpdateItemImg(id, img){
 
 async function gasAppendBrws(bRow){
   try{
+    await ensureFirebaseAuth();
     await fbDb.ref('brws/'+bRow.id).set(_clean(bRow));
     return true;
   }catch(e){ console.warn('gasAppendBrws 失敗',e); return false; }
@@ -11415,6 +11452,7 @@ async function gasAppendBrws(bRow){
 
 async function gasUpdateBrws(bid, fields){
   try{
+    await ensureFirebaseAuth();
     await fbDb.ref('brws/'+bid).update(_clean(fields));
     return true;
   }catch(e){ console.warn('gasUpdateBrws 失敗',e); return false; }
@@ -11433,6 +11471,7 @@ async function gasSave(){
   }
   showSaving();
   try{
+    await ensureFirebaseAuth();
     // inventory、借用和新增 logs 共用一次 root update，避免只寫入部分資料。
     const updates={};
     inv.forEach(item=>{
@@ -11470,6 +11509,7 @@ async function gasSave(){
 async function migrateFromSheetsToFirebase(){
   if(!confirm('確定要把 Google Sheets 的資料匯入 Firebase 嗎？\n建議只執行一次。'))return;
   try{
+    await ensureFirebaseAuth();
     const res=await fetch(GAS_URL+'?action=getAll');
     const d=await res.json();
     if(!d.ok) throw new Error(d.error||'讀取失敗');
@@ -11517,6 +11557,7 @@ async function migrateFromSheetsToFirebase(){
 async function migrateMissingLogs(){
   if(!confirm('確定要比對並補齊 Google Sheets 裡、但 Firebase 目前缺少的異動紀錄嗎？\n已存在的不會重複新增。'))return;
   try{
+    await ensureFirebaseAuth();
     const res=await fetch(GAS_URL+'?action=getAll');
     const d=await res.json();
     if(!d.ok) throw new Error(d.error||'讀取失敗');
@@ -11575,6 +11616,7 @@ async function doReset(){
   brws=[];
   bseq=1;
   try{
+    await ensureFirebaseAuth();
     await fbDb.ref('logs').set(null);
     await fbDb.ref('brws').set(null);
   }catch(e){ console.warn('清空 logs/brws 失敗',e); }
@@ -11674,7 +11716,7 @@ function showLoginScreen(){
         </div>
         <div style="margin-bottom:16px">
           <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:5px">密 碼</label>
-          <input id="loginPwd" type="password" maxlength="3" placeholder="請輸入 3 位數字密碼"
+          <input id="loginPwd" type="password" maxlength="32" placeholder="請輸入個人密碼"
             style="width:100%;padding:9px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:14px;color:#2b2016;letter-spacing:0.2em"
             onkeydown="if(event.key==='Enter')doLogin()">
         </div>
@@ -11695,7 +11737,8 @@ function doLogin(){
   const err=document.getElementById('loginErr');
   if(!nm){err.textContent='請選擇使用者';err.style.display='block';return;}
   if(!pwd){err.textContent='請輸入密碼';err.style.display='block';return;}
-  const user=USERS.find(u=>u.nm===nm&&u.pwd===pwd);
+  const personalPwd=localStorage.getItem(userPwdKey(nm));
+  const user=USERS.find(u=>u.nm===nm&&(u.pwd===pwd||personalPwd===pwd));
   if(!user){
     err.textContent='密碼錯誤，請再試一次';err.style.display='block';
     document.getElementById('loginPwd').value='';
@@ -11820,6 +11863,7 @@ function unlockInvWithAuth(){
 
 async function saveLockConfig(locked,by,at){
   try{
+    await ensureFirebaseAuth();
     await fbDb.ref('config').update(_clean({inventoryLock:locked, lockBy:by, lockAt:at, cats:CAT_META}));
   }catch(e){ console.warn('saveLockConfig失敗',e); }
 }
@@ -12002,7 +12046,7 @@ function withAuth(onSuccess, title='需要密碼驗證', hint=''){
       <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:6px;letter-spacing:0.1em">🔒 ${title}</div>
       ${hint?`<div style="font-size:11px;color:#7a6650;margin-bottom:14px">${hint}</div>`:'<div style="margin-bottom:14px"></div>'}
       <div style="margin-bottom:14px">
-        <label style="font-size:11px;color:#7a6650;letter-spacing:0.06em;display:block;margin-bottom:4px">請 輸 入 管 理 密 碼</label>
+        <label style="font-size:11px;color:#7a6650;letter-spacing:0.06em;display:block;margin-bottom:4px">請 輸 入 個 人 密 碼</label>
         <input id="authPwdInput" type="password" inputmode="numeric"
           placeholder="••••"
           style="width:100%;padding:9px 12px;border:1px solid #b39c6e;background:#fff;
@@ -12046,7 +12090,7 @@ function changePwd(){
   overlay.id='changePwdOverlay';
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:4px solid var(--gold);padding:24px 28px;max-width:320px;width:90%">
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:14px;letter-spacing:0.1em">🔑 修 改 管 理 密 碼</div>
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:14px;letter-spacing:0.1em">🔑 修 改 個 人 密 碼</div>
       <div style="margin-bottom:10px">
         <label style="font-size:11px;color:#7a6650;letter-spacing:0.04em;display:block;margin-bottom:4px">目 前 密 碼</label>
         <input id="cpOld" type="password" inputmode="numeric" placeholder="••••"
@@ -12080,7 +12124,8 @@ function cpSubmit(){
   if(old!==getPwd()){err.textContent='目前密碼錯誤';return;}
   if(!nw){err.textContent='新密碼不可空白';return;}
   if(nw!==cnf){err.textContent='兩次輸入的新密碼不相符';return;}
-  localStorage.setItem(LS_PWD,nw);
+  const pwdKey=_curUser?.nm?userPwdKey(_curUser.nm):LS_PWD;
+  localStorage.setItem(pwdKey,nw);
   document.getElementById('changePwdOverlay').remove();
   // Show success toast
   const t=document.createElement('div');
@@ -13158,10 +13203,10 @@ function confirmDeleteItem(id){
     return;
   }
   showSaving();
-  Promise.all([
+  ensureFirebaseAuth().then(()=>Promise.all([
     fbDb.ref('inv/'+id).remove(),
     gasAppendLog(deleteLog)
-  ]).then(()=>showSaved()).catch(e=>{
+  ])).then(()=>showSaved()).catch(e=>{
     console.warn('刪除品項或異動紀錄寫入失敗',e);
     showSaveErr();
   });
