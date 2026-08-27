@@ -11244,25 +11244,16 @@ async function gasLoad(){
     // inv：Firebase 以 id 為 key 儲存，天生就是「單筆位置」，
     // 不會有 Sheets 時代「整包覆蓋」的風險
     if(d.inv && Object.keys(d.inv).length>0){
-      inv=Object.values(d.inv).map(row=>({
-        ...row,
-        id:  Number(row.id),
-        qty: Number(row.qty),
-        min: Number(row.min),
-        con: row.con===true,
-        loc: row.loc || {}
-      }));
+      inv=Object.values(d.inv).map(normalizeInventoryRow)
+        .filter(row=>row.id>0);
     } else {
       // Firebase 是空的（尚未搬遷資料）：先用內建預設值，並提示執行搬遷
       console.warn('Firebase 尚無庫存資料，如尚未搬遷請執行 migrateFromSheetsToFirebase()');
     }
 
     if(d.logs && Object.keys(d.logs).length>0){
-      logs=Object.entries(d.logs).map(([key,row])=>({
-        ...row,
-        _fbKey: key,
-        qty: Number(row.qty||0)
-      })).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+      logs=Object.entries(d.logs).map(([key,row])=>normalizeLog(row,key))
+        .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
     }
 
     if(d.brws && Object.keys(d.brws).length>0){
@@ -11301,10 +11292,8 @@ function _startRealtimeListeners(){
   fbDb.ref('inv').on('value', snap=>{
     const d=snap.val()||{};
     if(!Object.keys(d).length) return;
-    inv=Object.values(d).map(row=>({
-      ...row, id:Number(row.id), qty:Number(row.qty), min:Number(row.min),
-      con:row.con===true, loc:row.loc||{}
-    }));
+    inv=Object.values(d).map(normalizeInventoryRow)
+      .filter(row=>row.id>0);
     if(['inv','loc'].includes(window._curPage)) go(window._curPage,null);
   });
 
@@ -11319,7 +11308,7 @@ function _startRealtimeListeners(){
 
   fbDb.ref('logs').on('value', snap=>{
     const d=snap.val()||{};
-    logs=Object.entries(d).map(([key,row])=>({...row,_fbKey:key,qty:Number(row.qty||0)}))
+    logs=Object.entries(d).map(([key,row])=>normalizeLog(row,key))
       .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
     if(window._curPage==='rep') go('rep',null);
     else if(window._curPage==='loginlog') pgLoginlog();
@@ -11349,10 +11338,29 @@ function _clean(obj){
 async function gasAppendLog(logRow){
   try{
     const ref=fbDb.ref('logs').push();
-    await ref.set(_clean({...logRow, loc:logRow.loc||''}));
-    logRow._fbKey=ref.key; // 標記已同步，避免 gasSave() 重複寫入
+    const normalized=logStoragePayload({...logRow,loc:logRow.loc||''});
+    await ref.set(_clean(normalized));
+    Object.assign(logRow,normalized,{_fbKey:ref.key}); // 標記已同步，避免 gasSave() 重複寫入
     return true;
-  }catch(e){ console.warn('gasAppendLog 失敗',e); return false; }
+  }catch(e){
+    console.warn('gasAppendLog 失敗',e);
+    throw e;
+  }
+}
+
+// 位置與異動紀錄使用同一個 multi-location update，確保不會只改到位置卻漏掉紀錄。
+async function gasUpdateInvLocAndLog(id,loc,logRow){
+  if(!_gasLoaded) throw new Error('Firebase 尚未完成同步');
+  const logRef=fbDb.ref('logs').push();
+    if(!Number.isFinite(Number(id))||Number(id)<=0) throw new Error('無效的品項編號');
+    const normalizedLoc=normalizeLocation(loc);
+    const normalized=logStoragePayload({...logRow,loc:ls(normalizedLoc)});
+    const updates={};
+    updates['inv/'+Number(id)+'/loc']=_clean(normalizedLoc);
+  updates['logs/'+logRef.key]=_clean(normalized);
+  await fbDb.ref().update(updates);
+  Object.assign(logRow,normalized,{_fbKey:logRef.key});
+  return true;
 }
 
 async function gasUpdateInv(id, qty){
@@ -11397,23 +11405,30 @@ async function gasSave(){
   }
   showSaving();
   try{
-    const invUpdate={};
-    inv.forEach(i=>{ invUpdate['inv/'+i.id]=_clean(i); });
+    // inventory、借用和新增 logs 共用一次 root update，避免只寫入部分資料。
+    const updates={};
+    inv.forEach(item=>{
+      const normalized=normalizeInventoryRow(item);
+      if(normalized.id>0) updates['inv/'+normalized.id]=_clean(normalized);
+    });
 
-    const brwsUpdate={};
-    brws.forEach(b=>{ brwsUpdate['brws/'+b.id]=_clean(b); });
+    brws.forEach(b=>{
+      const bid=Number(b.id);
+      if(Number.isFinite(bid)&&bid>0) updates['brws/'+bid]=_clean(b);
+    });
 
-    const logPromises=[];
+    const pendingLogs=[];
     logs.forEach(l=>{
       if(!l._fbKey){
-        const ref=fbDb.ref('logs').push();
-        const {_fbKey, ...clean}=l;
-        logPromises.push(ref.set(_clean(clean)).then(()=>{ l._fbKey=ref.key; }));
+        const key=fbDb.ref('logs').push().key;
+        const clean=logStoragePayload(l);
+        updates['logs/'+key]=_clean(clean);
+        pendingLogs.push({row:l,key});
       }
     });
 
-    await fbDb.ref().update({...invUpdate, ...brwsUpdate});
-    await Promise.all(logPromises);
+    if(Object.keys(updates).length) await fbDb.ref().update(updates);
+    pendingLogs.forEach(({row,key})=>{ row._fbKey=key; });
     showSaved();
   }catch(e){
     console.error('gasSave 失敗',e);
@@ -11433,14 +11448,8 @@ async function migrateFromSheetsToFirebase(){
 
     const invUpdate={};
     (d.data.inv||[]).forEach(row=>{
-      const id=Number(row.id);
-      invUpdate['inv/'+id]=_clean({
-        ...row, id,
-        qty: Number(row.qty),
-        min: Number(row.min),
-        con: row.con===true||row.con==='true'||row.con==='TRUE',
-        loc: typeof row.loc==='string'?(row.loc?JSON.parse(row.loc):{}):(row.loc||{})
-      });
+      const normalized=normalizeInventoryRow(row);
+      if(normalized.id>0) invUpdate['inv/'+normalized.id]=_clean(normalized);
     });
 
     const brwsUpdate={};
@@ -11459,7 +11468,8 @@ async function migrateFromSheetsToFirebase(){
     let logOk=0, logFail=0;
     for(const row of (d.data.logs||[])){
       try{
-        await fbDb.ref('logs').push().set(_clean(row));
+        const ref=fbDb.ref('logs').push();
+        await ref.set(_clean(logStoragePayload(row)));
         logOk++;
       }catch(e){
         logFail++;
@@ -11484,15 +11494,16 @@ async function migrateMissingLogs(){
     if(!d.ok) throw new Error(d.error||'讀取失敗');
 
     const sheetLogs=d.data.logs||[];
-    // 用 日期+時間+品項+人員+類型 組合當作是否已存在的比對依據
+    // 先正規化來源列，再用標準欄位組合比對，避免舊欄位造成重複匯入。
     const existingKeys=new Set(logs.map(l=>`${l.date}|${l.time}|${l.nm}|${l.user}|${l.type}`));
 
     let added=0, skipped=0, failed=0;
     for(const row of sheetLogs){
-      const key=`${row.date}|${row.time}|${row.nm}|${row.user}|${row.type}`;
+      const normalized=normalizeLog(row);
+      const key=`${normalized.date}|${normalized.time}|${normalized.nm}|${normalized.user}|${normalized.type}`;
       if(existingKeys.has(key)){ skipped++; continue; }
       try{
-        await fbDb.ref('logs').push().set(_clean(row));
+        await fbDb.ref('logs').push().set(_clean(logStoragePayload(normalized)));
         existingKeys.add(key); // 避免同一批裡的重複列再被加一次
         added++;
       }catch(e){
@@ -12119,8 +12130,80 @@ const CAT_META={
   '精油系列':{cls:'cat-med',label:'精油系列'}
 };
 
-const ls=l=>(!l||(!l.r&&!l.k&&!l.lv))?'—':[l.r,l.k,l.lv].filter(Boolean).join(' › ');
+function normalizeLocation(loc){
+  if(!loc) return {r:'',k:'',lv:''};
+  if(typeof loc==='string'){
+    const text=loc.trim();
+    if(!text||text==='—'||text==='尚未設定') return {r:'',k:'',lv:''};
+    // 相容 Sheets 可能保存的 JSON 字串位置。
+    if(text[0]==='{'&&text[text.length-1]==='}'){
+      try{
+        const parsed=JSON.parse(text);
+        if(parsed&&typeof parsed==='object') return normalizeLocation(parsed);
+      }catch(e){ /* 非 JSON 字串，改用顯示文字解析 */ }
+    }
+    const parts=text.split(/\s*›\s*|\s*>\s*|\s*\/\s*/).map(v=>v.trim());
+    return {r:parts[0]||'',k:parts[1]||'',lv:parts[2]||''};
+  }
+  return {
+    r:String(loc.r??loc.room??'').trim(),
+    k:String(loc.k??loc.rack??'').trim(),
+    lv:String(loc.lv??loc.level??'').trim()
+  };
+}
+const ls=l=>{const loc=normalizeLocation(l);return(!loc.r&&!loc.k&&!loc.lv)?'—':[loc.r,loc.k,loc.lv].filter(Boolean).join(' › ');};
 const tdy=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');};
+
+// 統一異動紀錄格式，兼容早期使用 op／mem／note／ts 欄位的舊資料。
+// 寫入 Firebase 時只保留標準欄位，避免舊欄位造成 undefined 或結構混雜。
+function normalizeLog(row,key=''){
+  const raw=row&&typeof row==='object'?row:{};
+  let stamp=null;
+  if(raw.ts){
+    const parsed=new Date(raw.ts);
+    if(!Number.isNaN(parsed.getTime())) stamp=parsed;
+  }
+  const stampDate=stamp?`${stamp.getFullYear()}-${String(stamp.getMonth()+1).padStart(2,'0')}-${String(stamp.getDate()).padStart(2,'0')}`:'';
+  const stampTime=stamp?stamp.toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'}):'';
+  const qty=Number(raw.qty);
+  const iid=Number(raw.iid??raw.itemId);
+  const normalized={
+    _fbKey:key||raw._fbKey||'',
+    type:String(raw.type||raw.op||raw.action||'調整'),
+    nm:String(raw.nm||raw.itemName||raw.item||'未命名品項'),
+    qty:Number.isFinite(qty)?qty:0,
+    user:String(raw.user||raw.person||raw.mem||raw.operator||''),
+    operator:String(raw.operator||raw.mem||raw.by||raw.user||''),
+    pur:String(raw.pur??raw.note??raw.memo??''),
+    due:String(raw.due??raw.returnDate??''),
+    loc:ls(raw.loc??raw.location??''),
+    date:String(raw.date||stampDate||'').slice(0,10),
+    time:String(raw.time||stampTime||'')
+  };
+  if(Number.isFinite(iid)) normalized.iid=iid;
+  return normalized;
+}
+
+function logStoragePayload(row){
+  const payload=normalizeLog(row);
+  delete payload._fbKey;
+  return payload;
+}
+
+function normalizeInventoryRow(row){
+  const raw=row&&typeof row==='object'?row:{};
+  const {location:legacyLocation,...rest}=raw;
+  const id=Number(rest.id),qty=Number(rest.qty),min=Number(rest.min);
+  return {
+    ...rest,
+    id:Number.isFinite(id)?id:0,
+    qty:Number.isFinite(qty)?qty:0,
+    min:Number.isFinite(min)?min:0,
+    con:rest.con===true||rest.con==='true'||rest.con==='TRUE'||rest.con===1||rest.con==='1',
+    loc:normalizeLocation(rest.loc??legacyLocation)
+  };
+}
+
 const ntm=()=>new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
 const iso=()=>new Date().toISOString().slice(0,10);
 const ovd=d=>{if(!d)return false;const[y,mo,day]=String(d).slice(0,10).split('-').map(Number);const t=new Date();return new Date(y,mo-1,day)<new Date(t.getFullYear(),t.getMonth(),t.getDate());};
@@ -12982,11 +13065,25 @@ function confirmDeleteItem(id){
   if(!item)return;
   // 從 inv 移除
   inv=inv.filter(i=>i.id!==id);
-  // 記錄異動日誌
-  logs.unshift({ts:new Date().toISOString(),iid:id,nm:item.nm,op:'刪除',qty:0,mem:'管理員',note:'品項已刪除'});
-  fbDb.ref('inv/'+id).remove().catch(e=>console.warn('Firebase 刪除品項失敗',e));
-  gasSave();
+  // 使用報表共用格式記錄異動，避免舊版 op／mem／note 欄位造成 undefined。
+  const operator=_curUser?_curUser.nm:'未知';
+  const deleteLog={type:'刪除',iid:id,nm:item.nm,qty:0,user:operator,operator,
+    pur:'品項已刪除',due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+  logs.unshift(deleteLog);
   pgInv();
+  if(!_gasLoaded){
+    showSaveErr();
+    alert('⚠ 尚未連線 Firebase，刪除與異動紀錄尚未同步。');
+    return;
+  }
+  showSaving();
+  Promise.all([
+    fbDb.ref('inv/'+id).remove(),
+    gasAppendLog(deleteLog)
+  ]).then(()=>showSaved()).catch(e=>{
+    console.warn('刪除品項或異動紀錄寫入失敗',e);
+    showSaveErr();
+  });
 }
 
 function selI(id){sd.item=inv.find(i=>i.id===id);ss=1;step()}
@@ -13581,14 +13678,14 @@ function upP(p){const r=document.getElementById(p+'R').value,k=document.getEleme
 function gLoc(p){return{r:document.getElementById(p+'R').value,k:document.getElementById(p+'K').value,lv:document.getElementById(p+'L').value}}
 
 function pgLoc(){
-  let h=`<div style="font-size:11px;color:#7a6650;letter-spacing:0.06em;margin-bottom:16px">點擊「編輯位置」修改品項的儲存位置設定。</div>`;
+  let h=`<div style="font-size:11px;color:#7a6650;letter-spacing:0.06em;margin-bottom:16px">點擊品項名稱、儲存位置或「編輯位置」即可修改該品項的儲存位置設定。</div>`;
   Object.keys(CAT_META).forEach(cat=>{
     const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px">
     <table class="tbl" style="min-width:480px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
-    ${ci.map(i=>`<tr><td style="font-family:'Playfair Display','Noto Serif TC',serif">${i.nm}</td><td><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px;white-space:nowrap">編 輯 位 置</button></td></tr>`).join('')}
+    ${ci.map(i=>`<tr><td onclick="oLE(${i.id})" title="點擊編輯位置" style="font-family:'Playfair Display','Noto Serif TC',serif;cursor:pointer">${i.nm}</td><td onclick="oLE(${i.id})" title="點擊編輯位置" style="cursor:pointer"><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px;white-space:nowrap">編 輯 位 置</button></td></tr>`).join('')}
     </tbody></table></div>`;
   });
   h+='<div id="lF" style="margin-top:12px"></div>';
@@ -13607,6 +13704,7 @@ function oLE(id){
   if(!canWrite()){ alert('⚠ 編輯位置需要管理員或以上權限'); return; }
   {
     const it=inv.find(i=>i.id===id);
+    if(!it)return;
     document.getElementById('lF').innerHTML=`
       <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:3px solid #b5832a;padding:14px;margin-top:4px">
         <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
@@ -13619,7 +13717,40 @@ function oLE(id){
     upP('e');document.getElementById('lF').scrollIntoView({behavior:'smooth'});
   }
 }
-function sLE(id){inv.find(i=>i.id===id).loc=gLoc('e');gasSave();document.getElementById('lF').innerHTML='';pgLoc();}
+async function sLE(id){
+  const it=inv.find(i=>i.id===id);
+  if(!it)return;
+  if(!canWrite()){ alert('⚠ 編輯位置需要管理員或以上權限'); return; }
+  if(!_gasLoaded){
+    alert('⚠ 尚未連線 Firebase\n位置與異動紀錄未儲存，請稍後再試。');
+    return;
+  }
+  const oldLoc={...(it.loc||{})};
+  const newLoc=gLoc('e');
+  const same=oldLoc.r===newLoc.r&&oldLoc.k===newLoc.k&&oldLoc.lv===newLoc.lv;
+  document.getElementById('lF').innerHTML='';
+  if(same){ pgLoc(); return; }
+
+  const operator=_curUser?_curUser.nm:'未知';
+  const locLog={type:'調整',iid:it.id,nm:it.nm,qty:0,user:operator,operator,
+    pur:`變更位置：「${ls(oldLoc)}」→「${ls(newLoc)}」`,due:'',loc:ls(newLoc),date:tdy(),time:ntm()};
+  it.loc=newLoc;
+  logs.unshift(locLog);
+  pgLoc();
+  showSaving();
+  try{
+    await gasUpdateInvLocAndLog(it.id,newLoc,locLog);
+    showSaved();
+  }catch(e){
+    console.warn('位置與異動紀錄寫入失敗',e);
+    it.loc=oldLoc;
+    const idx=logs.indexOf(locLog);
+    if(idx>=0)logs.splice(idx,1);
+    showSaveErr();
+    pgLoc();
+    alert('⚠ 位置與異動紀錄儲存失敗，請確認網路後再試。');
+  }
+}
 
 function pgRep(){
   const nms=['（全部品項）',...new Set(logs.map(l=>l.nm).filter(Boolean))];
