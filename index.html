@@ -10726,6 +10726,73 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   border-color:transparent var(--border-light) transparent transparent;
 }
 
+/* === QR SEARCH & PHOTO VIEWER === */
+.qr-toolbar{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+  margin-bottom:16px;padding:12px 14px;
+  background:var(--paper-warm);border:1px solid var(--border-light);
+  border-left:3px solid var(--gold);
+}
+.qr-toolbar-note{font-size:10px;color:var(--ink-light);letter-spacing:0.06em;line-height:1.8}
+.qr-toolbar-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:5px;color:var(--gold);font-size:10px}
+.qr-filter-wrap{position:relative;display:flex;align-items:center;flex-shrink:0}
+.qr-filter-wrap>span{position:absolute;left:10px;color:var(--ink-faint);font-size:13px;pointer-events:none}
+.qr-filter-wrap input{
+  width:min(270px,42vw);padding:8px 30px 8px 28px;
+  border:1px solid var(--border);border-radius:0;background:var(--paper);color:var(--ink);
+  font:11px 'Noto Sans TC',sans-serif;outline:none;transition:border-color .18s,box-shadow .18s;
+}
+.qr-filter-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(181,131,42,.12)}
+.qr-filter-clear{
+  position:absolute;right:5px;border:0;background:transparent;color:var(--ink-faint);
+  padding:3px 5px;font-size:12px;cursor:pointer;line-height:1;
+}
+.qr-filter-clear:hover{color:var(--red-seal)}
+.qr-empty{padding:30px 16px;text-align:center;color:var(--ink-light);font-size:12px;letter-spacing:.08em;background:var(--paper-warm);border:1px dashed var(--border)}
+.qr-photo-wrap{transition:transform .16s ease-out,box-shadow .16s ease-out}
+.qr-photo-wrap.has-photo:hover{transform:scale(1.04);box-shadow:0 3px 10px rgba(43,32,22,.18)}
+/* Style note: 照片檢視器延續紙本手帳的米白、酒紅與金色系，以深色模糊背景突出影像；操作保持清楚、克制且適合手機。 */
+.photo-viewer-overlay{
+  position:fixed;inset:0;z-index:4100;display:flex;align-items:center;justify-content:center;
+  padding:18px;background:rgba(24,17,13,.72);backdrop-filter:blur(12px) saturate(.78);-webkit-backdrop-filter:blur(12px) saturate(.78);
+  animation:photoViewerIn .18s ease-out both;
+}
+.photo-viewer-panel{
+  width:min(94vw,900px);max-height:94vh;display:flex;flex-direction:column;min-width:0;
+  background:var(--paper-warm);border:1px solid var(--gold-light);box-shadow:0 22px 70px rgba(0,0,0,.46);
+}
+.photo-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-light)}
+.photo-viewer-title{font:13px 'Playfair Display','Noto Serif TC',serif;color:var(--ink);letter-spacing:.08em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-viewer-close{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(122,93,52,.34);background:rgba(255,252,243,.7);color:var(--ink);font-size:18px;line-height:1;cursor:pointer;transition:background .16s ease-out,color .16s ease-out,transform .16s ease-out}
+.photo-viewer-close:hover{background:var(--red-seal);color:#fff;transform:rotate(4deg)}
+.photo-viewer-close:focus-visible,.photo-viewer-zoom button:focus-visible,.photo-viewer-actions button:focus-visible{outline:2px solid var(--red-seal);outline-offset:2px}
+.photo-viewer-stage{display:flex;flex-direction:column;align-items:stretch;min-height:220px;max-height:calc(94vh - 150px);padding:10px;background:linear-gradient(135deg,#1b1410,#33241b 48%,#18120f);overflow:hidden}
+.photo-viewer-viewport{display:flex;align-items:center;justify-content:center;flex:1;min-height:190px;min-width:0;overflow:auto;padding:22px;overscroll-behavior:contain;touch-action:pan-x pan-y}
+.photo-viewer-image{display:block;max-width:100%;max-height:calc(94vh - 235px);width:auto;height:auto;object-fit:contain;transform-origin:center;box-shadow:0 8px 24px rgba(0,0,0,.42);transition:transform .18s cubic-bezier(.23,1,.32,1);cursor:zoom-in;user-select:none}
+.photo-viewer-image.is-zoomed{cursor:grab}
+.photo-viewer-image.is-dragging{cursor:grabbing}
+.photo-viewer-zoom{display:flex;align-items:center;justify-content:center;gap:6px;padding:2px 0 10px;color:rgba(255,247,231,.82);font-size:10px;letter-spacing:.05em}
+.photo-viewer-zoom button{min-width:32px;height:28px;border:1px solid rgba(255,247,231,.32);background:rgba(22,15,11,.5);color:#fff7e7;font-size:16px;line-height:1;cursor:pointer;transition:background .16s ease-out,border-color .16s ease-out,transform .16s ease-out}
+.photo-viewer-zoom button:hover{background:var(--red-seal);border-color:var(--red-seal);transform:translateY(-1px)}
+.photo-viewer-zoom-label{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;color:#fff7e7}
+.photo-viewer-zoom-hint{margin-left:8px;color:rgba(255,247,231,.62)}
+.photo-viewer-caption{padding:9px 16px 0;color:var(--ink-light);font-size:10px;line-height:1.7;letter-spacing:.05em}
+.photo-viewer-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px 14px}
+.photo-viewer-actions button{font-size:11px;padding:6px 14px;cursor:pointer}
+@keyframes photoViewerIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.photo-viewer-overlay{animation:none}.photo-viewer-image,.photo-viewer-close,.photo-viewer-zoom button{transition:none}.qr-photo-wrap{transition:none}}
+@media (max-width:600px){
+  .photo-viewer-overlay{padding:8px}
+  .photo-viewer-panel{width:100%;max-height:96vh}
+  .photo-viewer-stage{max-height:calc(96vh - 136px);padding:8px}
+  .photo-viewer-viewport{min-height:180px;padding:10px}
+  .photo-viewer-image{max-height:calc(96vh - 210px)}
+  .photo-viewer-zoom-hint{display:none}
+  .qr-toolbar{display:block}
+  .qr-filter-wrap{margin-top:10px}
+  .qr-filter-wrap input{width:100%}
+}
+
 /* === LOC BUILDER === */
 .loc-box{
   background:var(--paper-warm);border:1px solid var(--border-light);
@@ -12523,7 +12590,8 @@ function pgInv(){
 
   // 類別群組
   const cats=Object.keys(CAT_META).filter(cat=>items.some(i=>i.cat===cat));
-  h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+  h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+    ${isDesigner()?`<button onclick="printInventoryCountSheet()" class="btn-primary" style="font-size:10px;padding:5px 12px;letter-spacing:0.04em">列 印 盤 點 表 ↗</button>`:''}
     <button onclick="toggleAllCat(true)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 展 開</button>
     <button onclick="toggleAllCat(false)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 收 合</button>
   </div>`;
@@ -13459,30 +13527,84 @@ function catIcon(cat){return CAT_ICON[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETT
 function catHex(cat){return CAT_HEX[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETTE.length].hex;}
 function catLightBg(cat){return CAT_LIGHT[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETTE.length].light;}
 
+let _qrSearch='';
+const A5_BRAND_DEFAULT={title:'品 項 張 貼 圖',subtitle:'平安家園・活動物品手帳',logoText:'平安家園',logoData:''};
+let _a5DraftLogoData='';
+function getA5Brand(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('pahome_a5_brand')||'null');
+    return {...A5_BRAND_DEFAULT,...(saved&&typeof saved==='object'?saved:{})};
+  }catch(e){return {...A5_BRAND_DEFAULT};}
+}
+function saveA5Brand(brand){
+  const next={...A5_BRAND_DEFAULT,...brand};
+  try{localStorage.setItem('pahome_a5_brand',JSON.stringify(next));}catch(e){console.warn('A5 品牌設定無法儲存',e);}
+  return next;
+}
+function qrEscapeAttr(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function filterQR(value){
+  _qrSearch=String(value??'');
+  pgQR();
+  requestAnimationFrame(()=>{
+    const input=document.getElementById('qrSearch');
+    if(!input)return;
+    input.focus();
+    const pos=_qrSearch.length;
+    try{input.setSelectionRange(pos,pos)}catch(e){}
+  });
+}
+function clearQRSearch(){
+  _qrSearch='';
+  pgQR();
+  requestAnimationFrame(()=>document.getElementById('qrSearch')?.focus());
+}
+
 function pgQR(){
+  const query=_qrSearch.trim().toLocaleLowerCase();
+  const items=query?inv.filter(i=>[
+    i.id,i.nm,i.cat,ls(i.loc),i.con?'消耗品':'非消耗品'
+  ].join(' ').toLocaleLowerCase().includes(query)):inv;
   let h=`
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div style="font-size:11px;color:#7a6650;letter-spacing:0.06em;line-height:1.8">
-      依類別顯示各品項專屬 QR Code。點擊任意卡片可預覽並列印。
+  <div class="qr-toolbar">
+    <div>
+      <div class="qr-toolbar-note">依類別顯示各品項專屬 QR Code。點擊卡片可預覽列印；點擊已有照片可檢視完整影像。</div>
+      <div class="qr-toolbar-meta"><span>⌕</span><span>顯示 ${items.length} / ${inv.length} 項</span>${query?`<span>・搜尋「${qrEscapeAttr(_qrSearch)}」</span>`:''}</div>
     </div>
-    <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap;flex-shrink:0;margin-left:12px">
+    <div class="qr-filter-wrap" role="search" aria-label="搜尋 QR Code 品項">
+      <span aria-hidden="true">⌕</span>
+      <input id="qrSearch" type="search" value="${qrEscapeAttr(_qrSearch)}" placeholder="搜尋品項、類別、位置或編號…" oninput="filterQR(this.value)" aria-label="搜尋品項、類別、位置或編號">
+      ${_qrSearch?`<button class="qr-filter-clear" type="button" onclick="clearQRSearch()" aria-label="清除搜尋">✕</button>`:''}
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+    ${isDesigner()?`<button onclick="printInventoryCountSheet()" style="font-size:11px;padding:6px 14px;white-space:nowrap">列 印 盤 點 表 ↗</button>`:''}
+    <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap">
       列 印 全 部 ${inv.length} 張 ↗
     </button>
   </div>`;
 
+  if(!items.length){
+    h+='<div class="qr-empty">找不到符合條件的品項，請換一個關鍵字。</div>';
+  }
+
   Object.keys(CAT_META).forEach(cat=>{
-    const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
+    const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
     h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px" class="qr-grid-mobile">`;
     ci.forEach(i=>{
       const catCol=catHex(cat);
+      const hasPhoto=!!i.img;
+      const photoAction=hasPhoto?`event.stopPropagation();openPhotoViewer(${i.id})`:(isAdminPlus()?`event.stopPropagation();openPhotoUpload(${i.id})`:'');
+      const photoTitle=hasPhoto?'點擊檢視完整照片':(isAdminPlus()?'點擊上傳照片（管理員以上）':'尚未上傳照片');
       h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(43,32,22,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
           <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
         </div>
-        <div class="qr-photo-wrap" onclick="event.stopPropagation();openPhotoUpload(${i.id})" title="點擊上傳／更換照片" style="width:44px;height:44px;margin:0 auto 4px;border-radius:50%;overflow:hidden;border:1px solid ${i.img?'var(--border-light)':'#d8c49a'};background:${i.img?'#fff':'#f8f0dc'};display:flex;align-items:center;justify-content:center;cursor:pointer">
-          ${i.img?`<img src="${i.img}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:14px;color:#b39c6e">📷</span>`}
+        <div class="qr-photo-wrap${hasPhoto?' has-photo':''}" ${photoAction?`onclick="${photoAction}"`:''} title="${photoTitle}" style="width:44px;height:44px;margin:0 auto 4px;border-radius:50%;overflow:hidden;border:1px solid ${hasPhoto?'var(--border-light)':'#d8c49a'};background:${hasPhoto?'#fff':'#f8f0dc'};display:flex;align-items:center;justify-content:center;cursor:${hasPhoto||isAdminPlus()?'pointer':'default'}">
+          ${hasPhoto?`<img src="${i.img}" alt="${qrEscapeAttr(i.nm)} 照片" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:14px;color:#b39c6e">📷</span>`}
         </div>
         <div style="margin:0 auto 6px;width:64px;height:64px;display:flex;align-items:center;justify-content:center">
           <div id="qrc-${i.id}" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center"></div>
@@ -13498,8 +13620,8 @@ function pgQR(){
   });
 
   document.getElementById('pg').innerHTML=h;
-  // Async fill all QR canvases
-  inv.forEach(item=>{
+  // Async fill all visible QR canvases
+  items.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
     if(!el)return;
     const payload=String(item.id);
@@ -13509,13 +13631,92 @@ function pgQR(){
   });
 }
 
-// ── 品項照片：上傳／編輯／刪除 ───────────────────────────────────────────────
+// ── 品項照片：上傳／編輯／刪除／完整檢視 ───────────────────────────────────────
+let _photoZoom=1;
+function applyPhotoZoom(){
+  const overlay=document.getElementById('photoViewerOverlay');
+  const image=overlay?.querySelector('.photo-viewer-image');
+  const label=overlay?.querySelector('.photo-viewer-zoom-label');
+  if(!image)return;
+  const percent=Math.round(_photoZoom*100);
+  image.style.transform=`scale(${_photoZoom})`;
+  image.classList.toggle('is-zoomed',_photoZoom>1);
+  if(label)label.textContent=`${percent}%`;
+  image.setAttribute('aria-label',`完整照片，目前縮放 ${percent}%`);
+}
+function changePhotoZoom(delta){
+  _photoZoom=Math.max(.5,Math.min(3,Math.round((_photoZoom+delta)*4)/4));
+  applyPhotoZoom();
+}
+function resetPhotoZoom(){_photoZoom=1;applyPhotoZoom()}
+function closePhotoViewer(){
+  const overlay=document.getElementById('photoViewerOverlay');
+  if(!overlay)return;
+  if(overlay._onKeydown)document.removeEventListener('keydown',overlay._onKeydown);
+  overlay.remove();
+  _photoZoom=1;
+}
+function openPhotoViewer(id){
+  const item=inv.find(i=>i.id===id);
+  if(!item?.img){
+    if(isAdminPlus())openPhotoUpload(id);
+    return;
+  }
+  closePhotoViewer();
+  _photoZoom=1;
+  const overlay=document.createElement('div');
+  overlay.id='photoViewerOverlay';
+  overlay.className='photo-viewer-overlay';
+  overlay.setAttribute('role','dialog');
+  overlay.setAttribute('aria-modal','true');
+  overlay.setAttribute('aria-label',`品項照片：${item.nm}`);
+  overlay.onclick=e=>{if(e.target===overlay)closePhotoViewer()};
+  overlay.innerHTML=`
+    <div class="photo-viewer-panel">
+      <div class="photo-viewer-head">
+        <span class="photo-viewer-title">品 項 照 片 ── ${item.nm}</span>
+        <button class="photo-viewer-close" type="button" onclick="closePhotoViewer()" aria-label="關閉完整照片">✕</button>
+      </div>
+      <div class="photo-viewer-stage">
+        <div class="photo-viewer-zoom" role="toolbar" aria-label="圖片縮放控制">
+          <button type="button" onclick="changePhotoZoom(-.25)" aria-label="縮小照片" title="縮小照片">−</button>
+          <span class="photo-viewer-zoom-label" aria-live="polite">100%</span>
+          <button type="button" onclick="resetPhotoZoom()" aria-label="還原照片大小" title="還原照片大小">1:1</button>
+          <button type="button" onclick="changePhotoZoom(.25)" aria-label="放大照片" title="放大照片">＋</button>
+          <span class="photo-viewer-zoom-hint">Ctrl/⌘＋滾輪縮放</span>
+        </div>
+        <div class="photo-viewer-viewport" tabindex="0" aria-label="照片檢視區，可使用 Ctrl 或 Command 加滾輪縮放">
+          <img class="photo-viewer-image" src="${item.img}" alt="${qrEscapeAttr(item.nm)} 完整照片" draggable="false">
+        </div>
+      </div>
+      <div class="photo-viewer-caption">${item.cat} ・ ${ls(item.loc)||'尚未設定位置'}</div>
+      <div class="photo-viewer-actions">
+        ${isAdminPlus()?`<button type="button" onclick="closePhotoViewer();openPhotoUpload(${id})">更 換 照 片</button>`:''}
+        <button class="btn-primary" type="button" onclick="closePhotoViewer()">關 閉</button>
+      </div>
+    </div>`;
+  overlay._onKeydown=e=>{
+    if(e.key==='Escape')closePhotoViewer();
+    else if(e.key==='+'||e.key==='=')changePhotoZoom(.25);
+    else if(e.key==='-'||e.key==='_')changePhotoZoom(-.25);
+    else if(e.key==='0')resetPhotoZoom();
+  };
+  document.body.appendChild(overlay);
+  const viewport=overlay.querySelector('.photo-viewer-viewport');
+  viewport?.addEventListener('wheel',e=>{
+    if(e.ctrlKey||e.metaKey){e.preventDefault();changePhotoZoom(e.deltaY<0?.25:-.25)}
+  },{passive:false});
+  viewport?.addEventListener('dblclick',resetPhotoZoom);
+  document.addEventListener('keydown',overlay._onKeydown);
+  overlay.querySelector('.photo-viewer-close')?.focus();
+  applyPhotoZoom();
+}
 function closePhotoUpload(){
   _pendingPhotoDataUrl=null;
   document.getElementById('photoUploadOverlay')?.remove();
 }
 function openPhotoUpload(id){
-  if(!canWrite()){ alert('⚠ 上傳照片需要管理員或以上權限'); return; }
+  if(!isAdminPlus()){ alert('⚠ 上傳照片需要管理員或以上權限'); return; }
   const item=inv.find(i=>i.id===id); if(!item) return;
   // 每次開啟都清除上一個品項尚未儲存的照片，避免誤存到其他品項。
   _pendingPhotoDataUrl=null;
@@ -13584,6 +13785,7 @@ function handlePhotoFile(evt){
 }
 
 function savePhoto(id){
+  if(!isAdminPlus()){ alert('⚠ 儲存照片需要管理員或以上權限'); return; }
   const item=inv.find(i=>i.id===id); if(!item) return;
   if(!_pendingPhotoDataUrl){ closePhotoUpload(); return; }
   item.img=_pendingPhotoDataUrl;
@@ -13595,6 +13797,7 @@ function savePhoto(id){
 }
 
 function removePhoto(id){
+  if(!isAdminPlus()){ alert('⚠ 移除照片需要管理員或以上權限'); return; }
   const item=inv.find(i=>i.id===id); if(!item) return;
   if(!confirm('確定要移除此品項的照片嗎？')) return;
   delete item.img;
@@ -13653,8 +13856,9 @@ function previewCard(id){
     </div>
 
     <!-- Actions -->
-    <div style="padding:10px 14px 14px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #d8c49a">
+    <div style="padding:10px 14px 14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #d8c49a">
       <button onclick="document.getElementById('qrModal').remove()" style="font-size:11px;padding:6px 14px">取 消</button>
+      ${isDesigner()?`<button onclick="openA5PosterOptions(${item.id})" style="font-size:11px;padding:6px 14px">A5 張 貼 圖 ↗</button>`:''}
       <button class="btn-primary" onclick="printSingleCard(${item.id})" style="font-size:11px;padding:6px 16px">列 印 此 張 ↗</button>
     </div>
   </div>`;
@@ -13730,6 +13934,103 @@ async function printSingleCard(id){
   w.document.close();
 }
 
+function printEsc(value){
+  return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+function printInventoryCountSheet(){
+  if(!isDesigner()){ alert('⚠ 盤點表列印僅設計師可操作'); return; }
+  const rows=inv.slice().sort((a,b)=>a.id-b.id).map((item,idx)=>`
+    <tr>
+      <td class="no">${idx+1}</td>
+      <td class="name">${printEsc(item.nm)}</td>
+      <td>${printEsc(item.cat)}</td>
+      <td>${item.con?'消耗品':'非消耗品'}</td>
+      <td class="qty">${item.qty}</td>
+      <td>${printEsc(item.u||'')}</td>
+      <td>${printEsc(ls(item.loc)||'—')}</td>
+      <td class="write-cell"></td>
+      <td class="write-cell"></td>
+    </tr>`).join('');
+  const w=window.open('','_blank','width=1100,height=800');
+  if(!w){alert('⚠ 瀏覽器封鎖了列印視窗，請允許此網站開啟彈出視窗。');return;}
+  w.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+    <title>既有品項盤點表｜平安家園</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      /* Style note: 盤點表沿用紙本手帳的米白、酒紅與金色，優先確保 A4 黑白列印的欄位清晰與書寫空間。 */
+      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#ece8df;color:#2b2016;font-family:'Noto Sans TC',sans-serif;font-size:10px}
+      .sheet{width:100%;max-width:190mm;margin:12mm auto;background:#fffdf7;padding:10mm;border:1px solid #d8c49a}
+      .mast{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #6b1f2a;padding-bottom:7px;margin-bottom:8px;gap:18px}
+      h1{margin:0;font:700 19px 'Noto Serif TC',serif;letter-spacing:.12em;color:#6b1f2a} .sub{margin-top:4px;color:#7a6650;font-size:9px;letter-spacing:.08em}
+      .meta{display:grid;grid-template-columns:repeat(3,auto);gap:14px;color:#7a6650;font-size:9px;white-space:nowrap}.meta b{display:inline-block;min-width:38px;color:#2b2016;border-bottom:1px solid #7a6650;text-align:center;font-weight:400}
+      table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #b9aa8d;padding:5px 4px;vertical-align:middle;line-height:1.35}th{background:#f1e5cf;color:#6b1f2a;font-size:9px;font-weight:700;letter-spacing:.04em}td{font-size:9px}td.no{width:5%;text-align:center;color:#7a6650}td.name{width:24%;font:11px 'Noto Serif TC',serif}td.qty{font-weight:700;text-align:center;font-variant-numeric:tabular-nums}.write-cell{height:24px;background:#fffef9}
+      th:nth-child(1){width:5%}th:nth-child(2){width:24%}th:nth-child(3){width:17%}th:nth-child(4){width:9%}th:nth-child(5){width:8%}th:nth-child(6){width:6%}th:nth-child(7){width:16%}th:nth-child(8){width:8%}th:nth-child(9){width:7%}
+      .foot{display:flex;justify-content:space-between;margin-top:8px;color:#7a6650;font-size:9px}.legend{color:#6b1f2a;font-weight:700}
+      @media print{html,body{background:#fff}.sheet{max-width:none;margin:0;border:0;padding:0}.mast{padding-top:0} @page{size:A4 portrait;margin:10mm}}
+    </style></head><body><main class="sheet">
+      <header class="mast"><div><h1>既 有 品 項 盤 點 表</h1><div class="sub">平安家園・活動物品手帳　｜　共 ${inv.length} 項</div></div><div class="meta"><span>盤點日 <b>${tdy()}</b></span><span>盤點人 <b></b></span><span>頁次 <b></b></span></div></header>
+      <table><thead><tr><th>序</th><th>品項</th><th>類別</th><th>性質</th><th>系統數量</th><th>單位</th><th>儲存位置</th><th>實盤數量</th><th>差異</th></tr></thead><tbody>${rows}</tbody></table>
+      <footer class="foot"><span class="legend">盤點說明：實盤數量請以現場清點結果填寫，差異欄記錄增減數。</span><span>備註：________________________________</span></footer>
+    </main><script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  w.document.close();
+}
+function closeA5PosterOptions(){document.getElementById('a5PosterOptions')?.remove();}
+function updateA5BrandPreview(){
+  const preview=document.getElementById('a5BrandPreview');if(!preview)return;
+  const title=document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title;
+  const subtitle=document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle;
+  const logoText=document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText;
+  preview.innerHTML=`<div style="height:100%;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:18px;background:#f3ead9;border:1px solid #b39c6e;box-shadow:0 8px 18px rgba(43,32,22,.10)"><div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none">${_a5DraftLogoData?`<img src="${_a5DraftLogoData}" alt="" style="width:100%;height:100%;object-fit:contain">`:'<span style="font:700 13px Georgia;color:#6b1f2a">P</span>'}</div><div style="min-width:0"><div style="font:700 13px 'Noto Serif TC',serif;color:#6b1f2a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(logoText)}</div><div style="font-size:8px;color:#7a6650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(subtitle)}</div></div></div><div style="height:1px;background:#b5832a"></div><div style="font:700 18px 'Noto Serif TC',serif;color:#2b2016;letter-spacing:.08em">${printEsc(title)}</div><div style="font-size:8px;color:#7a6650">A5 橫式版面預覽</div></div>`;
+}
+function openA5PosterOptions(id){
+  if(!isDesigner()){ alert('⚠ A5 張貼圖設定僅設計師可操作'); return; }
+  const item=inv.find(i=>i.id===id);if(!item)return;
+  const brand=getA5Brand();_a5DraftLogoData=brand.logoData||'';
+  const overlay=document.createElement('div');overlay.id='a5PosterOptions';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,.56);backdrop-filter:blur(5px);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.onclick=e=>{if(e.target===overlay)closeA5PosterOptions()};
+  overlay.innerHTML=`<div style="width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fffaf0;border:1px solid #b39c6e;box-shadow:0 18px 60px rgba(43,32,22,.28)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a"><div><div style="font:700 15px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em">A5 橫式張貼圖設定</div><div style="font-size:10px;color:#7a6650;margin-top:3px">${printEsc(item.nm)}　・　設定會儲存在此瀏覽器，供下一張張貼圖沿用</div></div><button type="button" onclick="closeA5PosterOptions()" aria-label="關閉 A5 張貼圖設定" style="border:0;background:transparent;color:#7a6650;font-size:20px;padding:2px 6px">✕</button></div>
+    <style>.a5-options-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:18px;padding:18px}@media(max-width:620px){.a5-options-grid{grid-template-columns:1fr}.a5-options-preview{order:-1}.a5-options-preview #a5BrandPreview{height:150px!important}}</style><div class="a5-options-grid">
+      <div style="display:grid;gap:12px;align-content:start"><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">張 貼 圖 標 題<input id="a5BrandTitle" maxlength="30" value="${printEsc(brand.title)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font:700 15px 'Noto Serif TC',serif"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">副 標／識別文字<input id="a5BrandSubtitle" maxlength="48" value="${printEsc(brand.subtitle)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司／單位名稱<input id="a5BrandLogoText" maxlength="24" value="${printEsc(brand.logoText)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司 Logo 圖檔<input id="a5BrandLogoFile" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:5px;padding:8px;border:1px dashed #b39c6e;background:#fffdf7;color:#2b2016;font-size:11px"><span style="display:block;margin-top:5px;font-size:9px;color:#9a8465;line-height:1.5">支援 PNG、JPG、WebP；建議使用透明背景方形 Logo，檔案上限 600KB。</span></label></div>
+      <div class="a5-options-preview"><div style="font-size:10px;color:#7a6650;letter-spacing:.08em;margin-bottom:7px">即 時 預 覽</div><div id="a5BrandPreview" style="height:176px"></div></div>
+    </div><div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #d8c49a"><button type="button" onclick="closeA5PosterOptions()" style="font-size:11px;padding:7px 15px">取 消</button><button type="button" class="btn-primary" onclick="submitA5PosterOptions(${item.id})" style="font-size:11px;padding:7px 17px">生成 A5 張 貼 圖 ↗</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('a5BrandLogoFile').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>600*1024){alert('⚠ Logo 檔案請小於 600KB');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{_a5DraftLogoData=String(reader.result||'');updateA5BrandPreview()};reader.readAsDataURL(file);};
+  updateA5BrandPreview();
+}
+function submitA5PosterOptions(id){
+  if(!isDesigner()){alert('⚠ A5 張貼圖列印僅設計師可操作');return;}
+  const brand=saveA5Brand({title:document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title,subtitle:document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle,logoText:document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText,logoData:_a5DraftLogoData||''});
+  closeA5PosterOptions();printA5Poster(id,brand);
+}
+async function printA5Poster(id,customBrand){
+  if(!isDesigner()){ alert('⚠ A5 張貼圖列印僅設計師可操作'); return; }
+  const item=inv.find(i=>i.id===id);if(!item)return;
+  const brand={...getA5Brand(),...(customBrand&&typeof customBrand==='object'?customBrand:{})};
+  const posterTitle=String(brand.title||A5_BRAND_DEFAULT.title).trim()||A5_BRAND_DEFAULT.title;
+  const posterSubtitle=String(brand.subtitle||A5_BRAND_DEFAULT.subtitle).trim()||A5_BRAND_DEFAULT.subtitle;
+  const logoText=String(brand.logoText||A5_BRAND_DEFAULT.logoText).trim()||A5_BRAND_DEFAULT.logoText;
+  const logoData=String(brand.logoData||'').startsWith('data:image/')?brand.logoData:'';
+  const url=await getQRDataUrl(item,260);
+  const catCol=catHex(item.cat),catLight=catLightBg(item.cat);
+  const nature=item.con?'消耗品':'非消耗品';
+  const borrowQty=brws.filter(b=>b.iid===item.id&&!b.ret).reduce((sum,b)=>sum+b.qty,0);
+  const w=window.open('','_blank','width=960,height=720');
+  if(!w){alert('⚠ 瀏覽器封鎖了列印視窗，請允許此網站開啟彈出視窗。');return;}
+  w.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+    <title>${printEsc(item.nm)}｜${printEsc(posterTitle)}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      /* Style note: A5 張貼圖採 210mm × 148mm 橫式紙本識別卡，左側建立品牌與 QR 導視，右側突出品項與位置資訊。 */
+      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#d9d4ca;color:#2b2016;font-family:'Noto Sans TC',sans-serif}.poster{width:210mm;height:148mm;margin:12mm auto;background:#f3ead9;border:1.5px solid #b39c6e;position:relative;overflow:hidden;padding:10mm 12mm 9mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(43,32,22,.16)}.header{display:grid;grid-template-columns:18mm minmax(0,1fr) minmax(44mm,auto);align-items:center;gap:5mm;padding-bottom:5mm;border-bottom:1px solid #d2bf98}.logo{width:16mm;height:16mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}.logo img{width:100%;height:100%;object-fit:contain}.logo-mark{font:700 17px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}.brand-name{font:700 14px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-sub{font-size:8px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.poster-kicker{text-align:right;color:#6b1f2a;font:700 12px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accent{height:2px;background:${catCol};margin:4mm 0 5mm}.content{display:grid;grid-template-columns:68mm minmax(0,1fr);gap:10mm;align-items:center;flex:1;min-height:0}.qr-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:10mm}.qr-label{font-size:8px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}.qr{width:64mm;height:64mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2mm}.qr img{width:58mm;height:58mm;image-rendering:auto}.qr-code{font-size:8px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}.info{min-width:0;display:flex;flex-direction:column;justify-content:center}.cat{align-self:flex-start;color:#fff;background:${catCol};padding:2mm 6mm;font-size:8px;letter-spacing:.1em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.name{font:700 23px/1.32 'Noto Serif TC',serif;color:#2b2016;margin:5mm 0 2mm;max-width:100%;word-break:break-word}.nature{align-self:flex-start;background:${catLight};border:1px solid ${catCol}80;color:${catCol};padding:1.2mm 5mm;border-radius:99px;font-size:8px}.details{margin-top:6mm;border-top:1px solid #d2bf98;border-bottom:1px solid #d2bf98;padding:4mm 0;display:grid;grid-template-columns:25mm minmax(0,1fr);gap:2.5mm 3mm;font-size:9px;line-height:1.4}.label{color:#7a6650;letter-spacing:.08em}.value{font-family:'Noto Serif TC',serif;word-break:break-word}.qty{font-size:13px;font-weight:700;color:${catCol}}.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:8mm;margin-top:5mm}.note{color:#7a6650;font-size:7.5px;line-height:1.45}.note b{color:#6b1f2a;font-weight:700}.id{color:${catCol};font-size:8px;white-space:nowrap}@media print{html,body{background:#fff}.poster{margin:0;border:1.5px solid #b39c6e;box-shadow:none}@page{size:A5 landscape;margin:0}}
+    </style></head><body><main class="poster">
+      <header class="header"><div class="logo">${logoData?`<img src="${printEsc(logoData)}" alt="${printEsc(logoText)} Logo">`:'<span class="logo-mark">PH</span>'}</div><div><div class="brand-name">${printEsc(logoText)}</div><div class="brand-sub">${printEsc(posterSubtitle)}</div></div><div class="poster-kicker">${printEsc(posterTitle)}</div></header>
+      <div class="accent"></div><section class="content"><div class="qr-panel"><div class="qr-label">掃 描 查 詢 品 項</div><div class="qr"><img src="${url}" alt="${printEsc(item.nm)} QR Code"></div><div class="qr-code">ITEM #${String(item.id).padStart(2,'0')}</div></div><div class="info"><div class="cat">${printEsc(item.cat)}</div><div class="name">${printEsc(item.nm)}</div><div class="nature">${nature}</div><div class="details"><div class="label">儲存位置</div><div class="value">${printEsc(ls(item.loc)||'尚未設定位置')}</div><div class="label">目前庫存</div><div class="value qty">${item.qty} ${printEsc(item.u||'')}</div><div class="label">庫存狀態</div><div class="value">${printEsc(stl(item))}${borrowQty?`　・借出 ${borrowQty}${printEsc(item.u||'')}`:''}</div></div><div class="bottom"><div class="note"><b>掃描 QR Code</b> 查看品項資料　｜　張貼前請確認現場位置與盤點數量</div><div class="id">品項編號　#${String(item.id).padStart(2,'0')}</div></div></div></section>
+    </main><script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  w.document.close();
+}
 async function printAllQR(){
   const btn=document.querySelector('button.btn-primary');
   if(btn){btn.textContent='產生中…';btn.disabled=true}
