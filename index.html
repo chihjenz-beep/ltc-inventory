@@ -12324,7 +12324,9 @@ function normalizeLog(row,key=''){
     due:String(raw.due??raw.returnDate??''),
     loc:ls(raw.loc??raw.location??''),
     date:String(raw.date||stampDate||'').slice(0,10),
-    time:String(raw.time||stampTime||'')
+    time:String(raw.time||stampTime||''),
+    before:String(raw.before??''),
+    after:String(raw.after??'')
   };
   if(Number.isFinite(iid)) normalized.iid=iid;
   return normalized;
@@ -13073,6 +13075,13 @@ function confirmAddItem(){
     loc:{r:r||'', k:k||'', lv:lv||''}
   };
   inv.push(newItem);
+  const addOperator=currentOperator();
+  const addLog={type:'新增',iid:newId,nm,qty,
+    user:addOperator,operator:addOperator,
+    pur:`新增品項：${cat}／${con?'消耗品':'非消耗品'}`,
+    before:'不存在',after:`數量 ${qty}；類別 ${cat}`,
+    due:'',loc:ls(newItem.loc),date:tdy(),time:ntm()};
+  logs.unshift(addLog);
 
   // 同步至 CAT_META（若為新類別則加入）
   if(!CAT_META[cat]){
@@ -13803,11 +13812,19 @@ function savePhoto(id){
   if(!isAdminPlus()){ alert('⚠ 儲存照片需要管理員或以上權限'); return; }
   const item=inv.find(i=>i.id===id); if(!item) return;
   if(!_pendingPhotoDataUrl){ closePhotoUpload(); return; }
+  const hadPhoto=!!item.img;
   item.img=_pendingPhotoDataUrl;
   _pendingPhotoDataUrl=null;
+  const operator=currentOperator();
+  const photoLog={type:'調整',iid:id,nm:item.nm,qty:0,user:operator,operator,
+    pur:hadPhoto?'更換照片':'新增照片',before:hadPhoto?'已有照片':'無照片',after:'已有照片',
+    due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+  logs.unshift(photoLog);
   document.getElementById('photoUploadOverlay')?.remove();
   showSaving();
-  gasUpdateItemImg(id,item.img).then(ok=>ok?showSaved():showSaveErr());
+  Promise.all([gasUpdateItemImg(id,item.img),gasAppendLog(photoLog)])
+    .then(([ok])=>ok?showSaved():showSaveErr())
+    .catch(()=>showSaveErr());
   if(window._curPage==='qr') pgQR();
 }
 
@@ -13817,9 +13834,16 @@ function removePhoto(id){
   if(!confirm('確定要移除此品項的照片嗎？')) return;
   delete item.img;
   _pendingPhotoDataUrl=null;
+  const operator=currentOperator();
+  const photoLog={type:'調整',iid:id,nm:item.nm,qty:0,user:operator,operator,
+    pur:'移除照片',before:'已有照片',after:'無照片',
+    due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+  logs.unshift(photoLog);
   document.getElementById('photoUploadOverlay')?.remove();
   showSaving();
-  gasUpdateItemImg(id,'').then(ok=>ok?showSaved():showSaveErr());
+  Promise.all([gasUpdateItemImg(id,''),gasAppendLog(photoLog)])
+    .then(([ok])=>ok?showSaved():showSaveErr())
+    .catch(()=>showSaveErr());
   if(window._curPage==='qr') pgQR();
 }
 
@@ -14218,6 +14242,17 @@ async function sLE(id){
   }
 }
 
+function getRepRows(){
+  const curNm=window._repNm||'';
+  const curFrom=window._repFrom||'';
+  const curTo=window._repTo||'';
+  let rows=logs.filter(l=>l.type!=='登入'&&l.type!=='登出');
+  if(curNm) rows=rows.filter(l=>l.nm===curNm);
+  if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
+  if(curTo) rows=rows.filter(l=>l.date&&l.date<=curTo);
+  return rows;
+}
+
 function pgRep(){
   const nms=['（全部品項）',...new Set(logs.map(l=>l.nm).filter(Boolean))];
   nms.sort((a,b)=>a==='（全部品項）'?-1:a.localeCompare(b,'zh-TW'));
@@ -14240,13 +14275,11 @@ function pgRep(){
       <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">結束日期</label>
       <input type="date" id="repTo" value="${curTo}" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
     </div>
+    <button onclick="printMovementReport()" style="padding:5px 14px;border:1px solid #6b1f2a;border-radius:3px;background:#6b1f2a;color:#fff;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">⇩ 匯出 PDF</button>
     <button onclick="repClear()" style="padding:5px 14px;border:1px solid #b39c6e;border-radius:3px;background:transparent;color:#7a6650;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
-  let rows=logs.filter(l=>l.type!=='登入'&&l.type!=='登出');
-  if(curNm)   rows=rows.filter(l=>l.nm===curNm);
-  if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
-  if(curTo)   rows=rows.filter(l=>l.date&&l.date<=curTo);
+  const rows=getRepRows();
 
   if(curNm||curFrom||curTo){
     const total=rows.length;
@@ -14308,6 +14341,24 @@ function repFilter(){
 function repClear(){
   window._repNm='';window._repFrom='';window._repTo='';
   pgRep();
+}
+
+function printMovementReport(){
+  const rows=getRepRows();
+  const w=window.open('','_blank','width=1200,height=850');
+  if(!w){alert('⚠ 瀏覽器封鎖了列印視窗，請允許此網站開啟彈出視窗。');return;}
+  const itemFilter=window._repNm||'全部品項';
+  const dateFilter=(window._repFrom||window._repTo)?`${window._repFrom||'不限'} ～ ${window._repTo||'不限'}`:'全部日期';
+  const body=rows.length?rows.map((l,idx)=>{
+    const stamp=[(l.date||'').slice(0,10),l.time||''].filter(Boolean).join(' ');
+    const actor=l.operator&&l.operator!==l.user?`${l.user||'—'}（操作：${l.operator}）`:l.user||l.operator||'—';
+    return `<tr><td>${idx+1}</td><td>${printEsc(stamp||'—')}</td><td><b>${printEsc(l.type||'—')}</b></td><td>${printEsc(l.nm||'—')}</td><td class="num">${printEsc(l.qty??0)}</td><td>${printEsc(actor)}</td><td>${printEsc(l.pur||'—')}</td><td>${printEsc(l.before||'—')}</td><td>${printEsc(l.after||'—')}</td><td>${printEsc(l.loc||'—')}</td></tr>`;
+  }).join(''):`<tr><td colspan="10" class="empty">查 無 符 合 紀 錄</td></tr>`;
+  w.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><title>異動紀錄｜${printEsc(itemFilter)}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"><style>
+    /* Style note: 稽核報表沿用平安家園紙本手帳的米白、酒紅與金色，採 A4 橫式並優先確保欄位可追溯與可閱讀。 */
+    *{box-sizing:border-box}html,body{margin:0;padding:0;background:#eee9df;color:#2b2016;font-family:'Noto Sans TC',sans-serif;font-size:9px}.sheet{max-width:285mm;margin:10mm auto;background:#fffdf7;padding:9mm;border:1px solid #d8c49a}.mast{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;border-bottom:2px solid #6b1f2a;padding-bottom:7px;margin-bottom:7px}.brand{font:700 18px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.14em}.sub{margin-top:4px;color:#7a6650;font-size:9px;letter-spacing:.06em}.meta{text-align:right;color:#7a6650;line-height:1.8}.meta b{color:#2b2016;font-weight:500}.summary{display:flex;gap:18px;margin-bottom:7px;color:#7a6650}.summary b{color:#2b2016}table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #b9aa8d;padding:4px 5px;vertical-align:top;line-height:1.35;word-break:break-word}th{background:#f1e5cf;color:#6b1f2a;font-size:8px;font-weight:700;letter-spacing:.04em}td{font-size:8px}td:first-child{width:3%;text-align:center;color:#7a6650}td.num{text-align:right;font-variant-numeric:tabular-nums}td.empty{text-align:center;padding:24px;color:#7a6650}th:nth-child(2){width:9%}th:nth-child(3){width:7%}th:nth-child(4){width:15%}th:nth-child(5){width:6%}th:nth-child(6){width:14%}th:nth-child(7){width:19%}th:nth-child(8){width:10%}th:nth-child(9){width:10%}th:nth-child(10){width:11%}.foot{display:flex;justify-content:space-between;margin-top:7px;color:#7a6650;font-size:8px}@media print{html,body{background:#fff}.sheet{max-width:none;margin:0;border:0;padding:0}@page{size:A4 landscape;margin:8mm}}
+  </style></head><body><main class="sheet"><header class="mast"><div><div class="brand">異 動 紀 錄</div><div class="sub">平安家園・活動物品手帳　｜　完整稽核報表</div></div><div class="meta">匯出日期：<b>${tdy()}</b><br>篩選品項：<b>${printEsc(itemFilter)}</b><br>日期範圍：<b>${printEsc(dateFilter)}</b></div></header><div class="summary">紀錄筆數：<b>${rows.length}</b><span>操作者欄位：登入者／實際操作人</span></div><table><thead><tr><th>序</th><th>日期時間</th><th>動作</th><th>品項</th><th>數量</th><th>人員／操作者</th><th>異動說明</th><th>異動前</th><th>異動後</th><th>位置</th></tr></thead><tbody>${body}</tbody></table><footer class="foot"><span>本報表依目前異動紀錄頁篩選條件產生；登入／登出紀錄請至登入紀錄頁查閱。</span><span>列印後可選擇「另存為 PDF」</span></footer></main><script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>`);
+  w.document.close();
 }
 
 function pgLoginlog(){
