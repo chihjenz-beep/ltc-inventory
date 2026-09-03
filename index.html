@@ -10573,11 +10573,13 @@ body{
 }
 .st::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--gold),var(--red-seal))}
 .st-l{font-size:9px;color:var(--gold);letter-spacing:0.15em;margin-bottom:5px}
-.st-v{font-family:'Playfair Display','Noto Serif TC',serif;font-size:22px;font-weight:700;color:var(--ink)}
+.st-v{font-family:'Playfair Display','Noto Serif TC',serif;font-size:30px;line-height:1.08;font-weight:800;letter-spacing:.02em;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.75)}
 .st-v.warn{color:var(--rust)}
 .st-v.info{color:var(--indigo)}
 .st-v.danger{color:var(--red-seal)}
-
+.cat-count{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18);font-size:15px;font-weight:800;line-height:1.1;letter-spacing:.02em;color:#fff}
+.inv-qty{font-family:'Playfair Display','Noto Serif TC',serif;font-size:19px;font-weight:800;line-height:1.1;letter-spacing:.02em;text-align:center}
+.category-audit{font-size:11px;line-height:1.5;letter-spacing:.04em;margin-bottom:10px;padding:7px 10px;border-left:3px solid var(--gold);background:rgba(181,131,42,.08);color:#7a6650}.category-audit strong{font-size:16px;font-weight:800;color:var(--ink)}.category-audit.ok{border-left-color:#4a7a5a;background:rgba(74,122,90,.08)}.category-audit.ok strong{color:#315f3f}.category-audit.mismatch{border-left-color:#a33d2f;background:rgba(163,61,47,.08)}.category-audit.mismatch strong{color:#8b2e24}
 /* === TABLE === */
 .sep{
   font-family:'Playfair Display','Noto Serif TC',serif;
@@ -12562,6 +12564,9 @@ function pgInv(){
   const low=inv.filter(i=>stc(i)!=='b-ok').length;
   const ac=brws.filter(b=>!b.ret).length;
   const od2=brws.filter(b=>!b.ret&&ovd(b.due)).length;
+  const expectedInventoryTotal=234;
+  const categoryTotal=Object.keys(CAT_META).reduce((sum,cat)=>sum+inv.filter(i=>i.cat===cat).length,0);
+  const categoryAuditOk=categoryTotal===inv.length&&categoryTotal===expectedInventoryTotal;
 
   function rows(arr,catCol){return arr.map(i=>{
     const bq=brws.filter(b=>b.iid===i.id&&!b.ret).reduce((s,b)=>s+b.qty,0);
@@ -12573,7 +12578,7 @@ function pgInv(){
       onclick="invQuickAction(${i.id})" title="點擊操作出入庫">
       <td style="font-family:'Playfair Display','Noto Serif TC',serif;padding-left:12px;border-left:3px solid ${catCol}">${i.nm}</td>
       <td class="inv-col-nat"><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></td>
-      <td style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:15px;font-weight:700;color:${qtyColor};text-align:center">${i.qty}</td>
+      <td class="inv-qty" style="color:${qtyColor}">${i.qty}</td>
       <td><span class="b ${stClass}" style="font-size:10px">${stl(i)}</span></td>
       <td>${bq>0?`<span class="b b-br" style="cursor:pointer;font-size:10px" onclick="event.stopPropagation();invReturnAction(${i.id})" title="點擊歸還">${bq}↩</span>`:'—'}</td>
       <td style="color:#7a6650;font-size:11px"><span class="lb" style="font-size:10px">${ls(i.loc)||'—'}</span></td>
@@ -12587,6 +12592,8 @@ function pgInv(){
     <div class="st"><div class="st-l">逾 期 未 還</div><div class="st-v danger">${od2}</div></div>
   </div>`;
   if(od2>0)h+=`<div class="oa">⚠ 注意：${od2} 筆借用已逾期未歸還，請查看「借用管理」頁面。</div>`;
+  const auditMessage=categoryAuditOk?'分類與品項資料一致，總數符合 234 項目標':categoryTotal===inv.length?`分類與品項資料一致，但目前為 ${categoryTotal} 項，與 234 項目標相差 ${Math.abs(expectedInventoryTotal-categoryTotal)} 項`:'分類與品項資料不一致，請核對資料';
+  h+=`<div class="category-audit ${categoryAuditOk?'ok':'mismatch'}">◈ 分類合計 <strong>${categoryTotal}</strong> 項　／　品項總數 <strong>${inv.length}</strong> 項　／　目標 <strong>${expectedInventoryTotal}</strong> 項　・　${auditMessage}</div>`;
   h+=`<div style="font-size:10px;color:#b5832a;letter-spacing:0.06em;margin-bottom:14px;padding:5px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>`;
 
   // 類別群組
@@ -12613,7 +12620,7 @@ function pgInv(){
           <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:12px;color:#fff;letter-spacing:0.08em;font-weight:500">${cat}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:10px;color:rgba(255,255,255,0.8)">${ci.length} 項</span>
+          <span class="cat-count">${ci.length} 項</span>
           <span id="${catId}_arrow" style="font-size:10px;color:#fff;transition:transform 0.2s">▼</span>
         </div>
       </div>
@@ -14129,7 +14136,7 @@ async function printAllQR(){
   .body{padding:10px}
   .sts{grid-template-columns:repeat(2,1fr)}
   .tbl th,.tbl td{padding:5px 6px;font-size:10px}
-  .st-v{font-size:22px}
+  .st-v{font-size:28px}.inv-qty{font-size:18px}.cat-count{font-size:14px;min-width:44px}
 }
 </style></head><body>
   <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 ${inv.length} 張）</h1>
