@@ -11375,6 +11375,7 @@ async function gasLoad(){
     if(d.inv && Object.keys(d.inv).length>0){
       inv=Object.values(d.inv).map(normalizeInventoryRow)
         .filter(row=>row.id>0);
+      ensureInventoryCategories();
     } else {
       // Firebase 是空的（尚未搬遷資料）：先用內建預設值，並提示執行搬遷
       console.warn('Firebase 尚無庫存資料，如尚未搬遷請執行 migrateFromSheetsToFirebase()');
@@ -11423,6 +11424,7 @@ function _startRealtimeListeners(){
     if(!Object.keys(d).length) return;
     inv=Object.values(d).map(normalizeInventoryRow)
       .filter(row=>row.id>0);
+    ensureInventoryCategories();
     if(['inv','loc'].includes(window._curPage)) go(window._curPage,null);
   });
 
@@ -12276,6 +12278,16 @@ const CAT_META={
   '食農相關':{cls:'cat-sen',label:'食農相關'},
   '精油系列':{cls:'cat-med',label:'精油系列'}
 };
+
+// Firebase 可能保存較新的類別名稱；顯示前自動補上未出現在舊版 CAT_META 的實際類別。
+function ensureInventoryCategories(){
+  const actualCats=[...new Set(inv.map(item=>String(item.cat||'').trim()).filter(Boolean))];
+  actualCats.forEach(cat=>{
+    if(CAT_META[cat])return;
+    const cls=CAT_CLS_CYCLE[Object.keys(CAT_META).length%CAT_CLS_CYCLE.length];
+    CAT_META[cat]={cls,label:cat};
+  });
+}
 
 function normalizeLocation(loc){
   if(!loc) return {r:'',k:'',lv:''};
