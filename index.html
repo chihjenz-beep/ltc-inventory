@@ -11972,7 +11972,7 @@ function confirmAddCategory(){
   const cls=CAT_CLS_CYCLE[Object.keys(CAT_META).length % CAT_CLS_CYCLE.length];
   CAT_META[name]={cls, label:name};
   const by=currentOperator();
-  logs.unshift({type:'系統',nm:'新增類別',qty:0,user:by,pur:`新增類別：${name}`,due:'',loc:'',date:tdy(),time:ntm()});
+  logs.unshift({type:'新增類別',nm:'類別',qty:0,user:by,operator:by,pur:`新增類別：${name}`,before:'類別不存在',after:`類別 ${name}`,due:'',loc:'',date:tdy(),time:ntm()});
   gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
   pushCatConfig();
   input.closest('div[style*=fixed]').remove();
@@ -12012,7 +12012,7 @@ function confirmRenameCategory(oldName){
   const affected=inv.filter(i=>i.cat===oldName);
   affected.forEach(i=>{ i.cat=newName; });
   const by=currentOperator();
-  logs.unshift({type:'系統',nm:'類別改名',qty:0,user:by,pur:`「${oldName}」→「${newName}」（影響 ${affected.length} 筆品項）`,due:'',loc:'',date:tdy(),time:ntm()});
+  logs.unshift({type:'調整',nm:'類別',qty:0,user:by,operator:by,pur:`類別改名：「${oldName}」→「${newName}」（影響 ${affected.length} 筆品項）`,before:`類別 ${oldName}`,after:`類別 ${newName}`,due:'',loc:'',date:tdy(),time:ntm()});
   gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
   pushCatConfig();
   if(affected.length && _gasLoaded) gasSave();
@@ -12055,9 +12055,9 @@ function confirmDeleteCategory(name){
   }
   delete CAT_META[name];
   const by=currentOperator();
-  logs.unshift({type:'系統',nm:'刪除類別',qty:0,user:by,
+  logs.unshift({type:'刪除',nm:'類別',qty:0,user:by,operator:by,
     pur:`刪除類別：${name}${affected.length?`（${affected.length} 筆品項已搬移至「${movedTo}」）`:''}`,
-    due:'',loc:'',date:tdy(),time:ntm()});
+    before:`類別 ${name}`,after:`類別已刪除${affected.length?`；品項已搬移至 ${movedTo}`:''}`,due:'',loc:'',date:tdy(),time:ntm()});
   gasAppendLog(logs[0]).catch(e=>console.warn('紀錄寫入失敗',e));
   pushCatConfig();
   if(affected.length && _gasLoaded) gasSave();
@@ -13070,15 +13070,16 @@ function confirmAddItem(){
   err.style.display='none';
 
   const newId=inv.reduce((m,i)=>Math.max(m,i.id),0)+1;
+  const isNewCategory=!CAT_META[cat];
   const newItem={
     id:newId, nm, con, cat, u:'個', qty, min:1,
     loc:{r:r||'', k:k||'', lv:lv||''}
   };
   inv.push(newItem);
   const addOperator=currentOperator();
-  const addLog={type:'新增',iid:newId,nm,qty,
+  const addLog={type:isNewCategory?'新增類別':'新增',iid:newId,nm,qty,
     user:addOperator,operator:addOperator,
-    pur:`新增品項：${cat}／${con?'消耗品':'非消耗品'}`,
+    pur:`新增品項：${cat}／${con?'消耗品':'非消耗品'}${isNewCategory?'（同時新增類別）':''}`,
     before:'不存在',after:`數量 ${qty}；類別 ${cat}`,
     due:'',loc:ls(newItem.loc),date:tdy(),time:ntm()};
   logs.unshift(addLog);
@@ -13159,9 +13160,10 @@ function confirmEditQty(id){
   const oldQty=item.qty;
   item.qty=newQty;
   const operator=currentOperator();
-  const editLog={type:'調整',nm:item.nm,qty:newQty-oldQty,
+  const editLog={type:'調整',iid:item.id,nm:item.nm,qty:newQty-oldQty,
     user:operator,operator:operator,
     pur:(note||'數量調整')+`（${oldQty}→${newQty}）`,
+    before:`數量 ${oldQty}`,after:`數量 ${newQty}`,
     due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
   logs.unshift(editLog);
   showSaving();
@@ -13220,9 +13222,10 @@ function confirmChangeItemCat(id){
   const oldCat=item.cat;
   item.cat=newCat;
   const operator=currentOperator();
-  const editLog={type:'調整',nm:item.nm,qty:0,
+  const editLog={type:'調整',iid:item.id,nm:item.nm,qty:0,
     user:operator,operator:operator,
     pur:`變更類別：「${oldCat}」→「${newCat}」`,
+    before:`類別 ${oldCat}`,after:`類別 ${newCat}`,
     due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
   logs.unshift(editLog);
   gasAppendLog(editLog).catch(e=>console.warn('紀錄寫入失敗',e));
@@ -13271,7 +13274,7 @@ function confirmDeleteItem(id){
   // 使用報表共用格式記錄異動，避免舊版 op／mem／note 欄位造成 undefined。
   const operator=currentOperator();
   const deleteLog={type:'刪除',iid:id,nm:item.nm,qty:0,user:operator,operator,
-    pur:'品項已刪除',due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+    pur:'品項已刪除',before:`數量 ${item.qty}；類別 ${item.cat}`,after:'品項不存在',due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
   logs.unshift(deleteLog);
   pgInv();
   if(!_gasLoaded){
@@ -13361,9 +13364,10 @@ function toggleItemCon(id){
   const oldCon=item.con;
   item.con=newCon;
   const operator=currentOperator();
-  const editLog={type:'調整',nm:item.nm,qty:0,
+  const editLog={type:'調整',iid:item.id,nm:item.nm,qty:0,
     user:operator,operator:operator,
     pur:`變更消耗性質：「${oldCon?'消耗品':'非消耗品'}」→「${newCon?'消耗品':'非消耗品'}」`,
+    before:`性質 ${oldCon?'消耗品':'非消耗品'}`,after:`性質 ${newCon?'消耗品':'非消耗品'}`,
     due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
   logs.unshift(editLog);
   showSaving();
@@ -13411,7 +13415,7 @@ function doRetById(bid){
   const b=brws.find(x=>x.id===bid);if(!b||b.ret)return;
   b.ret=true;b.retD=tdy();
   const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
-  const retLog={type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:currentOperator(),pur:b.pur||'歸還',due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
+  const retLog={type:'歸還',iid:b.iid,nm:b.nm,qty:b.qty,user:b.user,operator:currentOperator(),pur:b.pur||'歸還',before:`數量 ${it?it.qty-b.qty:'—'}`,after:`數量 ${it?it.qty:'—'}`,due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
   logs.push(retLog);
   // 增量寫入
   showSaving();
@@ -13465,10 +13469,12 @@ function cfm(){
   if(q<=0){er.textContent='數量須大於 0';return}
   const it=sd.item;
   if(sd.op!=='入庫'&&q>it.qty){er.textContent=`庫存不足，目前僅剩 ${it.qty} ${it.u}`;return}
+  const beforeQty=it.qty;
   if(sd.op==='入庫')it.qty+=q;else it.qty-=q;
+  const afterQty=it.qty;
   sd.qty=q;sd.user=u;sd.pur=pur;sd.due=due;
   if(sd.op==='借用')brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
-  logs.push({type:sd.op,nm:it.nm,qty:q,user:u,operator,pur,due:due||'',loc:ls(it.loc),date:tdy(),time:ntm()});
+  logs.push({type:sd.op,iid:it.id,nm:it.nm,qty:q,user:u,operator,pur,due:due||'',loc:ls(it.loc),before:`數量 ${beforeQty}`,after:`數量 ${afterQty}`,date:tdy(),time:ntm()});
   gasSave();
   ss=3;step();
 }
@@ -14223,7 +14229,7 @@ async function sLE(id){
 
   const operator=currentOperator();
   const locLog={type:'調整',iid:it.id,nm:it.nm,qty:0,user:operator,operator,
-    pur:`變更位置：「${ls(oldLoc)}」→「${ls(newLoc)}」`,due:'',loc:ls(newLoc),date:tdy(),time:ntm()};
+    pur:`變更位置：「${ls(oldLoc)}」→「${ls(newLoc)}」`,before:`位置 ${ls(oldLoc)}`,after:`位置 ${ls(newLoc)}`,due:'',loc:ls(newLoc),date:tdy(),time:ntm()};
   it.loc=newLoc;
   logs.unshift(locLog);
   pgLoc();
@@ -14242,14 +14248,19 @@ async function sLE(id){
   }
 }
 
+function repActionTypes(){
+  return ['新增','新增類別','刪除','調整','入庫','出庫','借用','領用','歸還'];
+}
 function getRepRows(){
   const curNm=window._repNm||'';
   const curFrom=window._repFrom||'';
   const curTo=window._repTo||'';
+  const curOp=window._repOp||'';
   let rows=logs.filter(l=>l.type!=='登入'&&l.type!=='登出');
   if(curNm) rows=rows.filter(l=>l.nm===curNm);
   if(curFrom) rows=rows.filter(l=>l.date&&l.date>=curFrom);
   if(curTo) rows=rows.filter(l=>l.date&&l.date<=curTo);
+  if(curOp) rows=rows.filter(l=>l.type===curOp);
   return rows;
 }
 
@@ -14259,12 +14270,21 @@ function pgRep(){
   const curNm  =window._repNm  ||'';
   const curFrom=window._repFrom||'';
   const curTo  =window._repTo  ||'';
+  const curOp  =window._repOp  ||'';
+  const actionOpts=repActionTypes();
 
   let h=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:14px;padding:12px 14px;background:rgba(180,150,100,0.08);border-radius:4px;border:1px solid rgba(180,150,100,0.2)">
     <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;flex:1">
       <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">品　項</label>
       <select id="repNm" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
         ${nms.map(n=>`<option value="${n==='（全部品項）'?'':n}" ${(curNm===''&&n==='（全部品項）')||(curNm===n)?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">操　作</label>
+      <select id="repOp" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
+        <option value="" ${!curOp?'selected':''}>（全部操作）</option>
+        ${actionOpts.map(op=>`<option value="${op}" ${curOp===op?'selected':''}>${op}</option>`).join('')}
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
@@ -14281,7 +14301,7 @@ function pgRep(){
 
   const rows=getRepRows();
 
-  if(curNm||curFrom||curTo){
+  if(curNm||curFrom||curTo||curOp){
     const total=rows.length;
     const inQ =rows.filter(l=>l.type==='入庫').reduce((s,l)=>s+Number(l.qty),0);
     const outQ=rows.filter(l=>l.type==='出庫'||l.type==='領用').reduce((s,l)=>s+Number(l.qty),0);
@@ -14295,17 +14315,17 @@ function pgRep(){
   }
 
   h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:12%">時 間</th><th style="width:8%">操 作</th>
-    <th style="width:16%">品 項</th><th style="width:6%">數 量</th>
-    <th style="width:18%">人 員</th><th style="width:13%">用 途</th>
-    <th style="width:11%">歸 還 日</th><th style="width:16%">位 置</th>
+    <th style="width:11%">時 間</th><th style="width:8%">操 作</th>
+    <th style="width:15%">品 項</th><th style="width:6%">數 量</th>
+    <th style="width:16%">人 員</th><th style="width:12%">用 途</th>
+    <th style="width:10%">異 動 前／後</th><th style="width:9%">歸 還 日</th><th style="width:13%">位 置</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
-    h+=`<tr><td colspan="8" style="text-align:center;padding:30px;color:#7a6650;font-family:'Playfair Display','Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
+    h+=`<tr><td colspan="9" style="text-align:center;padding:30px;color:#7a6650;font-family:'Playfair Display','Noto Serif TC',serif;letter-spacing:0.1em">${logs.length?'查 無 符 合 紀 錄':'尚 無 異 動 紀 錄'}</td></tr>`;
   } else {
     rows.forEach(l=>{
-      const typeMap={'入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','調整':'b-w','刪除':'b-d'};
+      const typeMap={'新增':'b-in','新增類別':'b-in','入庫':'b-in','借用':'b-br','歸還':'b-rt','領用':'b-u','出庫':'b-u','調整':'b-w','刪除':'b-d'};
       const cls=typeMap[l.type]||'b-u';
       // 只取日期部分（前10碼），去除時間
       const dateOnly=(l.date||'').slice(0,10);
@@ -14316,6 +14336,7 @@ function pgRep(){
         <td style="font-family:'Playfair Display','Noto Serif TC',serif">${l.nm}</td>
         <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
         <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#7a6650">（'+l.operator+'操作）</span>':''}</td><td>${l.pur||'—'}</td>
+        <td style="font-size:10px;line-height:1.45"><span style="color:#8b4513">${l.before||'—'}</span><br><span style="color:#2a6b5e">${l.after||'—'}</span></td>
         <td>${dueOnly||'—'}</td>
         <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
     });
@@ -14336,10 +14357,11 @@ function repFilter(){
   window._repNm  =document.getElementById('repNm')?.value||'';
   window._repFrom=document.getElementById('repFrom')?.value||'';
   window._repTo  =document.getElementById('repTo')?.value||'';
+  window._repOp  =document.getElementById('repOp')?.value||'';
   pgRep();
 }
 function repClear(){
-  window._repNm='';window._repFrom='';window._repTo='';
+  window._repNm='';window._repFrom='';window._repTo='';window._repOp='';
   pgRep();
 }
 
@@ -14348,6 +14370,7 @@ function printMovementReport(){
   const w=window.open('','_blank','width=1200,height=850');
   if(!w){alert('⚠ 瀏覽器封鎖了列印視窗，請允許此網站開啟彈出視窗。');return;}
   const itemFilter=window._repNm||'全部品項';
+  const opFilter=window._repOp||'全部操作';
   const dateFilter=(window._repFrom||window._repTo)?`${window._repFrom||'不限'} ～ ${window._repTo||'不限'}`:'全部日期';
   const body=rows.length?rows.map((l,idx)=>{
     const stamp=[(l.date||'').slice(0,10),l.time||''].filter(Boolean).join(' ');
@@ -14357,7 +14380,7 @@ function printMovementReport(){
   w.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><title>異動紀錄｜${printEsc(itemFilter)}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"><style>
     /* Style note: 稽核報表沿用平安家園紙本手帳的米白、酒紅與金色，採 A4 橫式並優先確保欄位可追溯與可閱讀。 */
     *{box-sizing:border-box}html,body{margin:0;padding:0;background:#eee9df;color:#2b2016;font-family:'Noto Sans TC',sans-serif;font-size:9px}.sheet{max-width:285mm;margin:10mm auto;background:#fffdf7;padding:9mm;border:1px solid #d8c49a}.mast{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;border-bottom:2px solid #6b1f2a;padding-bottom:7px;margin-bottom:7px}.brand{font:700 18px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.14em}.sub{margin-top:4px;color:#7a6650;font-size:9px;letter-spacing:.06em}.meta{text-align:right;color:#7a6650;line-height:1.8}.meta b{color:#2b2016;font-weight:500}.summary{display:flex;gap:18px;margin-bottom:7px;color:#7a6650}.summary b{color:#2b2016}table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #b9aa8d;padding:4px 5px;vertical-align:top;line-height:1.35;word-break:break-word}th{background:#f1e5cf;color:#6b1f2a;font-size:8px;font-weight:700;letter-spacing:.04em}td{font-size:8px}td:first-child{width:3%;text-align:center;color:#7a6650}td.num{text-align:right;font-variant-numeric:tabular-nums}td.empty{text-align:center;padding:24px;color:#7a6650}th:nth-child(2){width:9%}th:nth-child(3){width:7%}th:nth-child(4){width:15%}th:nth-child(5){width:6%}th:nth-child(6){width:14%}th:nth-child(7){width:19%}th:nth-child(8){width:10%}th:nth-child(9){width:10%}th:nth-child(10){width:11%}.foot{display:flex;justify-content:space-between;margin-top:7px;color:#7a6650;font-size:8px}@media print{html,body{background:#fff}.sheet{max-width:none;margin:0;border:0;padding:0}@page{size:A4 landscape;margin:8mm}}
-  </style></head><body><main class="sheet"><header class="mast"><div><div class="brand">異 動 紀 錄</div><div class="sub">平安家園・活動物品手帳　｜　完整稽核報表</div></div><div class="meta">匯出日期：<b>${tdy()}</b><br>篩選品項：<b>${printEsc(itemFilter)}</b><br>日期範圍：<b>${printEsc(dateFilter)}</b></div></header><div class="summary">紀錄筆數：<b>${rows.length}</b><span>操作者欄位：登入者／實際操作人</span></div><table><thead><tr><th>序</th><th>日期時間</th><th>動作</th><th>品項</th><th>數量</th><th>人員／操作者</th><th>異動說明</th><th>異動前</th><th>異動後</th><th>位置</th></tr></thead><tbody>${body}</tbody></table><footer class="foot"><span>本報表依目前異動紀錄頁篩選條件產生；登入／登出紀錄請至登入紀錄頁查閱。</span><span>列印後可選擇「另存為 PDF」</span></footer></main><script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>`);
+  </style></head><body><main class="sheet"><header class="mast"><div><div class="brand">異 動 紀 錄</div><div class="sub">平安家園・活動物品手帳　｜　完整稽核報表</div></div><div class="meta">匯出日期：<b>${tdy()}</b><br>篩選品項：<b>${printEsc(itemFilter)}</b><br>篩選操作：<b>${printEsc(opFilter)}</b><br>日期範圍：<b>${printEsc(dateFilter)}</b></div></header><div class="summary">紀錄筆數：<b>${rows.length}</b><span>操作者欄位：登入者／實際操作人</span></div><table><thead><tr><th>序</th><th>日期時間</th><th>動作</th><th>品項</th><th>數量</th><th>人員／操作者</th><th>異動說明</th><th>異動前</th><th>異動後</th><th>位置</th></tr></thead><tbody>${body}</tbody></table><footer class="foot"><span>本報表依目前異動紀錄頁篩選條件產生；登入／登出紀錄請至登入紀錄頁查閱。</span><span>列印後可選擇「另存為 PDF」</span></footer></main><script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>`);
   w.document.close();
 }
 
