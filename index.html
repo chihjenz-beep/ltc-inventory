@@ -13560,11 +13560,9 @@ function saveA5Brand(brand){
 function qrEscapeAttr(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
-function filterQR(value,inputEvent=null,fromComposition=false){
+function filterQR(value){
   _qrSearch=String(value??'');
-  // 注音／拼音仍在組字時，瀏覽器的 input 事件只代表暫存字串，不能立即重繪搜尋欄位。
-  const composing=!!inputEvent?.isComposing||_qrSearchComposing;
-  if(composing&&!fromComposition)return;
+  // 中文輸入法的 input 事件也要立即觸發篩選，讓搜尋結果隨輸入即時更新。
   window.clearTimeout(_qrSearchTimer);
   _qrSearchTimer=window.setTimeout(()=>{
     pgQR();
@@ -13582,7 +13580,7 @@ function startQRComposition(){
 }
 function endQRComposition(input){
   _qrSearchComposing=false;
-  filterQR(input?.value??'',null,true);
+  filterQR(input?.value??'');
 }
 function clearQRSearch(){
   _qrSearch='';
@@ -13603,7 +13601,7 @@ function pgQR(){
     </div>
     <div class="qr-filter-wrap" role="search" aria-label="搜尋 QR Code 品項">
       <span aria-hidden="true">⌕</span>
-      <input id="qrSearch" type="search" value="${qrEscapeAttr(_qrSearch)}" placeholder="搜尋品項、類別、位置或編號…" oninput="filterQR(this.value,event)" oncompositionstart="startQRComposition()" oncompositionend="endQRComposition(this)" aria-label="搜尋品項、類別、位置或編號">
+      <input id="qrSearch" type="search" value="${qrEscapeAttr(_qrSearch)}" placeholder="搜尋品項、類別、位置或編號…" oninput="filterQR(this.value)" aria-label="搜尋品項、類別、位置或編號">
       ${_qrSearch?`<button class="qr-filter-clear" type="button" onclick="clearQRSearch()" aria-label="清除搜尋">✕</button>`:''}
     </div>
   </div>
