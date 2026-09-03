@@ -11092,6 +11092,7 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
       <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section" onclick="go('catmanage',this);closeDrawer()" style="color:#5a7a9a">🏷 類 別 管 理</div>
       <div class="nav sys-section" onclick="forceSyncInv();closeDrawer()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
+      <div class="nav sys-section" onclick="backupFirebaseToSheets();closeDrawer()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#6b1f2a">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -11124,6 +11125,7 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
       <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section" onclick="go('catmanage',this)" style="color:#5a7a9a">🏷 類 別 管 理</div>
       <div class="nav sys-section" onclick="forceSyncInv()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
+      <div class="nav sys-section" onclick="backupFirebaseToSheets()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets</div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#6b1f2a">🔒 盤 點 鎖 定</div>
       <div class="nav sys-section" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
       <div class="nav sys-section" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
@@ -11456,6 +11458,25 @@ async function forceSyncInv(){
   }catch(e){
     console.error('forceSyncInv 失敗',e);
     alert('⚠ 同步失敗，請檢查網路連線後再試一次');
+  }
+}
+
+// ── 手動單向備份：Firebase → Google Sheets ────────────────────────────────
+// 需由 GAS Web App 提供 action=backupFirebaseToSheets 的 JSONP 端點。
+async function backupFirebaseToSheets(){
+  if(!confirm('確定要將 Firebase 目前資料備份到 Google Sheets 嗎？\n此動作只會從 Firebase 複製到 Sheets，不會修改 Firebase。'))return;
+  showSaving();
+  try{
+    const user=fbAuth.currentUser||await ensureFirebaseAuth();
+    const token=await user.getIdToken();
+    const result=await jsonpGetWithRetry(GAS_URL+'?action=backupFirebaseToSheets&authToken='+encodeURIComponent(token),1,15000);
+    if(!result||result.ok!==true)throw new Error(result?.error||'Google Sheets 備份失敗');
+    showSaved();
+    alert(`✓ 備份完成！庫存 ${result.inventory||0} 筆、借用 ${result.borrowings||0} 筆、異動紀錄 ${result.logs||0} 筆`);
+  }catch(e){
+    console.error('backupFirebaseToSheets 失敗',e);
+    showSaveErr();
+    alert('⚠ 備份失敗：'+(e?.message||e));
   }
 }
 
