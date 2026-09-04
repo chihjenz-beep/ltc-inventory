@@ -10579,6 +10579,7 @@ body{
 .st-v.danger{color:var(--red-seal)}
 .cat-count{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18);font-size:15px;font-weight:800;line-height:1.1;letter-spacing:.02em;color:#fff}
 .inv-qty{font-family:'Playfair Display','Noto Serif TC',serif;font-size:19px;font-weight:800;line-height:1.1;letter-spacing:.02em;text-align:center}
+.inv-detail-panel{margin:0 0 16px;border:1px solid var(--border);background:rgba(255,253,247,.72);overflow:hidden}.inv-detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border-bottom:1px solid var(--border);background:rgba(181,131,42,.08);color:var(--ink);font-size:12px;letter-spacing:.06em}.inv-detail-head strong{font-size:16px;font-weight:900}.inv-detail-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}.inv-detail-table th{padding:8px 7px;background:#efe2c9;border-bottom:2px solid #b39c6e;color:#5e3a25;font-size:11px;font-weight:800;letter-spacing:.05em;text-align:left}.inv-detail-table td{padding:8px 7px;border-bottom:1px solid #e0d4bb;vertical-align:middle;color:#33261c}.inv-detail-table tr:last-child td{border-bottom:0}.inv-detail-table .detail-id{width:8%;color:#7a6650;font-family:ui-monospace,monospace;text-align:center}.inv-detail-table .detail-name{width:36%;font-weight:650}.inv-detail-table .detail-cat{width:27%}.inv-detail-table .detail-num{width:14%;text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;color:#2b2016}.inv-detail-table .detail-num.onway{color:#5a7a9a}.inv-detail-table .detail-unit{font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:500;color:#7a6650}.inv-detail-table .detail-empty{padding:18px;text-align:center;color:#7a6650}@media(max-width:640px){.inv-detail-table{min-width:680px}.inv-detail-panel{overflow-x:auto}.inv-detail-head{min-width:680px}}
 .category-audit{font-size:11px;line-height:1.5;letter-spacing:.04em;margin-bottom:10px;padding:7px 10px;border-left:3px solid var(--gold);background:rgba(181,131,42,.08);color:#7a6650}.category-audit strong{font-size:16px;font-weight:800;color:var(--ink)}.category-audit.ok{border-left-color:#4a7a5a;background:rgba(74,122,90,.08)}.category-audit.ok strong{color:#315f3f}.category-audit.mismatch{border-left-color:#a33d2f;background:rgba(163,61,47,.08)}.category-audit.mismatch strong{color:#8b2e24}
 /* === TABLE === */
 .sep{
@@ -12591,6 +12592,12 @@ let ss=0,sd={item:null,op:'',qty:1,user:'',pur:'',due:''};
 const stc=i=>{if(i.qty<5)return i.qty===0?'b-d':'b-w';return 'b-ok'};
 const stl=i=>{const s=stc(i);return s==='b-d'?'危 急':s==='b-w'?'偏 低':'正 常'};
 
+let _inventoryDetailOpen=false;
+function toggleInventoryDetail(){
+  _inventoryDetailOpen=!_inventoryDetailOpen;
+  pgInv();
+}
+
 function pgInv(){
   const q=(document.getElementById('srch').value||'').toLowerCase();
   const items=inv.filter(i=>i.nm.toLowerCase().includes(q)||i.cat.includes(q)||ls(i.loc).includes(q));
@@ -12633,9 +12640,28 @@ function pgInv(){
   const cats=Object.keys(CAT_META).filter(cat=>items.some(i=>i.cat===cat));
   h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
     ${isDesigner()?`<button onclick="printInventoryCountSheet()" class="btn-primary" style="font-size:10px;padding:5px 12px;letter-spacing:0.04em">列 印 盤 點 表 ↗</button>`:''}
+    <button onclick="toggleInventoryDetail()" style="font-size:10px;padding:5px 12px;border:1px solid var(--gold);background:var(--gold-pale);color:#5e3a25;cursor:pointer;letter-spacing:0.04em;font-weight:700">${_inventoryDetailOpen?'隱 藏 品 項 明 細':'顯 示 品 項 明 細'}</button>
     <button onclick="toggleAllCat(true)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 展 開</button>
     <button onclick="toggleAllCat(false)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 收 合</button>
   </div>`;
+
+  if(_inventoryDetailOpen){
+    const detailRows=items.slice().sort((a,b)=>(a.cat||'').localeCompare(b.cat||'','zh-TW')||Number(a.id)-Number(b.id)).map(i=>{
+      const bq=brws.filter(b=>b.iid===i.id&&!b.ret).reduce((s,b)=>s+Number(b.qty||0),0);
+      return `<tr onclick="invQuickAction(${i.id})" title="點擊操作出入庫">
+        <td class="detail-id">${i.id}</td>
+        <td class="detail-name">${i.nm}</td>
+        <td class="detail-cat">${cb(i.cat)}</td>
+        <td class="detail-num">${i.qty}<span class="detail-unit"> ${i.u||''}</span></td>
+        <td class="detail-num onway">${bq||0}<span class="detail-unit"> ${i.u||''}</span></td>
+      </tr>`;
+    }).join('');
+    h+=`<section class="inv-detail-panel" aria-label="品項明細">
+      <div class="inv-detail-head"><span>品 項 明 細（目前篩選 ${items.length} 項）</span><strong>${items.length}</strong></div>
+      <div style="overflow-x:auto"><table class="inv-detail-table"><thead><tr><th class="detail-id">ID</th><th class="detail-name">品項</th><th class="detail-cat">類別</th><th class="detail-num">庫存數</th><th class="detail-num">在途數</th></tr></thead><tbody>${detailRows||'<tr><td colspan="5" class="detail-empty">目前沒有符合的品項</td></tr>'}</tbody></table></div>
+      <div style="padding:7px 10px;color:#7a6650;font-size:10px;border-top:1px solid var(--border)">在途數＝目前尚未歸還的借用數量；點擊品項列可進行出入庫或歸還操作。</div>
+    </section>`;
+  }
 
   let catIdx=0;
   Object.keys(CAT_META).forEach(cat=>{
