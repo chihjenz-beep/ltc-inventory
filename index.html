@@ -10623,6 +10623,9 @@ body{
 .b-in{background:var(--sage-light);color:var(--sage);border:1px solid rgba(90,122,94,0.25)}
 .b-rt{background:var(--paper-deep);color:var(--ink-faint);border:1px solid var(--border-light)}
 .b-od{background:rgba(139,32,32,0.1);color:var(--red-seal);border:1px solid rgba(139,32,32,0.3)}
+.rep-op-pill{border-radius:999px;padding:4px 12px;font-size:11px;letter-spacing:0.02em;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;white-space:nowrap}
+.rep-op-pill:hover{opacity:.82}
+.rep-op-pill:active{transform:scale(.96)}
 .lb{
   display:inline-block;font-size:10px;padding:1px 8px;
   background:var(--paper-deep);color:var(--ink-faint);
@@ -13608,7 +13611,6 @@ function catHex(cat){return CAT_HEX[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETTE.
 function catLightBg(cat){return CAT_LIGHT[cat]||CAT_PALETTE[_catHash(cat)%CAT_PALETTE.length].light;}
 
 let _qrSearch='';
-let _qrSearchComposing=false;
 let _qrSearchTimer=0;
 const A5_BRAND_DEFAULT={title:'品 項 張 貼 圖',subtitle:'平安家園・活動物品手帳',logoText:'平安家園',logoData:''};
 let _a5DraftLogoData='';
@@ -13626,52 +13628,33 @@ function saveA5Brand(brand){
 function qrEscapeAttr(value){
   return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 }
-function filterQR(value,evt=null,force=false){
+function filterQR(value){
+  // 注音／拼音組字期間，input.value 會隨每次選字即時更新；不論是否仍在組字中都直接
+  // debounce 後刷新結果，因為 renderQRResults() 只改「結果區」的 innerHTML，
+  // 完全不會動到 #qrSearch 這個輸入框節點，所以不會打斷 IME 的組字工作階段。
   _qrSearch=String(value??'');
-  // 桌面 Chrome 的注音組字會在 compositionend 前後各觸發一次 input；只要仍在組字，就不重建搜尋框。
-  if(evt?.isComposing||_qrSearchComposing){
-    if(!force)return;
-  }
   window.clearTimeout(_qrSearchTimer);
-  _qrSearchTimer=window.setTimeout(()=>{
-    pgQR();
-    requestAnimationFrame(()=>{
-      const input=document.getElementById('qrSearch');
-      if(!input)return;
-      input.focus();
-      const pos=_qrSearch.length;
-      try{input.setSelectionRange(pos,pos)}catch(e){}
-    });
-  },0);
-}
-function startQRComposition(){
-  _qrSearchComposing=true;
-}
-function endQRComposition(input){
-  _qrSearchComposing=false;
-  filterQR(input?.value??'',null,true);
+  _qrSearchTimer=window.setTimeout(renderQRResults,80);
 }
 function clearQRSearch(){
   _qrSearch='';
-  pgQR();
-  requestAnimationFrame(()=>document.getElementById('qrSearch')?.focus());
+  const input=document.getElementById('qrSearch');
+  if(input)input.value='';
+  renderQRResults();
+  input?.focus();
 }
 
 function pgQR(){
-  const query=_qrSearch.trim().toLocaleLowerCase();
-  const items=query?inv.filter(i=>[
-    i.id,i.nm,i.cat,ls(i.loc),i.con?'消耗品':'非消耗品'
-  ].join(' ').toLocaleLowerCase().includes(query)):inv;
-  let h=`
+  const h=`
   <div class="qr-toolbar">
     <div>
       <div class="qr-toolbar-note">依類別顯示各品項專屬 QR Code。點擊卡片可預覽列印；點擊已有照片可檢視完整影像。</div>
-      <div class="qr-toolbar-meta"><span>⌕</span><span>顯示 ${items.length} / ${inv.length} 項</span>${query?`<span>・搜尋「${qrEscapeAttr(_qrSearch)}」</span>`:''}</div>
+      <div class="qr-toolbar-meta" id="qrToolbarMeta"></div>
     </div>
     <div class="qr-filter-wrap" role="search" aria-label="搜尋 QR Code 品項">
       <span aria-hidden="true">⌕</span>
-      <input id="qrSearch" type="text" value="${qrEscapeAttr(_qrSearch)}" placeholder="搜尋品項、類別、位置或編號…" oninput="filterQR(this.value,event)" oncompositionstart="startQRComposition()" oncompositionend="endQRComposition(this)" aria-label="搜尋品項、類別、位置或編號" autocomplete="off">
-      ${_qrSearch?`<button class="qr-filter-clear" type="button" onclick="clearQRSearch()" aria-label="清除搜尋">✕</button>`:''}
+      <input id="qrSearch" type="text" value="${qrEscapeAttr(_qrSearch)}" placeholder="搜尋品項、類別、位置或編號…" oninput="filterQR(this.value)" aria-label="搜尋品項、類別、位置或編號" autocomplete="off">
+      <button class="qr-filter-clear" type="button" id="qrClearBtn" onclick="clearQRSearch()" aria-label="清除搜尋" style="display:${_qrSearch?'inline-flex':'none'}">✕</button>
     </div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;margin-bottom:14px">
@@ -13679,8 +13662,26 @@ function pgQR(){
     <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap">
       列 印 全 部 ${inv.length} 張 ↗
     </button>
-  </div>`;
+  </div>
+  <div id="qrResultsBox"></div>`;
+  document.getElementById('pg').innerHTML=h;
+  renderQRResults();
+}
 
+// 只重繪「顯示筆數」與卡片結果區，從不重建 #qrSearch 輸入框節點，
+// 因此可在注音／拼音組字過程中安全即時刷新，不會打斷候選字選字或使輸入框失焦。
+function renderQRResults(){
+  const query=_qrSearch.trim().toLocaleLowerCase();
+  const items=query?inv.filter(i=>[
+    i.id,i.nm,i.cat,ls(i.loc),i.con?'消耗品':'非消耗品'
+  ].join(' ').toLocaleLowerCase().includes(query)):inv;
+
+  const meta=document.getElementById('qrToolbarMeta');
+  if(meta)meta.innerHTML=`<span>⌕</span><span>顯示 ${items.length} / ${inv.length} 項</span>${query?`<span>・搜尋「${qrEscapeAttr(_qrSearch)}」</span>`:''}`;
+  const clearBtn=document.getElementById('qrClearBtn');
+  if(clearBtn)clearBtn.style.display=_qrSearch?'inline-flex':'none';
+
+  let h='';
   if(!items.length){
     h+='<div class="qr-empty">找不到符合條件的品項，請換一個關鍵字。</div>';
   }
@@ -13715,7 +13716,8 @@ function pgQR(){
     h+='</div>';
   });
 
-  document.getElementById('pg').innerHTML=h;
+  const box=document.getElementById('qrResultsBox');
+  if(box)box.innerHTML=h;
   // Async fill all visible QR canvases
   items.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
@@ -14316,6 +14318,20 @@ async function sLE(id){
 function repActionTypes(){
   return ['新增','新增類別','刪除','調整','入庫','出庫','借用','領用','歸還'];
 }
+function repOpColor(op){
+  const map={
+    '新增':{fg:'#3f5a42',bd:'rgba(63,90,66,.35)'},
+    '新增類別':{fg:'#3f5a42',bd:'rgba(63,90,66,.35)'},
+    '入庫':{fg:'#3f5a42',bd:'rgba(63,90,66,.35)'},
+    '出庫':{fg:'#3f5a42',bd:'rgba(63,90,66,.35)'},
+    '領用':{fg:'#3f5a42',bd:'rgba(63,90,66,.35)'},
+    '借用':{fg:'#9c7a3c',bd:'rgba(156,122,60,.4)'},
+    '歸還':{fg:'#7a6650',bd:'rgba(122,102,80,.35)'},
+    '調整':{fg:'#7a3a1e',bd:'rgba(122,58,30,.3)'},
+    '刪除':{fg:'#6b1f2a',bd:'rgba(107,31,42,.35)'}
+  };
+  return map[op]||{fg:'#3f5a42',bd:'rgba(63,90,66,.35)'};
+}
 function getRepOps(){
   const ops=Array.isArray(window._repOps)?window._repOps:[];
   if(ops.length)return ops;
@@ -14352,10 +14368,17 @@ function pgRep(){
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
       <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">操　作（可複選）</label>
-      <select id="repOp" multiple size="5" onchange="repFilter()" style="min-width:132px;padding:4px 6px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px;line-height:1.45">
-        ${actionOpts.map(op=>`<option value="${op}" ${curOps.includes(op)?'selected':''}>${op}</option>`).join('')}
-      </select>
-      <span style="font-size:9px;color:#8a7359">按住 Ctrl／⌘ 可複選；清除選取代表全部操作</span>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;max-width:240px">
+        ${actionOpts.map(op=>{
+          const active=curOps.includes(op);
+          const c=repOpColor(op);
+          const style=active
+            ?`background:${c.fg};color:#fff;border:1px solid ${c.fg}`
+            :`background:transparent;color:${c.fg};border:1px solid ${c.bd}`;
+          return `<button type="button" onclick="toggleRepOp('${op}')" class="rep-op-pill" style="${style}">${active?'✓ ':''}${op}</button>`;
+        }).join('')}
+      </div>
+      <span style="font-size:9px;color:#8a7359">點選可複選切換；全部取消代表顯示所有操作</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
       <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">起始日期</label>
@@ -14427,8 +14450,13 @@ function repFilter(){
   window._repNm  =document.getElementById('repNm')?.value||'';
   window._repFrom=document.getElementById('repFrom')?.value||'';
   window._repTo  =document.getElementById('repTo')?.value||'';
-  window._repOps =Array.from(document.getElementById('repOp')?.selectedOptions||[]).map(o=>o.value);
-  window._repOp  =window._repOps.length===1?window._repOps[0]:'';
+  pgRep();
+}
+function toggleRepOp(op){
+  const cur=new Set(getRepOps());
+  if(cur.has(op))cur.delete(op);else cur.add(op);
+  window._repOps=Array.from(cur);
+  window._repOp =window._repOps.length===1?window._repOps[0]:'';
   pgRep();
 }
 function repClear(){
