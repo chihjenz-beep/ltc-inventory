@@ -12314,8 +12314,9 @@ function normalizeInventoryRow(row){
   const raw=row&&typeof row==='object'?row:{};
   const {location:legacyLocation,...rest}=raw;
   const id=Number(rest.id),qty=Number(rest.qty),min=Number(rest.min);
-  // 業務規則：精油系列品項的計量單位一律固定為 ml，不論原始資料寫的是什麼。
-  const u=rest.cat==='精油系列'?'ml':(rest.u||'個');
+  // 精油系列預設建議用 ml（新增品項表單、變更類別時會自動帶入），
+  // 但不在這裡強制覆蓋——管理者可對個別品項（例如罐子、貼紙等非液態品項）手動改回其他單位。
+  const u=rest.u||'個';
   return {
     ...rest,
     id:Number.isFinite(id)?id:0,
@@ -13010,10 +13011,10 @@ function openAddItem(){
           </div>
           <div>
             <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">計 量 單 位</label>
-            <select id="aiUnit" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+            <select id="aiUnit" onchange="this.dataset.userTouched='1'" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
               ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u==='個'?'selected':''}>${u}</option>`).join('')}
             </select>
-            <div id="aiUnitHint" style="font-size:9px;color:#9a8465;margin-top:4px;display:none">精油系列品項的計量單位固定為 ml</div>
+            <div id="aiUnitHint" style="font-size:9px;color:#9a8465;margin-top:4px;display:none">精油系列品項預設帶入 ml，若此品項並非液態（例如容器、貼紙），可自行改選其他單位</div>
           </div>
           <div>
             <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">性 質 <span style="color:#6b1f2a">*</span></label>
@@ -13071,10 +13072,10 @@ function syncAddItemUnitForCat(){
   const unitSel=document.getElementById('aiUnit');
   const hint=document.getElementById('aiUnitHint');
   if(!unitSel)return;
-  const locked=cat==='精油系列';
-  unitSel.disabled=locked;
-  if(locked)unitSel.value='ml';
-  if(hint)hint.style.display=locked?'block':'none';
+  const isOil=cat==='精油系列';
+  // 精油系列只是「帶入預設值 ml」的建議，不鎖死——罐子、貼紙等非液態品項可自行改選。
+  if(isOil && !unitSel.dataset.userTouched) unitSel.value='ml';
+  if(hint)hint.style.display=isOil?'block':'none';
 }
 
 function confirmAddItem(){
@@ -13094,9 +13095,8 @@ function confirmAddItem(){
 
   const newId=inv.reduce((m,i)=>Math.max(m,i.id),0)+1;
   const isNewCategory=!CAT_META[cat];
-  // 精油系列一律固定 ml；其餘依表單選擇，非合法選項則回退為「個」。
+  // 依表單選擇（精油系列預設已帶入 ml，但可手動改選）；非合法選項則回退為「個」。
   let u=document.getElementById('aiUnit')?.value||'個';
-  if(cat==='精油系列')u='ml';
   if(!UNIT_OPTIONS.includes(u))u='個';
   const newItem={
     id:newId, nm, con, cat, u, qty, min:1,
@@ -13248,7 +13248,7 @@ function confirmChangeItemCat(id){
   if(newCat===item.cat){ document.getElementById('changeCatOverlay').remove(); return; }
   const oldCat=item.cat;
   item.cat=newCat;
-  // 業務規則：轉入精油系列一律固定 ml 計量單位，不論原本用什麼單位。
+  // 轉入精油系列時，預設把單位帶成 ml（僅為方便的預設值，之後仍可透過「變更計量單位」改回其他值）。
   const oldUnit=item.u;
   const unitAutoChanged=newCat==='精油系列'&&oldUnit!=='ml';
   if(unitAutoChanged)item.u='ml';
@@ -13288,15 +13288,15 @@ function changeItemUnit(id){
         </div>
         <div>
           <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">變 更 為</label>
-          <select id="cuSel" ${isOil?'disabled':''} style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px">
-            ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u===(isOil?'ml':item.u)?'selected':''}>${u}</option>`).join('')}
+          <select id="cuSel" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px">
+            ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u===item.u?'selected':''}>${u}</option>`).join('')}
           </select>
-          ${isOil?`<div style="font-size:9px;color:#9a8465;margin-top:5px">精油系列品項的計量單位固定為 ml，無法變更。若要改用其他單位，請先變更品項類別。</div>`:''}
+          ${isOil?`<div style="font-size:9px;color:#9a8465;margin-top:5px">精油系列品項預設建議使用 ml；若此品項並非液態（例如容器、貼紙），可自行改選其他單位。</div>`:''}
         </div>
         <div id="cuErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
           <button onclick="document.getElementById('changeUnitOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
-          <button ${isOil?'disabled style="padding:7px 20px;font-size:12px;background:#c7b899;color:#fff;border:1px solid #c7b899;cursor:not-allowed;letter-spacing:0.04em"':`onclick="confirmChangeItemUnit(${id})" style="padding:7px 20px;font-size:12px;background:#7a3a1e;color:#fff;border:1px solid #7a3a1e;cursor:pointer;letter-spacing:0.04em"`}>確 認 變 更</button>
+          <button onclick="confirmChangeItemUnit(${id})" style="padding:7px 20px;font-size:12px;background:#7a3a1e;color:#fff;border:1px solid #7a3a1e;cursor:pointer;letter-spacing:0.04em">確 認 變 更</button>
         </div>
       </div>
     </div>`;
@@ -13306,12 +13306,15 @@ function changeItemUnit(id){
 function confirmChangeItemUnit(id){
   const item=inv.find(i=>i.id===id);
   if(!item)return;
-  if(item.cat==='精油系列'){ document.getElementById('changeUnitOverlay')?.remove(); return; }
   const sel=document.getElementById('cuSel');
   const newUnit=sel?sel.value:'';
   const err=document.getElementById('cuErr');
   if(!UNIT_OPTIONS.includes(newUnit)){ err.textContent='請選擇有效的單位'; err.style.display='block'; return; }
   if(newUnit===item.u){ document.getElementById('changeUnitOverlay').remove(); return; }
+  // 精油系列品項改成非 ml 屬於例外情況（例如容器、貼紙），多一次確認避免手滑誤改。
+  if(item.cat==='精油系列'&&newUnit!=='ml'){
+    if(!confirm(`「${item.nm}」目前歸在精油系列，預設建議使用 ml。\n確定要改成「${newUnit}」嗎？（適用於容器、貼紙等非液態品項）`))return;
+  }
   const oldUnit=item.u;
   item.u=newUnit;
   const operator=currentOperator();
