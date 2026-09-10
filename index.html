@@ -13134,6 +13134,9 @@ function editQty(id){
   const item=inv.find(i=>i.id===id);
   if(!item)return;
   if(!canWrite()){ alert('⚠ 修改數量需要管理員或以上權限'); return; }
+  const isMl=item.u==='ml';
+  const stepAttr=isMl?'0.1':'1';
+  const displayQty=isMl?(Math.round(Number(item.qty)*10)/10).toFixed(1):item.qty;
   const overlay=document.createElement('div');
   overlay.id='editQtyOverlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -13146,14 +13149,14 @@ function editQty(id){
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
         <div style="text-align:center">
           <div style="font-size:11px;color:#7a6650;margin-bottom:6px;letter-spacing:0.06em">目 前 數 量</div>
-          <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:32px;color:#2b2016;font-weight:700">${item.qty} <span style="font-size:14px;font-weight:400;color:#7a6650">${item.u}</span></div>
+          <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:32px;color:#2b2016;font-weight:700">${isMl?Number(item.qty).toFixed(1):item.qty} <span style="font-size:14px;font-weight:400;color:#7a6650">${item.u}</span></div>
         </div>
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">修 改 為</label>
+          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">修 改 為${isMl?'（可輸入小數點後 1 位）':''}</label>
           <div style="display:flex;align-items:center;gap:8px">
-            <button onclick="stepQty(-1)" style="width:36px;height:36px;font-size:20px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">−</button>
-            <input id="eqInput" type="number" value="${item.qty}" min="0" style="flex:1;text-align:center;padding:8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:18px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">
-            <button onclick="stepQty(1)" style="width:36px;height:36px;font-size:20px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">＋</button>
+            <button onclick="stepQty(${isMl?-0.1:-1})" style="width:36px;height:36px;font-size:20px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">−</button>
+            <input id="eqInput" type="number" value="${displayQty}" min="0" step="${stepAttr}" style="flex:1;text-align:center;padding:8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:18px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">
+            <button onclick="stepQty(${isMl?0.1:1})" style="width:36px;height:36px;font-size:20px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">＋</button>
           </div>
         </div>
         <div>
@@ -13172,18 +13175,23 @@ function editQty(id){
 function stepQty(delta){
   const inp=document.getElementById('eqInput');
   if(!inp)return;
-  inp.value=Math.max(0,(parseInt(inp.value)||0)+delta);
+  const next=Math.max(0,(parseFloat(inp.value)||0)+delta);
+  // 固定到小數點第一位，避免像 0.1+0.2 那種浮點誤差把畫面弄成 0.30000000000000004
+  inp.value=Math.round(next*10)/10;
 }
 
 function confirmEditQty(id){
   const item=inv.find(i=>i.id===id);
   if(!item)return;
-  const newQty=parseInt(document.getElementById('eqInput').value);
+  const isMl=item.u==='ml';
+  let newQty=parseFloat(document.getElementById('eqInput').value);
   const note=(document.getElementById('eqNote').value||'').trim();
   const err=document.getElementById('eqErr');
   if(isNaN(newQty)||newQty<0){
     err.textContent='請輸入有效數量（≥ 0）';err.style.display='block';return;
   }
+  // 單位是 ml 才允許到小數點第一位，其餘單位維持整數（四捨五入）
+  newQty=isMl?Math.round(newQty*10)/10:Math.round(newQty);
   const oldQty=item.qty;
   item.qty=newQty;
   const operator=currentOperator();
