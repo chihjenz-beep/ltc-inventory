@@ -12170,8 +12170,18 @@ function authSubmit(){
 const ROOMS=['庫房一','庫房二','庫房三','庫房四','庫房五','庫房六'];
 const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
 const LEVS=['第一層','第二層','第三層'];
-// 品項計量單位選項；精油系列品項一律固定為 ml（見 normalizeInventoryRow）。
+// 品項計量單位選項；精油品項預設建議用 ml，但管理者可個別覆寫（見 changeItemUnit）。
 const UNIT_OPTIONS=['瓶','個','套','ml'];
+// 業務規則：只有「精油」這個類別的品項，才允許數量計到小數點第 1 位
+// （新增品項初始數量、修改數量、掃描出入庫的借用／領用／入庫、借用歸還數量）。
+// 其餘類別一律維持整數。
+function isDecimalQtyItem(item){ return !!item && item.cat==='精油'; }
+// 把數字依品項規則收斂：精油固定到小數點第 1 位，其餘四捨五入為整數。
+function roundQtyFor(item,val){
+  const n=parseFloat(val);
+  if(isNaN(n))return 0;
+  return isDecimalQtyItem(item)?Math.round(n*10)/10:Math.round(n);
+}
 // ── 使用者資料（role: designer／admin／supervisor／user）─────────────────
 const USERS=[
   {nm:'白雪儀', pwd:'619', role:'supervisor'},
@@ -12239,7 +12249,7 @@ const CAT_META={
   '辦公文具用品':{cls:'cat-art',label:'辦公文具用品'},
   '面膜系列':{cls:'cat-sen',label:'面膜系列'},
   '食農相關':{cls:'cat-sen',label:'食農相關'},
-  '精油系列':{cls:'cat-med',label:'精油系列'}
+  '精油':{cls:'cat-med',label:'精油'}
 };
 
 // Firebase 可能保存較新的類別名稱；顯示前自動補上未出現在舊版 CAT_META 的實際類別。
@@ -12318,7 +12328,7 @@ function normalizeInventoryRow(row){
   const raw=row&&typeof row==='object'?row:{};
   const {location:legacyLocation,...rest}=raw;
   const id=Number(rest.id),qty=Number(rest.qty),min=Number(rest.min);
-  // 精油系列預設建議用 ml（新增品項表單、變更類別時會自動帶入），
+  // 精油預設建議用 ml（新增品項表單、變更類別時會自動帶入），
   // 但不在這裡強制覆蓋——管理者可對個別品項（例如罐子、貼紙等非液態品項）手動改回其他單位。
   const u=rest.u||'個';
   return {
@@ -12371,12 +12381,12 @@ let inv=[
   {id:30, nm:'香茅薄荷皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:31, nm:'絲瓜絡', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:32, nm:'台灣檜木粉', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'精油系列', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'精油', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:34, nm:'手工皂模具／擴香石模具', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:35, nm:'塑膠花瓣（手工藝器材料）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:36, nm:'各色毛根（紅/朱紅/綠/蔚藍/橙/米/黃/蘭花/粉紅/櫻桃/燃橙/深褐）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:37, nm:'禮品貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'精油系列', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'精油', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:39, nm:'洗臉慕斯貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:40, nm:'噴嘴頭', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:41, nm:'噴嘴瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
@@ -12682,7 +12692,7 @@ function pgBorrow(){
   if(done.length){
     h+=`<div class="sep" style="margin-top:20px"><div class="sep-line"></div>已歸還（${done.length} 筆）<div class="sep-line"></div></div>
     <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:580px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">歸 還 日</th><th style="width:25%">狀 態</th></tr></thead><tbody>`;
-    [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);h+=`<tr><td style="font-family:'Playfair Display','Noto Serif TC',serif">${b.nm}</td><td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
+    [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);const retQtyTxt=(b.retQty!=null&&b.retQty!==b.qty)?`${b.retQty}${it?it.u:''}（借 ${b.qty}）`:`${b.qty}${it?it.u:''}`;h+=`<tr><td style="font-family:'Playfair Display','Noto Serif TC',serif">${b.nm}</td><td style="white-space:nowrap">${retQtyTxt}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
     h+='</tbody></table>';
   }
   document.getElementById('pg').innerHTML=h;
@@ -12699,11 +12709,65 @@ function pgBorrow(){
 
 function doRet(id){
   const b=brws.find(x=>x.id===id);if(!b)return;
+  const it=inv.find(i=>i.id===b.iid);
+  if(it&&isDecimalQtyItem(it)){
+    openReturnQtyModal(id);
+    return;
+  }
+  // 非精油品項維持原本「一鍵全數歸還」行為，不彈窗
   b.ret=true;b.retD=tdy();
-  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
+  if(it)it.qty+=b.qty;
   logs.push({type:'歸還',nm:b.nm,qty:b.qty,user:b.user,operator:currentOperator(),pur:b.pur||'歸還',due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
   gasSave();
   pgBorrow();
+}
+// 精油品項允許「借用 A 數量、歸還 B 數量」（例如已使用消耗掉一部分），
+// 差額不會計回庫存；其餘品項不受影響，仍是借多少還多少。
+function openReturnQtyModal(id){
+  const b=brws.find(x=>x.id===id);if(!b)return;
+  const it=inv.find(i=>i.id===b.iid);
+  const overlay=document.createElement('div');
+  overlay.id='returnQtyOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML=`
+    <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:320px;border-left:4px solid #2a6b5e">
+      <div style="padding:14px 18px;border-bottom:1px solid #d8c49a">
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">↩ 歸 還</div>
+        <div style="font-size:11px;color:#7a6650;margin-top:3px">${b.nm}　・　借用人：${b.user}</div>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:11px;color:#7a6650">借用數量：<b style="color:#2b2016">${b.qty}</b> ${it?it.u:''}</div>
+        <div>
+          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">實 際 歸 還 數 量（可輸入小數點後 1 位）</label>
+          <input id="rtQtyInput" type="number" value="${b.qty}" min="0.1" max="${b.qty}" step="0.1" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:16px;color:#2b2016;text-align:center;font-family:'Playfair Display','Noto Serif TC',serif">
+          <div style="font-size:9px;color:#9a8465;margin-top:5px">若實際歸還量少於借用量（例如已使用掉一部分），差額不會計回庫存。</div>
+        </div>
+        <div id="rtQtyErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById('returnQtyOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
+          <button onclick="confirmReturnQty(${id})" class="btn-primary" style="padding:7px 20px;font-size:12px">確 認 歸 還</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+function confirmReturnQty(id){
+  const b=brws.find(x=>x.id===id);if(!b)return;
+  const it=inv.find(i=>i.id===b.iid);
+  const err=document.getElementById('rtQtyErr');
+  let retQty=parseFloat(document.getElementById('rtQtyInput').value);
+  if(isNaN(retQty)||retQty<=0){ err.textContent='請輸入有效的歸還數量（大於 0）'; err.style.display='block'; return; }
+  retQty=Math.round(retQty*10)/10;
+  if(retQty>b.qty){ err.textContent=`歸還數量不可超過借用數量（${b.qty}）`; err.style.display='block'; return; }
+  const shortfall=Math.round((b.qty-retQty)*10)/10;
+  b.ret=true;b.retD=tdy();b.retQty=retQty;
+  if(it)it.qty=roundQtyFor(it,it.qty+retQty);
+  logs.push({type:'歸還',nm:b.nm,qty:retQty,user:b.user,operator:currentOperator(),
+    pur:(b.pur||'歸還')+(shortfall>0?`（借用 ${b.qty}，實際歸還 ${retQty}，差額 ${shortfall} 未計回庫存）`:''),
+    due:b.due||'',loc:it?ls(it.loc):'',date:tdy(),time:ntm()});
+  gasSave();
+  document.getElementById('returnQtyOverlay').remove();
+  (pgmap[window._curPage]||pgBorrow)();
 }
 
 function pgScan(){ss=0;sd={item:null,op:'',qty:1,user:'',pur:'',due:''};step()}
@@ -12772,7 +12836,7 @@ function step(){
       </div>
       <div class="fr">
         <div><label class="fl">${isBr?'借用':'領用'} 人員姓名</label><select id="sU"><option value="">— 請選擇 —</option>${MEMBERS.map(m=>`<option>${m}</option>`).join('')}</select></div>
-        <div><label class="fl">數量（${i.u}）</label><input type="number" id="sQ" min="1" value="1"></div>
+        <div><label class="fl">數量（${i.u}）${isDecimalQtyItem(i)?'　可 輸 入 小 數 點 後 1 位':''}</label><input type="number" id="sQ" min="${isDecimalQtyItem(i)?'0.1':'1'}" step="${isDecimalQtyItem(i)?'0.1':'1'}" value="1"></div>
       </div>
       <div class="fr">
         <div><label class="fl">出庫用途</label><select id="sP">${pList.map(p=>`<option>${p}</option>`).join('')}</select></div>
@@ -13018,7 +13082,7 @@ function openAddItem(){
             <select id="aiUnit" onchange="this.dataset.userTouched='1'" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
               ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u==='個'?'selected':''}>${u}</option>`).join('')}
             </select>
-            <div id="aiUnitHint" style="font-size:9px;color:#9a8465;margin-top:4px;display:none">精油系列品項預設帶入 ml，若此品項並非液態（例如容器、貼紙），可自行改選其他單位</div>
+            <div id="aiUnitHint" style="font-size:9px;color:#9a8465;margin-top:4px;display:none">精油品項預設帶入 ml，若此品項並非液態（例如容器、貼紙），可自行改選其他單位</div>
           </div>
           <div>
             <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">性 質 <span style="color:#6b1f2a">*</span></label>
@@ -13032,8 +13096,8 @@ function openAddItem(){
             </div>
           </div>
           <div>
-            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量</label>
-            <input id="aiQty" type="number" value="0" min="0" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:13px;color:#2b2016">
+            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量<span id="aiQtyHint" style="font-size:9px;color:#9a8465;display:none">（可輸入小數點後 1 位）</span></label>
+            <input id="aiQty" type="number" value="0" min="0" step="1" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:13px;color:#2b2016">
           </div>
           <div>
             <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">存 放 位 置</label>
@@ -13075,18 +13139,24 @@ function syncAddItemUnitForCat(){
   const cat=document.getElementById('aiCat')?.value;
   const unitSel=document.getElementById('aiUnit');
   const hint=document.getElementById('aiUnitHint');
+  const qtyInput=document.getElementById('aiQty');
+  const qtyHint=document.getElementById('aiQtyHint');
   if(!unitSel)return;
-  const isOil=cat==='精油系列';
-  // 精油系列只是「帶入預設值 ml」的建議，不鎖死——罐子、貼紙等非液態品項可自行改選。
+  const isOil=cat==='精油';
+  // 精油只是「帶入預設值 ml」的建議，不鎖死——罐子、貼紙等非液態品項可自行改選。
   if(isOil && !unitSel.dataset.userTouched) unitSel.value='ml';
   if(hint)hint.style.display=isOil?'block':'none';
+  // 只有精油類別的初始數量允許輸入到小數點第 1 位
+  if(qtyInput)qtyInput.step=isOil?'0.1':'1';
+  if(qtyHint)qtyHint.style.display=isOil?'inline':'none';
 }
 
 function confirmAddItem(){
   const nm=document.getElementById('aiNm').value.trim();
   const cat=document.getElementById('aiCat').value;
   const con=document.querySelector('input[name="aiCon"]:checked').value==='true';
-  const qty=parseInt(document.getElementById('aiQty').value)||0;
+  // 精油類別允許小數點第 1 位，其餘類別維持整數。
+  const qty=roundQtyFor({cat},document.getElementById('aiQty').value);
   const r=document.getElementById('aiR').value;
   const k=document.getElementById('aiK').value;
   const lv=document.getElementById('aiLv').value;
@@ -13099,7 +13169,7 @@ function confirmAddItem(){
 
   const newId=inv.reduce((m,i)=>Math.max(m,i.id),0)+1;
   const isNewCategory=!CAT_META[cat];
-  // 依表單選擇（精油系列預設已帶入 ml，但可手動改選）；非合法選項則回退為「個」。
+  // 依表單選擇（精油預設已帶入 ml，但可手動改選）；非合法選項則回退為「個」。
   let u=document.getElementById('aiUnit')?.value||'個';
   if(!UNIT_OPTIONS.includes(u))u='個';
   const newItem={
@@ -13138,7 +13208,7 @@ function editQty(id){
   const item=inv.find(i=>i.id===id);
   if(!item)return;
   if(!canWrite()){ alert('⚠ 修改數量需要管理員或以上權限'); return; }
-  const isMl=item.u==='ml';
+  const isMl=isDecimalQtyItem(item);
   const stepAttr=isMl?'0.1':'1';
   const displayQty=isMl?(Math.round(Number(item.qty)*10)/10).toFixed(1):item.qty;
   const overlay=document.createElement('div');
@@ -13187,7 +13257,7 @@ function stepQty(delta){
 function confirmEditQty(id){
   const item=inv.find(i=>i.id===id);
   if(!item)return;
-  const isMl=item.u==='ml';
+  const isMl=isDecimalQtyItem(item);
   let newQty=parseFloat(document.getElementById('eqInput').value);
   const note=(document.getElementById('eqNote').value||'').trim();
   const err=document.getElementById('eqErr');
@@ -13260,14 +13330,14 @@ function confirmChangeItemCat(id){
   if(newCat===item.cat){ document.getElementById('changeCatOverlay').remove(); return; }
   const oldCat=item.cat;
   item.cat=newCat;
-  // 轉入精油系列時，預設把單位帶成 ml（僅為方便的預設值，之後仍可透過「變更計量單位」改回其他值）。
+  // 轉入精油時，預設把單位帶成 ml（僅為方便的預設值，之後仍可透過「變更計量單位」改回其他值）。
   const oldUnit=item.u;
-  const unitAutoChanged=newCat==='精油系列'&&oldUnit!=='ml';
+  const unitAutoChanged=newCat==='精油'&&oldUnit!=='ml';
   if(unitAutoChanged)item.u='ml';
   const operator=currentOperator();
   const editLog={type:'調整',iid:item.id,nm:item.nm,qty:0,
     user:operator,operator:operator,
-    pur:`變更類別：「${oldCat}」→「${newCat}」`+(unitAutoChanged?`；因屬精油系列，計量單位自動由「${oldUnit}」改為「ml」`:''),
+    pur:`變更類別：「${oldCat}」→「${newCat}」`+(unitAutoChanged?`；因屬精油，計量單位自動由「${oldUnit}」改為「ml」`:''),
     before:`類別 ${oldCat}`+(unitAutoChanged?`；單位 ${oldUnit}`:''),
     after:`類別 ${newCat}`+(unitAutoChanged?`；單位 ml`:''),
     due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
@@ -13283,7 +13353,7 @@ function changeItemUnit(id){
   const item=inv.find(i=>i.id===id);
   if(!item)return;
   if(!isAdminPlus()){ alert('⚠ 變更計量單位需要管理者或以上權限'); return; }
-  const isOil=item.cat==='精油系列';
+  const isOil=item.cat==='精油';
   const overlay=document.createElement('div');
   overlay.id='changeUnitOverlay';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
@@ -13303,7 +13373,7 @@ function changeItemUnit(id){
           <select id="cuSel" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px">
             ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u===item.u?'selected':''}>${u}</option>`).join('')}
           </select>
-          ${isOil?`<div style="font-size:9px;color:#9a8465;margin-top:5px">精油系列品項預設建議使用 ml；若此品項並非液態（例如容器、貼紙），可自行改選其他單位。</div>`:''}
+          ${isOil?`<div style="font-size:9px;color:#9a8465;margin-top:5px">精油品項預設建議使用 ml；若此品項並非液態（例如容器、貼紙），可自行改選其他單位。</div>`:''}
         </div>
         <div id="cuErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -13323,9 +13393,9 @@ function confirmChangeItemUnit(id){
   const err=document.getElementById('cuErr');
   if(!UNIT_OPTIONS.includes(newUnit)){ err.textContent='請選擇有效的單位'; err.style.display='block'; return; }
   if(newUnit===item.u){ document.getElementById('changeUnitOverlay').remove(); return; }
-  // 精油系列品項改成非 ml 屬於例外情況（例如容器、貼紙），多一次確認避免手滑誤改。
-  if(item.cat==='精油系列'&&newUnit!=='ml'){
-    if(!confirm(`「${item.nm}」目前歸在精油系列，預設建議使用 ml。\n確定要改成「${newUnit}」嗎？（適用於容器、貼紙等非液態品項）`))return;
+  // 精油品項改成非 ml 屬於例外情況（例如容器、貼紙），多一次確認避免手滑誤改。
+  if(item.cat==='精油'&&newUnit!=='ml'){
+    if(!confirm(`「${item.nm}」目前歸在精油，預設建議使用 ml。\n確定要改成「${newUnit}」嗎？（適用於容器、貼紙等非液態品項）`))return;
   }
   const oldUnit=item.u;
   item.u=newUnit;
@@ -13525,8 +13595,13 @@ function invDoOp(id, op){
 
 function doRetById(bid){
   const b=brws.find(x=>x.id===bid);if(!b||b.ret)return;
+  const it=inv.find(i=>i.id===b.iid);
+  if(it&&isDecimalQtyItem(it)){
+    openReturnQtyModal(bid);
+    return;
+  }
   b.ret=true;b.retD=tdy();
-  const it=inv.find(i=>i.id===b.iid);if(it)it.qty+=b.qty;
+  if(it)it.qty+=b.qty;
   const retLog={type:'歸還',iid:b.iid,nm:b.nm,qty:b.qty,user:b.user,operator:currentOperator(),pur:b.pur||'歸還',before:`數量 ${it?it.qty-b.qty:'—'}`,after:`數量 ${it?it.qty:'—'}`,due:b.due||'',loc:ls(it?it.loc:{}),date:tdy(),time:ntm()};
   logs.push(retLog);
   // 增量寫入
@@ -13576,13 +13651,13 @@ function selO(op){
 function cfm(){
   if(!guardOp('出入庫')) return;
   const operator=currentOperator();  // 登入者（實際操作人）
-  const u=(document.getElementById('sU').value||'').trim(),q=parseInt(document.getElementById('sQ').value)||0,pur=document.getElementById('sP').value,due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'',er=document.getElementById('er');
+  const it=sd.item;
+  const u=(document.getElementById('sU').value||'').trim(),q=roundQtyFor(it,document.getElementById('sQ').value),pur=document.getElementById('sP').value,due=sd.op==='借用'&&document.getElementById('sD')?document.getElementById('sD').value:'',er=document.getElementById('er');
   if(!u){er.textContent='請填寫人員姓名';return}
   if(q<=0){er.textContent='數量須大於 0';return}
-  const it=sd.item;
   if(sd.op!=='入庫'&&q>it.qty){er.textContent=`庫存不足，目前僅剩 ${it.qty} ${it.u}`;return}
   const beforeQty=it.qty;
-  if(sd.op==='入庫')it.qty+=q;else it.qty-=q;
+  if(sd.op==='入庫')it.qty=roundQtyFor(it,it.qty+q);else it.qty=roundQtyFor(it,it.qty-q);
   const afterQty=it.qty;
   sd.qty=q;sd.user=u;sd.pur=pur;sd.due=due;
   if(sd.op==='借用')brws.push({id:bseq++,iid:it.id,nm:it.nm,qty:q,user:u,pur,due,date:tdy(),time:ntm(),ret:false,retD:null});
@@ -13599,7 +13674,7 @@ const CAT_ICON={
   '兒盟':'🎁','團體活動健康促進':'🤸','場地布置':'🎪',
   '手工皂':'🧼','手工藝-1':'🎨','手工藝-2':'🧵',
   '按摩系列':'💆','擴香牌材料組':'🌺','桌遊':'🎲',
-  '活動服裝表演器材料':'👗','穴位按摩刮痧':'🪷','精油系列':'🌸',
+  '活動服裝表演器材料':'👗','穴位按摩刮痧':'🪷','精油':'🌸',
   '耳穴按摩材料':'👂','膏類材料':'🧴','行政用品':'📋',
   '辦公文具用品':'✏️','面膜系列':'🫧','食農相關':'🥬',
   // 舊版類別名稱（相容保留，避免資料尚未同步時退回預設樣式）
@@ -13614,7 +13689,7 @@ const CAT_HEX={
   '兒盟':'#3c9163','團體活動健康促進':'#3d90c9','場地布置':'#9c4fa8',
   '手工皂':'#c98a4f','手工藝-1':'#e0784f','手工藝-2':'#3fae95',
   '按摩系列':'#6a7fd6','擴香牌材料組':'#d9668f','桌遊':'#4f8fd6',
-  '活動服裝表演器材料':'#a8455a','穴位按摩刮痧':'#5a9c8a','精油系列':'#c17fc9',
+  '活動服裝表演器材料':'#a8455a','穴位按摩刮痧':'#5a9c8a','精油':'#c17fc9',
   '耳穴按摩材料':'#d99060','膏類材料':'#4fae7d','行政用品':'#a89142',
   '辦公文具用品':'#3f9ca0','面膜系列':'#8a72c9','食農相關':'#4f9e4f',
   '佈置裝飾材料':'#7f4c0f','手工皂相關':'#c98a4f','手工藝材料':'#3fae95',
@@ -13628,7 +13703,7 @@ const CAT_LIGHT={
   '兒盟':'#eafaf0','團體活動健康促進':'#e8f4fc','場地布置':'#f6ecfa',
   '手工皂':'#fbf1e5','手工藝-1':'#fdece3','手工藝-2':'#e5f8f3',
   '按摩系列':'#eef0fc','擴香牌材料組':'#fcecf1','桌遊':'#eaf3fc',
-  '活動服裝表演器材料':'#f9eaec','穴位按摩刮痧':'#eaf6f2','精油系列':'#f8ecf9',
+  '活動服裝表演器材料':'#f9eaec','穴位按摩刮痧':'#eaf6f2','精油':'#f8ecf9',
   '耳穴按摩材料':'#fcf0e6','膏類材料':'#e6f8ee','行政用品':'#f8f5e5',
   '辦公文具用品':'#e5f6f7','面膜系列':'#f0ecfa','食農相關':'#eaf8ea',
   '佈置裝飾材料':'#faeeda','手工皂相關':'#fbf1e5','手工藝材料':'#e5f8f3',
