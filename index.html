@@ -10731,6 +10731,12 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   border-style:solid;border-width:0 12px 12px 0;
   border-color:transparent var(--border-light) transparent transparent;
 }
+.qr-select-cb{
+  position:absolute;top:6px;left:6px;z-index:2;
+  width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,253,247,.92);border:1px solid #b39c6e;border-radius:3px;cursor:pointer;
+}
+.qr-select-cb input{width:14px;height:14px;margin:0;accent-color:#6b1f2a;cursor:pointer}
 
 /* === QR SEARCH & PHOTO VIEWER === */
 .qr-toolbar{
@@ -11095,11 +11101,8 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section" onclick="go('catmanage',this);closeDrawer()" style="color:#5a7a9a">🏷 類 別 管 理</div>
-      <div class="nav sys-section" onclick="forceSyncInv();closeDrawer()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
-      <div class="nav sys-section" onclick="backupFirebaseToSheets();closeDrawer()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets</div>
+      <div class="nav sys-section" onclick="backupFirebaseToSheets();closeDrawer()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets<br><span id="backupLastDrawer" style="font-size:9px;letter-spacing:0.04em;color:#9a8465"></span></div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#6b1f2a">🔒 盤 點 鎖 定</div>
-      <div class="nav sys-section" onclick="changePwd();closeDrawer()" style="color:var(--gold)">修 改 密 碼</div>
-      <div class="nav sys-section" onclick="confirmReset();closeDrawer()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
       <div class="stor-badge" id="syncBadge">✓ 已同步</div>
@@ -11128,11 +11131,8 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
       <div class="nsh sys-section" style="margin-top:8px">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav sys-section" onclick="go('catmanage',this)" style="color:#5a7a9a">🏷 類 別 管 理</div>
-      <div class="nav sys-section" onclick="forceSyncInv()" style="color:#4a7a5a">🔄 強 制 同 步 庫 存</div>
-      <div class="nav sys-section" onclick="backupFirebaseToSheets()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets</div>
+      <div class="nav sys-section" onclick="backupFirebaseToSheets()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets<br><span id="backupLastDesktop" style="font-size:9px;letter-spacing:0.04em;color:#9a8465"></span></div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#6b1f2a">🔒 盤 點 鎖 定</div>
-      <div class="nav sys-section" onclick="changePwd()" style="color:var(--gold)">修 改 密 碼</div>
-      <div class="nav sys-section" onclick="confirmReset()" style="color:var(--red-seal)">重 設 系 統</div>
     </div>
     <div class="sb-foot">
       <div class="stor-badge" id="syncBadge">✓ 已同步</div>
@@ -11452,23 +11452,31 @@ function _startRealtimeListeners(){
   });
 }
 
-// ── 強制同步庫存：捨棄本機快取，直接重新從 Firebase 讀取一次 ────────────────
-async function forceSyncInv(){
-  if(!confirm('確定要強制同步嗎？將會以 Firebase 上的最新資料為準重新載入。'))return;
-  showSaving();
-  try{
-    await gasLoad();
-    alert('✓ 已完成同步');
-  }catch(e){
-    console.error('forceSyncInv 失敗',e);
-    alert('⚠ 同步失敗，請檢查網路連線後再試一次');
-  }
-}
-
 // ── 手動單向備份：Firebase → Google Sheets ────────────────────────────────
 // 需由 GAS Web App 提供 action=backupFirebaseToSheets 的 JSONP 端點。
+const LS_BACKUP_TS='pahome_last_backup_sheets';
+let _backupRunning=false;
+function fmtBackupTs(ts){
+  const n=Number(ts);
+  if(!n)return'尚 未 備 份 過（此裝置）';
+  const d=new Date(n);
+  if(isNaN(d))return'尚 未 備 份 過（此裝置）';
+  const p=v=>String(v).padStart(2,'0');
+  return `上次備份：${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function updateBackupBtnLabel(text){
+  const label=text!==undefined?text:fmtBackupTs(localStorage.getItem(LS_BACKUP_TS));
+  ['backupLastDrawer','backupLastDesktop'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.textContent=label;
+  });
+}
+document.addEventListener('DOMContentLoaded',()=>updateBackupBtnLabel());
 async function backupFirebaseToSheets(){
+  if(_backupRunning)return; // 防止重複點擊，重疊送出多次備份請求
   if(!confirm('確定要將 Firebase 目前資料備份到 Google Sheets 嗎？\n此動作只會從 Firebase 複製到 Sheets，不會修改 Firebase。'))return;
+  _backupRunning=true;
+  updateBackupBtnLabel('備 份 中… 請 稍 候');
   showSaving();
   try{
     const user=fbAuth.currentUser||await ensureFirebaseAuth();
@@ -11476,11 +11484,21 @@ async function backupFirebaseToSheets(){
     const result=await jsonpGetWithRetry(GAS_URL+'?action=backupFirebaseToSheets&authToken='+encodeURIComponent(token),1,15000);
     if(!result||result.ok!==true)throw new Error(result?.error||'Google Sheets 備份失敗');
     showSaved();
+    localStorage.setItem(LS_BACKUP_TS,String(Date.now()));
+    updateBackupBtnLabel();
     alert(`✓ 備份完成！庫存 ${result.inventory||0} 筆、借用 ${result.borrowings||0} 筆、異動紀錄 ${result.logs||0} 筆`);
   }catch(e){
     console.error('backupFirebaseToSheets 失敗',e);
     showSaveErr();
-    alert('⚠ 備份失敗：'+(e?.message||e));
+    updateBackupBtnLabel();
+    const msg=String(e?.message||e||'');
+    if(/未知的\s*action|unknown\s*action/i.test(msg)){
+      alert('⚠ 備份失敗：後端 Google Apps Script 尚未提供 backupFirebaseToSheets 這個動作，需請開發者在對應的 GAS 專案補上匯出程式碼後，此按鈕才能運作。\n（原始錯誤：'+msg+'）');
+    }else{
+      alert('⚠ 備份失敗：'+msg);
+    }
+  }finally{
+    _backupRunning=false;
   }
 }
 
@@ -11685,40 +11703,6 @@ async function migrateMissingLogs(){
   }
 }
 
-
-function confirmReset(){
-  withAuth(()=>{
-    const overlay=document.createElement('div');
-    overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.7);z-index:3000;display:flex;align-items:center;justify-content:center';
-    overlay.innerHTML=`
-      <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:4px solid #6b1f2a;padding:24px 28px;max-width:340px;width:90%">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:15px;color:#2b2016;margin-bottom:8px;letter-spacing:0.08em">確認重設系統？</div>
-        <div style="font-size:12px;color:#7a6650;line-height:1.8;margin-bottom:18px">
-          將清除所有異動紀錄、借用記錄，並將庫存數量還原為初始值。<br>
-          <span style="color:#6b1f2a;font-size:11px">此操作無法復原。</span>
-        </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button onclick="this.closest('[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
-          <button onclick="doReset();this.closest('[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px;background:#6b1f2a;color:#fff;border-color:#6b1f2a">確 認 重 設</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-  }, '重設系統', '重設後所有紀錄將清除，此操作無法復原');
-}
-async function doReset(){
-  // 還原預設庫存數量
-  inv.forEach(i=>{ i.qty=30; });
-  logs=[];
-  brws=[];
-  bseq=1;
-  try{
-    await ensureFirebaseAuth();
-    await fbDb.ref('logs').set(null);
-    await fbDb.ref('brws').set(null);
-  }catch(e){ console.warn('清空 logs/brws 失敗',e); }
-  await gasSave();
-  location.reload();
-}
 
 // ── Password guard ─────────────────────────────────────────────────────────
 
@@ -12179,61 +12163,11 @@ function authSubmit(){
   }
 }
 
-// Change password (in settings/sidebar)
-function changePwd(){
-  const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:3500;display:flex;align-items:center;justify-content:center';
-  overlay.id='changePwdOverlay';
-  overlay.innerHTML=`
-    <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:4px solid var(--gold);padding:24px 28px;max-width:320px;width:90%">
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:14px;letter-spacing:0.1em">🔑 修 改 個 人 密 碼</div>
-      <div style="margin-bottom:10px">
-        <label style="font-size:11px;color:#7a6650;letter-spacing:0.04em;display:block;margin-bottom:4px">目 前 密 碼</label>
-        <input id="cpOld" type="password" inputmode="numeric" placeholder="••••"
-          style="width:100%;padding:8px 12px;border:1px solid #b39c6e;background:#fff;font-size:16px;letter-spacing:0.3em;text-align:center;color:#2b2016;outline:none">
-      </div>
-      <div style="margin-bottom:10px">
-        <label style="font-size:11px;color:#7a6650;letter-spacing:0.04em;display:block;margin-bottom:4px">新 密 碼</label>
-        <input id="cpNew" type="password" inputmode="numeric" placeholder="••••"
-          style="width:100%;padding:8px 12px;border:1px solid #b39c6e;background:#fff;font-size:16px;letter-spacing:0.3em;text-align:center;color:#2b2016;outline:none">
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="font-size:11px;color:#7a6650;letter-spacing:0.04em;display:block;margin-bottom:4px">確 認 新 密 碼</label>
-        <input id="cpCnf" type="password" inputmode="numeric" placeholder="••••"
-          style="width:100%;padding:8px 12px;border:1px solid #b39c6e;background:#fff;font-size:16px;letter-spacing:0.3em;text-align:center;color:#2b2016;outline:none"
-          onkeydown="if(event.key==='Enter')cpSubmit()">
-      </div>
-      <div id="cpErr" style="font-size:11px;color:#6b1f2a;min-height:16px;margin-bottom:10px;letter-spacing:0.04em"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button onclick="document.getElementById('changePwdOverlay').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
-        <button class="btn-primary" onclick="cpSubmit()" style="font-size:11px;padding:7px 18px">更 改 密 碼</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  setTimeout(()=>{const i=document.getElementById('cpOld');if(i)i.focus();},80);
-}
-function cpSubmit(){
-  const old=document.getElementById('cpOld').value;
-  const nw=document.getElementById('cpNew').value;
-  const cnf=document.getElementById('cpCnf').value;
-  const err=document.getElementById('cpErr');
-  if(old!==getPwd()){err.textContent='目前密碼錯誤';return;}
-  if(!nw){err.textContent='新密碼不可空白';return;}
-  if(nw!==cnf){err.textContent='兩次輸入的新密碼不相符';return;}
-  const pwdKey=_curUser?.nm?userPwdKey(_curUser.nm):LS_PWD;
-  localStorage.setItem(pwdKey,nw);
-  document.getElementById('changePwdOverlay').remove();
-  // Show success toast
-  const t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2a6b5e;color:#fff;padding:9px 22px;font-size:12px;letter-spacing:0.08em;z-index:4000;border-radius:2px;font-family:\'Noto Serif TC\',serif';
-  t.textContent='✓ 密碼已更新';
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),2200);
-}
-
 const ROOMS=['庫房一','庫房二','庫房三','庫房四','庫房五','庫房六'];
 const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
 const LEVS=['第一層','第二層','第三層'];
+// 品項計量單位選項；精油系列品項一律固定為 ml（見 normalizeInventoryRow）。
+const UNIT_OPTIONS=['瓶','個','套','ml'];
 // ── 使用者資料（role: designer／admin／supervisor／user）─────────────────
 const USERS=[
   {nm:'白雪儀', pwd:'619', role:'supervisor'},
@@ -12380,13 +12314,16 @@ function normalizeInventoryRow(row){
   const raw=row&&typeof row==='object'?row:{};
   const {location:legacyLocation,...rest}=raw;
   const id=Number(rest.id),qty=Number(rest.qty),min=Number(rest.min);
+  // 業務規則：精油系列品項的計量單位一律固定為 ml，不論原始資料寫的是什麼。
+  const u=rest.cat==='精油系列'?'ml':(rest.u||'個');
   return {
     ...rest,
     id:Number.isFinite(id)?id:0,
     qty:Number.isFinite(qty)?qty:0,
     min:Number.isFinite(min)?min:0,
     con:rest.con===true||rest.con==='true'||rest.con==='TRUE'||rest.con===1||rest.con==='1',
-    loc:normalizeLocation(rest.loc??legacyLocation)
+    loc:normalizeLocation(rest.loc??legacyLocation),
+    u
   };
 }
 
@@ -12429,12 +12366,12 @@ let inv=[
   {id:30, nm:'香茅薄荷皂基（用過）', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:31, nm:'絲瓜絡', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:32, nm:'台灣檜木粉', con:true, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'精油系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:33, nm:'台灣柴燒紅檜精油', con:true, cat:'精油系列', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:34, nm:'手工皂模具／擴香石模具', con:false, cat:'手工皂相關', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:35, nm:'塑膠花瓣（手工藝器材料）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:36, nm:'各色毛根（紅/朱紅/綠/蔚藍/橙/米/黃/蘭花/粉紅/櫻桃/燃橙/深褐）', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:37, nm:'禮品貼紙', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
-  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'精油系列', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
+  {id:38, nm:'精油萬用膏貼紙', con:true, cat:'精油系列', u:'ml', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:39, nm:'洗臉慕斯貼紙', con:true, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:40, nm:'噴嘴頭', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
   {id:41, nm:'噴嘴瓶', con:false, cat:'手工藝材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'', lv:''}},
@@ -13066,10 +13003,17 @@ function openAddItem(){
           </div>
           <div>
             <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">類 別 <span style="color:#6b1f2a">*</span></label>
-            <select id="aiCat" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+            <select id="aiCat" onchange="syncAddItemUnitForCat()" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
               <option value="">請選擇類別</option>
               ${catOpts}
             </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">計 量 單 位</label>
+            <select id="aiUnit" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+              ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u==='個'?'selected':''}>${u}</option>`).join('')}
+            </select>
+            <div id="aiUnitHint" style="font-size:9px;color:#9a8465;margin-top:4px;display:none">精油系列品項的計量單位固定為 ml</div>
           </div>
           <div>
             <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">性 質 <span style="color:#6b1f2a">*</span></label>
@@ -13120,6 +13064,17 @@ function openAddItem(){
         </div>
       </div>`;
     document.body.appendChild(overlay);
+    syncAddItemUnitForCat();
+}
+function syncAddItemUnitForCat(){
+  const cat=document.getElementById('aiCat')?.value;
+  const unitSel=document.getElementById('aiUnit');
+  const hint=document.getElementById('aiUnitHint');
+  if(!unitSel)return;
+  const locked=cat==='精油系列';
+  unitSel.disabled=locked;
+  if(locked)unitSel.value='ml';
+  if(hint)hint.style.display=locked?'block':'none';
 }
 
 function confirmAddItem(){
@@ -13139,8 +13094,12 @@ function confirmAddItem(){
 
   const newId=inv.reduce((m,i)=>Math.max(m,i.id),0)+1;
   const isNewCategory=!CAT_META[cat];
+  // 精油系列一律固定 ml；其餘依表單選擇，非合法選項則回退為「個」。
+  let u=document.getElementById('aiUnit')?.value||'個';
+  if(cat==='精油系列')u='ml';
+  if(!UNIT_OPTIONS.includes(u))u='個';
   const newItem={
-    id:newId, nm, con, cat, u:'個', qty, min:1,
+    id:newId, nm, con, cat, u, qty, min:1,
     loc:{r:r||'', k:k||'', lv:lv||''}
   };
   inv.push(newItem);
@@ -13289,16 +13248,82 @@ function confirmChangeItemCat(id){
   if(newCat===item.cat){ document.getElementById('changeCatOverlay').remove(); return; }
   const oldCat=item.cat;
   item.cat=newCat;
+  // 業務規則：轉入精油系列一律固定 ml 計量單位，不論原本用什麼單位。
+  const oldUnit=item.u;
+  const unitAutoChanged=newCat==='精油系列'&&oldUnit!=='ml';
+  if(unitAutoChanged)item.u='ml';
   const operator=currentOperator();
   const editLog={type:'調整',iid:item.id,nm:item.nm,qty:0,
     user:operator,operator:operator,
-    pur:`變更類別：「${oldCat}」→「${newCat}」`,
-    before:`類別 ${oldCat}`,after:`類別 ${newCat}`,
+    pur:`變更類別：「${oldCat}」→「${newCat}」`+(unitAutoChanged?`；因屬精油系列，計量單位自動由「${oldUnit}」改為「ml」`:''),
+    before:`類別 ${oldCat}`+(unitAutoChanged?`；單位 ${oldUnit}`:''),
+    after:`類別 ${newCat}`+(unitAutoChanged?`；單位 ml`:''),
     due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
   logs.unshift(editLog);
   gasAppendLog(editLog).catch(e=>console.warn('紀錄寫入失敗',e));
   if(_gasLoaded) gasSave();
   document.getElementById('changeCatOverlay').remove();
+  pgInv();
+}
+
+function changeItemUnit(id){
+  document.getElementById('invActionModal')?.remove();
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  if(!isAdminPlus()){ alert('⚠ 變更計量單位需要管理者或以上權限'); return; }
+  const isOil=item.cat==='精油系列';
+  const overlay=document.createElement('div');
+  overlay.id='changeUnitOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:3500;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.innerHTML=`
+    <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:320px;border-left:4px solid #7a3a1e">
+      <div style="padding:14px 18px;border-bottom:1px solid #d8c49a">
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">📏 變 更 計 量 單 位</div>
+        <div style="font-size:11px;color:#7a6650;margin-top:3px">${item.nm}</div>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+        <div>
+          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">目 前 單 位</label>
+          <div style="font-size:12px;color:#7a6650">${item.u}</div>
+        </div>
+        <div>
+          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">變 更 為</label>
+          <select id="cuSel" ${isOil?'disabled':''} style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px">
+            ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u===(isOil?'ml':item.u)?'selected':''}>${u}</option>`).join('')}
+          </select>
+          ${isOil?`<div style="font-size:9px;color:#9a8465;margin-top:5px">精油系列品項的計量單位固定為 ml，無法變更。若要改用其他單位，請先變更品項類別。</div>`:''}
+        </div>
+        <div id="cuErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onclick="document.getElementById('changeUnitOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
+          <button ${isOil?'disabled style="padding:7px 20px;font-size:12px;background:#c7b899;color:#fff;border:1px solid #c7b899;cursor:not-allowed;letter-spacing:0.04em"':`onclick="confirmChangeItemUnit(${id})" style="padding:7px 20px;font-size:12px;background:#7a3a1e;color:#fff;border:1px solid #7a3a1e;cursor:pointer;letter-spacing:0.04em"`}>確 認 變 更</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function confirmChangeItemUnit(id){
+  const item=inv.find(i=>i.id===id);
+  if(!item)return;
+  if(item.cat==='精油系列'){ document.getElementById('changeUnitOverlay')?.remove(); return; }
+  const sel=document.getElementById('cuSel');
+  const newUnit=sel?sel.value:'';
+  const err=document.getElementById('cuErr');
+  if(!UNIT_OPTIONS.includes(newUnit)){ err.textContent='請選擇有效的單位'; err.style.display='block'; return; }
+  if(newUnit===item.u){ document.getElementById('changeUnitOverlay').remove(); return; }
+  const oldUnit=item.u;
+  item.u=newUnit;
+  const operator=currentOperator();
+  const editLog={type:'調整',iid:item.id,nm:item.nm,qty:0,
+    user:operator,operator:operator,
+    pur:`變更計量單位：「${oldUnit}」→「${newUnit}」`,
+    before:`單位 ${oldUnit}`,after:`單位 ${newUnit}`,
+    due:'',loc:ls(item.loc),date:tdy(),time:ntm()};
+  logs.unshift(editLog);
+  gasAppendLog(editLog).catch(e=>console.warn('紀錄寫入失敗',e));
+  if(_gasLoaded) gasSave();
+  document.getElementById('changeUnitOverlay').remove();
   pgInv();
 }
 
@@ -13413,6 +13438,10 @@ function invQuickAction(id){
         onmouseover="this.style.background='rgba(42,107,94,0.08)'" onmouseout="this.style.background='transparent'">
         🔁 ${item.con?'改 為 非 消 耗':'改 為 消 耗 品'}
       </button>
+      ${isAdminPlus()?`<button onclick="changeItemUnit(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(122,58,30,0.4);color:#7a3a1e;cursor:pointer;letter-spacing:0.06em"
+        onmouseover="this.style.background='rgba(122,58,30,0.08)'" onmouseout="this.style.background='transparent'">
+        📏 變 更 計 量 單 位
+      </button>`:''}
       <button onclick="deleteItem(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(139,32,32,0.06)'" onmouseout="this.style.background='transparent'">
         🗑 刪 除 品 項
@@ -13612,6 +13641,7 @@ function catLightBg(cat){return CAT_LIGHT[cat]||CAT_PALETTE[_catHash(cat)%CAT_PA
 
 let _qrSearch='';
 let _qrSearchTimer=0;
+let _qrSelected=new Set();
 const A5_BRAND_DEFAULT={title:'品 項 張 貼 圖',subtitle:'平安家園・活動物品手帳',logoText:'平安家園',logoData:''};
 let _a5DraftLogoData='';
 function getA5Brand(){
@@ -13657,7 +13687,8 @@ function pgQR(){
       <button class="qr-filter-clear" type="button" id="qrClearBtn" onclick="clearQRSearch()" aria-label="清除搜尋" style="display:${_qrSearch?'inline-flex':'none'}">✕</button>
     </div>
   </div>
-  <div style="display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+    ${isDesigner()?`<div id="qrSelBar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-right:auto"></div>`:''}
     ${isDesigner()?`<button onclick="printInventoryCountSheet()" style="font-size:11px;padding:6px 14px;white-space:nowrap">列 印 盤 點 表 ↗</button>`:''}
     <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap">
       列 印 全 部 ${inv.length} 張 ↗
@@ -13667,10 +13698,34 @@ function pgQR(){
   document.getElementById('pg').innerHTML=h;
   renderQRResults();
 }
+// 更新「批次選取」列（勾選張貼圖）：只改這個小區塊，不動搜尋框或卡片格線
+function updateQRSelBar(){
+  const bar=document.getElementById('qrSelBar');
+  if(!bar)return;
+  const n=_qrSelected.size;
+  bar.innerHTML=n
+    ?`<span style="font-size:11px;color:#7a6650">已選 <b style="color:#2b2016">${n}</b> 項</span>
+       <button type="button" onclick="qrClearSelection()" style="font-size:11px;padding:5px 12px;white-space:nowrap">清 除 選 取</button>
+       <button type="button" class="btn-primary" onclick="openA5PosterOptionsBatch()" style="font-size:11px;padding:5px 14px;white-space:nowrap">批 次 生 成 A5 PDF ↗</button>`
+    :`<span style="font-size:10px;color:#9a8465">勾選卡片左上角可複選，批次生成 A5 張貼圖 PDF</span>`;
+}
+function toggleQRSelect(id,checked){
+  if(checked)_qrSelected.add(id);else _qrSelected.delete(id);
+  updateQRSelBar();
+}
+function qrClearSelection(){
+  _qrSelected.clear();
+  renderQRResults();
+}
 
 // 只重繪「顯示筆數」與卡片結果區，從不重建 #qrSearch 輸入框節點，
 // 因此可在注音／拼音組字過程中安全即時刷新，不會打斷候選字選字或使輸入框失焦。
 function renderQRResults(){
+  // 移除已被刪除品項殘留的選取狀態
+  if(_qrSelected.size){
+    const liveIds=new Set(inv.map(i=>i.id));
+    Array.from(_qrSelected).forEach(id=>{if(!liveIds.has(id))_qrSelected.delete(id)});
+  }
   const query=_qrSearch.trim().toLocaleLowerCase();
   const items=query?inv.filter(i=>[
     i.id,i.nm,i.cat,ls(i.loc),i.con?'消耗品':'非消耗品'
@@ -13696,7 +13751,9 @@ function renderQRResults(){
       const hasPhoto=!!i.img;
       const photoAction=hasPhoto?`event.stopPropagation();openPhotoViewer(${i.id})`:(isAdminPlus()?`event.stopPropagation();openPhotoUpload(${i.id})`:'');
       const photoTitle=hasPhoto?'點擊檢視完整照片':(isAdminPlus()?'點擊上傳照片（管理員以上）':'尚未上傳照片');
+      const selectCb=isDesigner()?`<label class="qr-select-cb" onclick="event.stopPropagation()" title="選取此品項，供批次生成 A5 張貼圖 PDF"><input type="checkbox" ${_qrSelected.has(i.id)?'checked':''} onchange="toggleQRSelect(${i.id},this.checked)"></label>`:'';
       h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(43,32,22,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        ${selectCb}
         <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
           <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
         </div>
@@ -13718,6 +13775,7 @@ function renderQRResults(){
 
   const box=document.getElementById('qrResultsBox');
   if(box)box.innerHTML=h;
+  updateQRSelBar();
   // Async fill all visible QR canvases
   items.forEach(item=>{
     const el=document.getElementById('qrc-'+item.id);
@@ -14088,6 +14146,20 @@ function printInventoryCountSheet(){
   w.document.close();
 }
 function closeA5PosterOptions(){document.getElementById('a5PosterOptions')?.remove();}
+function a5PosterOptionsModalHTML(brand,headerNote,submitAttr){
+  return `<div style="width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fffaf0;border:1px solid #b39c6e;box-shadow:0 18px 60px rgba(43,32,22,.28)">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a"><div><div style="font:700 15px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em">A5 橫式張貼圖設定</div><div style="font-size:10px;color:#7a6650;margin-top:3px">${headerNote}</div></div><button type="button" onclick="closeA5PosterOptions()" aria-label="關閉 A5 張貼圖設定" style="border:0;background:transparent;color:#7a6650;font-size:20px;padding:2px 6px">✕</button></div>
+    <style>.a5-options-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:18px;padding:18px}@media(max-width:620px){.a5-options-grid{grid-template-columns:1fr}.a5-options-preview{order:-1}.a5-options-preview #a5BrandPreview{height:150px!important}}</style><div class="a5-options-grid">
+      <div style="display:grid;gap:12px;align-content:start"><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">張 貼 圖 標 題<input id="a5BrandTitle" maxlength="30" value="${printEsc(brand.title)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font:700 15px 'Noto Serif TC',serif"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">副 標／識別文字<input id="a5BrandSubtitle" maxlength="48" value="${printEsc(brand.subtitle)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司／單位名稱<input id="a5BrandLogoText" maxlength="24" value="${printEsc(brand.logoText)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司 Logo 圖檔<input id="a5BrandLogoFile" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:5px;padding:8px;border:1px dashed #b39c6e;background:#fffdf7;color:#2b2016;font-size:11px"><span style="display:block;margin-top:5px;font-size:9px;color:#9a8465;line-height:1.5">支援 PNG、JPG、WebP；建議使用透明背景方形 Logo，檔案上限 600KB。</span></label></div>
+      <div class="a5-options-preview"><div style="font-size:10px;color:#7a6650;letter-spacing:.08em;margin-bottom:7px">即 時 預 覽</div><div id="a5BrandPreview" style="height:176px"></div></div>
+    </div><div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #d8c49a"><button type="button" onclick="closeA5PosterOptions()" style="font-size:11px;padding:7px 15px">取 消</button><button type="button" class="btn-primary" onclick="${submitAttr}" style="font-size:11px;padding:7px 17px">生成 A5 張 貼 圖 ↗</button></div>
+  </div>`;
+}
+function bindA5LogoFileInput(){
+  const el=document.getElementById('a5BrandLogoFile');
+  if(!el)return;
+  el.onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>600*1024){alert('⚠ Logo 檔案請小於 600KB');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{_a5DraftLogoData=String(reader.result||'');updateA5BrandPreview()};reader.readAsDataURL(file);};
+}
 function updateA5BrandPreview(){
   const preview=document.getElementById('a5BrandPreview');if(!preview)return;
   const title=document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title;
@@ -14102,21 +14174,114 @@ function openA5PosterOptions(id){
   const overlay=document.createElement('div');overlay.id='a5PosterOptions';
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,.56);backdrop-filter:blur(5px);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px';
   overlay.onclick=e=>{if(e.target===overlay)closeA5PosterOptions()};
-  overlay.innerHTML=`<div style="width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fffaf0;border:1px solid #b39c6e;box-shadow:0 18px 60px rgba(43,32,22,.28)">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a"><div><div style="font:700 15px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em">A5 橫式張貼圖設定</div><div style="font-size:10px;color:#7a6650;margin-top:3px">${printEsc(item.nm)}　・　設定會儲存在此瀏覽器，供下一張張貼圖沿用</div></div><button type="button" onclick="closeA5PosterOptions()" aria-label="關閉 A5 張貼圖設定" style="border:0;background:transparent;color:#7a6650;font-size:20px;padding:2px 6px">✕</button></div>
-    <style>.a5-options-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:18px;padding:18px}@media(max-width:620px){.a5-options-grid{grid-template-columns:1fr}.a5-options-preview{order:-1}.a5-options-preview #a5BrandPreview{height:150px!important}}</style><div class="a5-options-grid">
-      <div style="display:grid;gap:12px;align-content:start"><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">張 貼 圖 標 題<input id="a5BrandTitle" maxlength="30" value="${printEsc(brand.title)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font:700 15px 'Noto Serif TC',serif"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">副 標／識別文字<input id="a5BrandSubtitle" maxlength="48" value="${printEsc(brand.subtitle)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司／單位名稱<input id="a5BrandLogoText" maxlength="24" value="${printEsc(brand.logoText)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司 Logo 圖檔<input id="a5BrandLogoFile" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:5px;padding:8px;border:1px dashed #b39c6e;background:#fffdf7;color:#2b2016;font-size:11px"><span style="display:block;margin-top:5px;font-size:9px;color:#9a8465;line-height:1.5">支援 PNG、JPG、WebP；建議使用透明背景方形 Logo，檔案上限 600KB。</span></label></div>
-      <div class="a5-options-preview"><div style="font-size:10px;color:#7a6650;letter-spacing:.08em;margin-bottom:7px">即 時 預 覽</div><div id="a5BrandPreview" style="height:176px"></div></div>
-    </div><div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #d8c49a"><button type="button" onclick="closeA5PosterOptions()" style="font-size:11px;padding:7px 15px">取 消</button><button type="button" class="btn-primary" onclick="submitA5PosterOptions(${item.id})" style="font-size:11px;padding:7px 17px">生成 A5 張 貼 圖 ↗</button></div>
-  </div>`;
+  overlay.innerHTML=a5PosterOptionsModalHTML(brand,`${printEsc(item.nm)}　・　設定會儲存在此瀏覽器，供下一張張貼圖沿用`,`submitA5PosterOptions(${item.id})`);
   document.body.appendChild(overlay);
-  document.getElementById('a5BrandLogoFile').onchange=e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>600*1024){alert('⚠ Logo 檔案請小於 600KB');e.target.value='';return;}const reader=new FileReader();reader.onload=()=>{_a5DraftLogoData=String(reader.result||'');updateA5BrandPreview()};reader.readAsDataURL(file);};
+  bindA5LogoFileInput();
   updateA5BrandPreview();
 }
 function submitA5PosterOptions(id){
   if(!isDesigner()){alert('⚠ A5 張貼圖列印僅設計師可操作');return;}
   const brand=saveA5Brand({title:document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title,subtitle:document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle,logoText:document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText,logoData:_a5DraftLogoData||''});
   closeA5PosterOptions();printA5Poster(id,brand);
+}
+// ── 批次 A5 張貼圖（勾選複數品項，合併成一份可列印／另存 PDF 的文件）──────────
+function openA5PosterOptionsBatch(){
+  if(!isDesigner()){ alert('⚠ A5 張貼圖設定僅設計師可操作'); return; }
+  const ids=Array.from(_qrSelected);
+  if(!ids.length){ alert('⚠ 請先在卡片左上角勾選至少一項品項'); return; }
+  const brand=getA5Brand();_a5DraftLogoData=brand.logoData||'';
+  const overlay=document.createElement('div');overlay.id='a5PosterOptions';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,.56);backdrop-filter:blur(5px);z-index:1200;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.onclick=e=>{if(e.target===overlay)closeA5PosterOptions()};
+  overlay.innerHTML=a5PosterOptionsModalHTML(brand,`已選 ${ids.length} 項　・　設定會儲存在此瀏覽器，供下一次張貼圖沿用`,`submitA5PosterOptionsBatch()`);
+  document.body.appendChild(overlay);
+  bindA5LogoFileInput();
+  updateA5BrandPreview();
+}
+function submitA5PosterOptionsBatch(){
+  if(!isDesigner()){alert('⚠ A5 張貼圖列印僅設計師可操作');return;}
+  const ids=Array.from(_qrSelected);
+  if(!ids.length){alert('⚠ 請先勾選至少一項品項');closeA5PosterOptions();return;}
+  const brand=saveA5Brand({title:document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title,subtitle:document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle,logoText:document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText,logoData:_a5DraftLogoData||''});
+  closeA5PosterOptions();
+  printA5PosterBatch(ids,brand);
+}
+async function printA5PosterBatch(ids,customBrand){
+  if(!isDesigner()){ alert('⚠ A5 張貼圖列印僅設計師可操作'); return; }
+  const items=ids.map(id=>inv.find(i=>i.id===id)).filter(Boolean);
+  if(!items.length){ alert('⚠ 找不到選取的品項，請重新勾選。'); return; }
+  const bar=document.getElementById('qrSelBar');
+  const barBak=bar?bar.innerHTML:'';
+  if(bar)bar.innerHTML=`<span style="font-size:11px;color:#7a6650">正 在 產 生 ${items.length} 張 A5 張 貼 圖…</span>`;
+
+  const brand={...getA5Brand(),...(customBrand&&typeof customBrand==='object'?customBrand:{})};
+  const posterTitle=String(brand.title||A5_BRAND_DEFAULT.title).trim()||A5_BRAND_DEFAULT.title;
+  const posterSubtitle=String(brand.subtitle||A5_BRAND_DEFAULT.subtitle).trim()||A5_BRAND_DEFAULT.subtitle;
+  const logoText=String(brand.logoText||A5_BRAND_DEFAULT.logoText).trim()||A5_BRAND_DEFAULT.logoText;
+  const logoData=String(brand.logoData||'').startsWith('data:image/')?brand.logoData:'';
+
+  let postersHtml='';
+  try{
+    const posters=await Promise.all(items.map(async item=>{
+      const url=await getQRDataUrl(item,260);
+      const catCol=catHex(item.cat),catLight=catLightBg(item.cat);
+      const nature=item.con?'消耗品':'非消耗品';
+      const photoSource=String(item.img||'').trim();
+      const photoData=(photoSource.startsWith('data:image/')||photoSource.startsWith('https://')||photoSource.startsWith('http://'))?photoSource:'';
+      return `<main class="poster" style="--cat:${catCol};--catlight:${catLight}">
+        <header class="header"><div class="logo">${logoData?`<img src="${printEsc(logoData)}" alt="${printEsc(logoText)} Logo">`:'<span class="logo-mark">PH</span>'}</div><div><div class="brand-name">${printEsc(logoText)}</div><div class="brand-sub">${printEsc(posterSubtitle)}</div></div><div class="poster-kicker">${printEsc(posterTitle)}</div></header>
+        <div class="accent"></div><section class="content"><div class="qr-panel"><div class="qr-label">掃 描 查 詢 品 項</div><div class="qr"><img src="${url}" alt="${printEsc(item.nm)} QR Code"></div><div class="qr-code">ITEM #${String(item.id).padStart(2,'0')}</div></div><div class="photo-panel"><div class="photo-label">品 項 照 片</div><div class="photo-frame">${photoData?`<img src="${printEsc(photoData)}" alt="${printEsc(item.nm)} 品項照片">`:'<div class="photo-empty"><span class="photo-empty-mark">▧</span><span>尚未上傳照片</span></div>'}</div><div class="photo-hint">${photoData?'現場實物參照':'請由管理員以上上傳照片'}</div></div><div class="info"><div class="cat">${printEsc(item.cat)}</div><div class="name">${printEsc(item.nm)}</div><div class="nature">${nature}</div><div class="details"><div class="label">儲存位置</div><div class="value">${printEsc(ls(item.loc)||'尚未設定位置')}</div><div class="label">庫存狀態</div><div class="value">${printEsc(stl(item))}</div></div><div class="bottom"><div class="note"><b>掃描 QR Code</b> 查看品項資料　｜　張貼前請確認現場位置與盤點數量</div><div class="id">品項編號　#${String(item.id).padStart(2,'0')}</div></div></div></section>
+      </main>`;
+    }));
+    postersHtml=posters.join('');
+  }finally{
+    if(bar)updateQRSelBar();
+  }
+
+  const w=window.open('','_blank','width=960,height=720');
+  if(!w){alert('⚠ 瀏覽器封鎖了列印視窗，請允許此網站開啟彈出視窗。');return;}
+  w.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+    <title>${printEsc(posterTitle)}｜批次 A5 張貼圖（共 ${items.length} 張）</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+      /* Style note: 批次 A5 張貼圖，每品項各佔一頁 210mm × 148mm 橫式紙本，色彩以 CSS 變數 --cat/--catlight 依品項類別套色，供一次列印或另存為多頁 PDF。 */
+      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#d9d4ca;color:#2b2016;font-family:'Noto Sans TC',sans-serif}
+      .poster{width:210mm;height:148mm;margin:12mm auto;background:#f3ead9;border:1.5px solid #b39c6e;position:relative;overflow:hidden;padding:10mm 12mm 9mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(43,32,22,.16)}
+      .poster+.poster{page-break-before:always;margin-top:12mm}
+      .header{display:grid;grid-template-columns:18mm minmax(0,1fr) minmax(44mm,auto);align-items:center;gap:5mm;padding-bottom:5mm;border-bottom:1px solid #d2bf98}
+      .logo{width:16mm;height:16mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+      .logo img{width:100%;height:100%;object-fit:contain}
+      .logo-mark{font:700 17px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}
+      .brand-name{font:700 15px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .brand-sub{font-size:9px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .poster-kicker{text-align:right;color:#6b1f2a;font:700 13px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .accent{height:2px;background:var(--cat);margin:4mm 0 5mm}
+      .content{display:grid;grid-template-columns:50mm 66mm minmax(0,1fr);gap:6mm;align-items:center;flex:1;min-height:0}
+      .qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:7mm}
+      .qr-label,.photo-label{font-size:10px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}
+      .qr{width:50mm;height:50mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2mm}
+      .qr img{width:45mm;height:45mm;image-rendering:auto}
+      .qr-code{font-size:10px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}
+      .photo-frame{width:66mm;height:78mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.5mm;overflow:hidden}
+      .photo-frame img{width:100%;height:100%;object-fit:contain;image-rendering:auto}
+      .photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;color:#b39c6e;font-size:10px;letter-spacing:.08em;text-align:center}
+      .photo-empty-mark{font-size:26px;opacity:.75}
+      .photo-hint{font-size:9px;color:#9a8465;margin-top:3mm;text-align:center;line-height:1.4}
+      .info{min-width:0;display:flex;flex-direction:column;justify-content:center}
+      .cat{align-self:flex-start;color:#fff;background:var(--cat);padding:2.2mm 6mm;font-size:13px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .name{font:900 30px/1.18 'Noto Serif TC',serif;color:#20150f;margin:4mm 0 2.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .2mm 0 rgba(43,32,22,.12)}
+      .nature{align-self:flex-start;background:var(--catlight);border:1.5px solid var(--cat);color:var(--cat);padding:1.5mm 5mm;border-radius:99px;font-size:12px;font-weight:700}
+      .details{margin-top:5mm;border-top:1.5px solid #b39c6e;border-bottom:1.5px solid #b39c6e;padding:4mm 0;display:grid;grid-template-columns:24mm minmax(0,1fr);gap:2.5mm 3mm;font-size:13.5px;line-height:1.35}
+      .label{color:#6b5744;font-weight:700;letter-spacing:.05em}
+      .value{font-family:'Noto Serif TC',serif;font-weight:700;word-break:break-word}
+      .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:5mm;margin-top:4mm}
+      .note{color:#7a6650;font-size:8.5px;line-height:1.4}
+      .note b{color:#6b1f2a;font-weight:800}
+      .id{color:var(--cat);font-size:11px;font-weight:800;white-space:nowrap}
+      @media print{html,body{background:#fff}.poster{margin:0;border:1.5px solid #b39c6e;box-shadow:none}.poster+.poster{margin-top:0}@page{size:A5 landscape;margin:0}}
+    </style></head><body>${postersHtml}
+    <script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  w.document.close();
 }
 async function printA5Poster(id,customBrand){
   if(!isDesigner()){ alert('⚠ A5 張貼圖列印僅設計師可操作'); return; }
