@@ -10374,7 +10374,7 @@ var QRC=function(container,opts){
     container.innerHTML='';container.appendChild(canvas);
     render(canvas,opts.text,opts.width||128);
   }catch(e){
-    container.innerHTML='<span style="font-size:9px;color:#c00">QR錯誤:'+e.message+'</span>';
+    container.innerHTML='<span style="font-size:12px;color:#c00">QR錯誤:'+e.message+'</span>';
   }
 };
 QRC.toDataURL=function(text,opts){
@@ -10426,67 +10426,50 @@ body{
   font-family:'Cormorant Garamond','Noto Sans TC',sans-serif;
   background:var(--paper);
   color:var(--ink);
-  background-image:
-    radial-gradient(circle at 25% 25%, rgba(107,31,42,0.055) 0%, transparent 3%),
-    radial-gradient(circle at 75% 75%, rgba(107,31,42,0.055) 0%, transparent 3%),
-    radial-gradient(circle at 75% 25%, rgba(156,122,60,0.07) 0%, transparent 2.6%),
-    radial-gradient(circle at 25% 75%, rgba(156,122,60,0.07) 0%, transparent 2.6%),
-    repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(107,31,42,0.03) 27px,rgba(107,31,42,0.03) 28px);
-  background-size:56px 56px,56px 56px,56px 56px,56px 56px,100% 28px;
 }
 .app{display:flex;height:100vh;max-width:1100px;margin:0 auto;position:relative}
 
-/* === SIDEBAR === */
+/* === SIDEBAR (masthead) === */
 .sb{
   width:160px;flex-shrink:0;
   background:var(--paper-warm);
-  border-right:3px double var(--border);
+  border-right:1px solid var(--border);
   display:flex;flex-direction:column;
   position:relative;overflow:hidden;
 }
-.sb::before{
-  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
-  background:repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(107,31,42,0.05) 18px,rgba(107,31,42,0.05) 19px);
-  pointer-events:none;
-}
 .sb-hd{
-  padding:22px 16px 18px;
-  border-bottom:3px double var(--border);
+  padding:22px 16px 16px;
+  border-bottom:4px solid var(--ink);
+  box-shadow:0 3px 0 -1px var(--gold);
   position:relative;
-}
-.sb-hd::after{
-  content:'❧';position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
-  font-size:14px;color:var(--gold);background:var(--paper-warm);
-  padding:0 8px;line-height:1;
 }
 .sb-title{
   font-family:'Playfair Display','Noto Serif TC',serif;
-  font-size:15px;font-weight:700;
-  color:var(--ink);letter-spacing:0.05em;
-  line-height:1.3;
+  font-size:21px;font-weight:900;
+  color:var(--ink);letter-spacing:0.03em;
+  line-height:1.15;
 }
 .sb-sub{
-  font-size:10px;color:var(--gold);
-  margin-top:4px;letter-spacing:0.12em;
-  font-style:italic;
+  font-size:12px;color:var(--gold);
+  margin-top:6px;letter-spacing:0.22em;
+  font-style:normal;text-transform:uppercase;
 }
 .seal{
-  width:28px;height:28px;border-radius:3px;
-  background:var(--red-seal);
-  display:flex;align-items:center;justify-content:center;
-  margin-top:10px;
-  font-family:'Playfair Display','Noto Serif TC',serif;
-  font-size:10px;color:#fff;font-weight:700;
-  letter-spacing:0;transform:rotate(-3deg);
-  box-shadow:1px 1px 0 rgba(0,0,0,0.3);
+  display:inline-flex;align-items:center;
+  padding:3px 9px;
+  border:1px solid var(--red-seal);
+  margin-top:12px;
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:12px;color:var(--red-seal);font-weight:700;
+  letter-spacing:0.14em;
 }
 .nsh{
-  font-size:9px;color:var(--gold);
-  padding:14px 16px 4px;
+  font-size:12px;color:var(--gold);
+  padding:16px 16px 5px;
   letter-spacing:0.18em;text-transform:uppercase;
 }
 .nav{
-  padding:9px 16px;font-size:12px;
+  padding:9px 16px;font-size:15px;
   cursor:pointer;color:var(--ink-faint);
   position:relative;
   transition:color 0.2s;
@@ -10501,36 +10484,32 @@ body{
 }
 .nav.on::before{
   content:'◆';position:absolute;right:10px;top:50%;transform:translateY(-50%);
-  font-size:6px;color:var(--gold);
+  font-size:9px;color:var(--gold);
 }
 .sb-foot{
   padding:14px 16px;border-top:1px solid var(--border-light);
   margin-top:auto;
 }
-.sb-foot-txt{font-size:10px;color:var(--gold);letter-spacing:0.1em}
-.sb-foot-ver{font-size:9px;color:var(--ink-faint);margin-top:2px}
+.sb-foot-txt{font-size:13px;color:var(--gold);letter-spacing:0.1em}
+.sb-foot-ver{font-size:12px;color:var(--ink-faint);margin-top:2px}
 
 /* === MAIN === */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 
 .topbar{
-  padding:12px 20px;
-  border-bottom:1px solid var(--border);
+  padding:14px 20px 12px;
+  border-bottom:3px solid var(--ink);
   display:flex;align-items:center;gap:10px;
   background:var(--paper-warm);
   position:relative;
 }
-.topbar::after{
-  content:'';position:absolute;bottom:-1px;left:0;right:0;
-  height:1px;background:linear-gradient(90deg,var(--gold),transparent 60%);
-}
 .tb-t{
   font-family:'Playfair Display','Noto Serif TC',serif;
-  font-size:16px;font-weight:500;
+  font-size:22px;font-weight:900;
   color:var(--ink);flex:1;
-  letter-spacing:0.08em;
+  letter-spacing:0.02em;
 }
-.tb-dot{color:var(--gold);margin-right:6px;font-size:12px}
+.tb-dot{display:none}
 .srch-wrap{
   position:relative;display:flex;align-items:center;
 }
@@ -10538,17 +10517,17 @@ body{
   border:1px solid var(--border);
   border-radius:0;
   padding:5px 10px 5px 28px;
-  font-size:11px;font-family:'Noto Sans TC',sans-serif;
+  font-size:14px;font-family:'Noto Sans TC',sans-serif;
   background:var(--paper);color:var(--ink);
   width:140px;outline:none;
   transition:border-color 0.2s;
 }
 .srch-wrap input:focus{border-color:var(--gold)}
-.srch-icon{position:absolute;left:8px;color:var(--ink-faint);font-size:11px;pointer-events:none}
+.srch-icon{position:absolute;left:8px;color:var(--ink-faint);font-size:14px;pointer-events:none}
 .scan-btn{
   background:var(--ink);color:var(--paper);
   border:none;border-radius:0;
-  padding:6px 14px;font-size:11px;
+  padding:6px 14px;font-size:14px;
   font-family:'Noto Sans TC',sans-serif;
   cursor:pointer;letter-spacing:0.08em;
   transition:background 0.2s;
@@ -10565,44 +10544,42 @@ body{
 .sts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}
 .st{
   background:var(--paper-warm);
-  border:1px solid var(--border-light);
-  outline:1px solid var(--paper-warm);
-  outline-offset:-4px;
-  padding:12px 14px;
+  border-top:3px solid var(--ink);
+  padding:12px 14px 10px;
   position:relative;overflow:hidden;
 }
-.st::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(180deg,var(--gold),var(--red-seal))}
-.st-l{font-size:9px;color:var(--gold);letter-spacing:0.15em;margin-bottom:5px}
-.st-v{font-family:'Playfair Display','Noto Serif TC',serif;font-size:30px;line-height:1.08;font-weight:800;letter-spacing:.02em;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.75)}
+.st-l{font-size:12px;color:var(--gold);letter-spacing:0.15em;margin-bottom:5px;text-transform:uppercase}
+.st-v{font-family:'Playfair Display','Noto Serif TC',serif;font-size:34px;line-height:1.05;font-weight:900;letter-spacing:0;color:var(--ink)}
 .st-v.warn{color:var(--rust)}
 .st-v.info{color:var(--indigo)}
 .st-v.danger{color:var(--red-seal)}
-.cat-count{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18);font-size:15px;font-weight:800;line-height:1.1;letter-spacing:.02em;color:#fff}
-.inv-qty{font-family:'Playfair Display','Noto Serif TC',serif;font-size:19px;font-weight:800;line-height:1.1;letter-spacing:.02em;text-align:center}
-.inv-detail-panel{margin:0 0 16px;border:1px solid var(--border);background:rgba(255,253,247,.72);overflow:hidden}.inv-detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border-bottom:1px solid var(--border);background:rgba(181,131,42,.08);color:var(--ink);font-size:12px;letter-spacing:.06em}.inv-detail-head strong{font-size:16px;font-weight:900}.inv-detail-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}.inv-detail-table th{padding:8px 7px;background:#efe2c9;border-bottom:2px solid #b39c6e;color:#5e3a25;font-size:11px;font-weight:800;letter-spacing:.05em;text-align:left}.inv-detail-table td{padding:8px 7px;border-bottom:1px solid #e0d4bb;vertical-align:middle;color:#33261c}.inv-detail-table tr:last-child td{border-bottom:0}.inv-detail-table .detail-id{width:8%;color:#7a6650;font-family:ui-monospace,monospace;text-align:center}.inv-detail-table .detail-name{width:36%;font-weight:650}.inv-detail-table .detail-cat{width:27%}.inv-detail-table .detail-num{width:14%;text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;color:#2b2016}.inv-detail-table .detail-num.onway{color:#5a7a9a}.inv-detail-table .detail-unit{font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:500;color:#7a6650}.inv-detail-table .detail-empty{padding:18px;text-align:center;color:#7a6650}@media(max-width:640px){.inv-detail-table{min-width:680px}.inv-detail-panel{overflow-x:auto}.inv-detail-head{min-width:680px}}
+.cat-count{display:inline-flex;align-items:center;justify-content:center;min-width:48px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.18);font-size:17px;font-weight:800;line-height:1.1;letter-spacing:.02em;color:#fff}
+.inv-qty{font-family:'Playfair Display','Noto Serif TC',serif;font-size:21px;font-weight:800;line-height:1.1;letter-spacing:.02em;text-align:center}
+.inv-detail-panel{margin:0 0 16px;border:1px solid var(--border);background:rgba(255,253,247,.72);overflow:hidden}.inv-detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 12px;border-bottom:1px solid var(--border);background:rgba(181,131,42,.08);color:var(--ink);font-size:15px;letter-spacing:.06em}.inv-detail-head strong{font-size:18px;font-weight:900}.inv-detail-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:15px}.inv-detail-table th{padding:8px 7px;background:#efe2c9;border-bottom:2px solid #b39c6e;color:#5e3a25;font-size:14px;font-weight:800;letter-spacing:.05em;text-align:left}.inv-detail-table td{padding:8px 7px;border-bottom:1px solid #e0d4bb;vertical-align:middle;color:#33261c}.inv-detail-table tr:last-child td{border-bottom:0}.inv-detail-table .detail-id{width:8%;color:#7a6650;font-family:ui-monospace,monospace;text-align:center}.inv-detail-table .detail-name{width:36%;font-weight:650}.inv-detail-table .detail-cat{width:27%}.inv-detail-table .detail-num{width:14%;text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:22px;font-weight:900;font-variant-numeric:tabular-nums;color:#2b2016}.inv-detail-table .detail-num.onway{color:#5a7a9a}.inv-detail-table .detail-unit{font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:#7a6650}.inv-detail-table .detail-empty{padding:18px;text-align:center;color:#7a6650}@media(max-width:640px){.inv-detail-table{min-width:680px}.inv-detail-panel{overflow-x:auto}.inv-detail-head{min-width:680px}}
 /* === TABLE === */
 .sep{
-  font-family:'Playfair Display','Noto Serif TC',serif;
-  font-size:13px;font-weight:500;
-  color:var(--ink);margin:18px 0 10px;
+  font-family:'Noto Sans TC',sans-serif;
+  font-size:14px;font-weight:700;
+  color:var(--ink);margin:22px 0 10px;
   display:flex;align-items:center;gap:8px;
-  padding-bottom:6px;
-  border-bottom:1px solid var(--border-light);
+  padding-bottom:7px;
+  border-bottom:2px solid var(--ink);
+  letter-spacing:0.1em;
   position:relative;
 }
-.sep::before{content:'◈';color:var(--gold);font-size:11px}
-.sep-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border-light),transparent)}
+.sep::before{content:'';width:9px;height:9px;background:var(--red-seal);flex-shrink:0}
+.sep-line{flex:1;height:1px;background:var(--border-light)}
 
-.tbl{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;margin-bottom:4px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed;margin-bottom:4px}
 .tbl th{
-  text-align:left;padding:6px 8px;
-  border-bottom:1px solid var(--border);
-  font-weight:500;color:var(--ink-faint);
-  font-size:10px;letter-spacing:0.08em;
-  background:var(--paper-warm);
+  text-align:left;padding:6px 8px 8px;
+  border-bottom:2px solid var(--ink);
+  font-weight:700;color:var(--ink);
+  font-size:12px;letter-spacing:0.12em;text-transform:uppercase;
+  background:transparent;
 }
 .tbl td{
-  padding:7px 8px;
+  padding:8px 8px;
   border-bottom:1px solid var(--border-light);
   color:var(--ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -10611,7 +10588,7 @@ body{
 .tbl tr:hover td{background:rgba(181,131,42,0.04)}
 
 /* === BADGES === */
-.b{display:inline-block;font-size:10px;padding:1px 8px;font-weight:500;letter-spacing:0.04em}
+.b{display:inline-block;font-size:13px;padding:1px 8px;font-weight:500;letter-spacing:0.04em}
 .b-ok{background:var(--sage-light);color:var(--sage);border:1px solid rgba(90,122,94,0.25)}
 .b-w{background:var(--rust-light);color:var(--rust);border:1px solid rgba(122,58,30,0.25)}
 .b-d{background:rgba(139,32,32,0.1);color:var(--red-seal);border:1px solid rgba(139,32,32,0.3)}
@@ -10622,11 +10599,11 @@ body{
 .b-in{background:var(--sage-light);color:var(--sage);border:1px solid rgba(90,122,94,0.25)}
 .b-rt{background:var(--paper-deep);color:var(--ink-faint);border:1px solid var(--border-light)}
 .b-od{background:rgba(139,32,32,0.1);color:var(--red-seal);border:1px solid rgba(139,32,32,0.3)}
-.rep-op-pill{border-radius:999px;padding:4px 12px;font-size:11px;letter-spacing:0.02em;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;white-space:nowrap}
+.rep-op-pill{border-radius:999px;padding:4px 12px;font-size:14px;letter-spacing:0.02em;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;white-space:nowrap}
 .rep-op-pill:hover{opacity:.82}
 .rep-op-pill:active{transform:scale(.96)}
 .lb{
-  display:inline-block;font-size:10px;padding:1px 8px;
+  display:inline-block;font-size:13px;padding:1px 8px;
   background:var(--paper-deep);color:var(--ink-faint);
   border:1px solid var(--border-light);
   letter-spacing:0.02em;
@@ -10642,25 +10619,25 @@ body{
 .oa{
   background:rgba(139,32,32,0.07);
   border-left:3px solid var(--red-seal);
-  padding:8px 12px;font-size:11px;color:var(--red-seal);
+  padding:8px 12px;font-size:14px;color:var(--red-seal);
   margin-bottom:14px;letter-spacing:0.02em;
 }
 
 /* === FORMS === */
-.fl{font-size:11px;color:var(--ink-faint);display:block;margin-bottom:4px;letter-spacing:0.04em}
+.fl{font-size:14px;color:var(--ink-faint);display:block;margin-bottom:4px;letter-spacing:0.04em}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .cb{
   background:var(--paper-warm);
   border:1px solid var(--border-light);
   border-left:3px solid var(--gold);
-  padding:10px 12px;margin-bottom:12px;font-size:12px;
+  padding:10px 12px;margin-bottom:12px;font-size:15px;
 }
 .ci{display:flex;justify-content:space-between;padding:3px 0;gap:8px}
 .ci span:first-child{color:var(--ink-faint);flex-shrink:0}
 .ci span:last-child{color:var(--ink);text-align:right}
 input[type=text],input[type=number],input[type=date],select{
   border:1px solid var(--border);border-radius:0;
-  padding:7px 10px;font-size:11px;
+  padding:7px 10px;font-size:14px;
   font-family:'Noto Sans TC',sans-serif;
   background:var(--paper);color:var(--ink);
   outline:none;width:100%;
@@ -10669,7 +10646,7 @@ input[type=text],input[type=number],input[type=date],select{
 input:focus,select:focus{border-color:var(--gold)}
 button{
   border:1px solid var(--border);border-radius:0;
-  padding:7px 14px;font-size:11px;
+  padding:7px 14px;font-size:14px;
   font-family:'Noto Sans TC',sans-serif;
   background:transparent;color:var(--ink);cursor:pointer;
   letter-spacing:0.04em;transition:all 0.2s;
@@ -10712,7 +10689,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   display:flex;align-items:center;justify-content:center;
   margin:0 auto 16px;
   font-family:'Playfair Display','Noto Serif TC',serif;
-  font-size:28px;color:var(--sage);
+  font-size:30px;color:var(--sage);
 }
 
 /* === AI BAR === */
@@ -10744,22 +10721,22 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   background:var(--paper-warm);border:1px solid var(--border-light);
   border-left:3px solid var(--gold);
 }
-.qr-toolbar-note{font-size:10px;color:var(--ink-light);letter-spacing:0.06em;line-height:1.8}
-.qr-toolbar-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:5px;color:var(--gold);font-size:10px}
+.qr-toolbar-note{font-size:13px;color:var(--ink-light);letter-spacing:0.06em;line-height:1.8}
+.qr-toolbar-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:5px;color:var(--gold);font-size:13px}
 .qr-filter-wrap{position:relative;display:flex;align-items:center;flex-shrink:0}
-.qr-filter-wrap>span{position:absolute;left:10px;color:var(--ink-faint);font-size:13px;pointer-events:none}
+.qr-filter-wrap>span{position:absolute;left:10px;color:var(--ink-faint);font-size:16px;pointer-events:none}
 .qr-filter-wrap input{
   width:min(270px,42vw);padding:8px 30px 8px 28px;
   border:1px solid var(--border);border-radius:0;background:var(--paper);color:var(--ink);
-  font:11px 'Noto Sans TC',sans-serif;outline:none;transition:border-color .18s,box-shadow .18s;
+  font:14px 'Noto Sans TC',sans-serif;outline:none;transition:border-color .18s,box-shadow .18s;
 }
 .qr-filter-wrap input:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(181,131,42,.12)}
 .qr-filter-clear{
   position:absolute;right:5px;border:0;background:transparent;color:var(--ink-faint);
-  padding:3px 5px;font-size:12px;cursor:pointer;line-height:1;
+  padding:3px 5px;font-size:15px;cursor:pointer;line-height:1;
 }
 .qr-filter-clear:hover{color:var(--red-seal)}
-.qr-empty{padding:30px 16px;text-align:center;color:var(--ink-light);font-size:12px;letter-spacing:.08em;background:var(--paper-warm);border:1px dashed var(--border)}
+.qr-empty{padding:30px 16px;text-align:center;color:var(--ink-light);font-size:15px;letter-spacing:.08em;background:var(--paper-warm);border:1px dashed var(--border)}
 .qr-photo-wrap{transition:transform .16s ease-out,box-shadow .16s ease-out}
 .qr-photo-wrap.has-photo:hover{transform:scale(1.04);box-shadow:0 3px 10px rgba(43,32,22,.18)}
 /* Style note: 照片檢視器延續紙本手帳的米白、酒紅與金色系，以深色模糊背景突出影像；操作保持清楚、克制且適合手機。 */
@@ -10773,8 +10750,8 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   background:var(--paper-warm);border:1px solid var(--gold-light);box-shadow:0 22px 70px rgba(0,0,0,.46);
 }
 .photo-viewer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-light)}
-.photo-viewer-title{font:13px 'Playfair Display','Noto Serif TC',serif;color:var(--ink);letter-spacing:.08em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.photo-viewer-close{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(122,93,52,.34);background:rgba(255,252,243,.7);color:var(--ink);font-size:18px;line-height:1;cursor:pointer;transition:background .16s ease-out,color .16s ease-out,transform .16s ease-out}
+.photo-viewer-title{font:16px 'Playfair Display','Noto Serif TC',serif;color:var(--ink);letter-spacing:.08em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-viewer-close{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid rgba(122,93,52,.34);background:rgba(255,252,243,.7);color:var(--ink);font-size:20px;line-height:1;cursor:pointer;transition:background .16s ease-out,color .16s ease-out,transform .16s ease-out}
 .photo-viewer-close:hover{background:var(--red-seal);color:#fff;transform:rotate(4deg)}
 .photo-viewer-close:focus-visible,.photo-viewer-zoom button:focus-visible,.photo-viewer-actions button:focus-visible{outline:2px solid var(--red-seal);outline-offset:2px}
 .photo-viewer-stage{display:flex;flex-direction:column;align-items:stretch;min-height:220px;max-height:calc(94vh - 150px);padding:10px;background:linear-gradient(135deg,#1b1410,#33241b 48%,#18120f);overflow:hidden}
@@ -10782,14 +10759,14 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .photo-viewer-image{display:block;max-width:100%;max-height:calc(94vh - 235px);width:auto;height:auto;object-fit:contain;transform-origin:center;box-shadow:0 8px 24px rgba(0,0,0,.42);transition:transform .18s cubic-bezier(.23,1,.32,1);cursor:zoom-in;user-select:none}
 .photo-viewer-image.is-zoomed{cursor:grab}
 .photo-viewer-image.is-dragging{cursor:grabbing}
-.photo-viewer-zoom{display:flex;align-items:center;justify-content:center;gap:6px;padding:2px 0 10px;color:rgba(255,247,231,.82);font-size:10px;letter-spacing:.05em}
-.photo-viewer-zoom button{min-width:32px;height:28px;border:1px solid rgba(255,247,231,.32);background:rgba(22,15,11,.5);color:#fff7e7;font-size:16px;line-height:1;cursor:pointer;transition:background .16s ease-out,border-color .16s ease-out,transform .16s ease-out}
+.photo-viewer-zoom{display:flex;align-items:center;justify-content:center;gap:6px;padding:2px 0 10px;color:rgba(255,247,231,.82);font-size:13px;letter-spacing:.05em}
+.photo-viewer-zoom button{min-width:32px;height:28px;border:1px solid rgba(255,247,231,.32);background:rgba(22,15,11,.5);color:#fff7e7;font-size:18px;line-height:1;cursor:pointer;transition:background .16s ease-out,border-color .16s ease-out,transform .16s ease-out}
 .photo-viewer-zoom button:hover{background:var(--red-seal);border-color:var(--red-seal);transform:translateY(-1px)}
 .photo-viewer-zoom-label{min-width:48px;text-align:center;font-variant-numeric:tabular-nums;color:#fff7e7}
 .photo-viewer-zoom-hint{margin-left:8px;color:rgba(255,247,231,.62)}
-.photo-viewer-caption{padding:9px 16px 0;color:var(--ink-light);font-size:10px;line-height:1.7;letter-spacing:.05em}
+.photo-viewer-caption{padding:9px 16px 0;color:var(--ink-light);font-size:13px;line-height:1.7;letter-spacing:.05em}
 .photo-viewer-actions{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px 14px}
-.photo-viewer-actions button{font-size:11px;padding:6px 14px;cursor:pointer}
+.photo-viewer-actions button{font-size:14px;padding:6px 14px;cursor:pointer}
 @keyframes photoViewerIn{from{opacity:0}to{opacity:1}}
 @media (prefers-reduced-motion:reduce){.photo-viewer-overlay{animation:none}.photo-viewer-image,.photo-viewer-close,.photo-viewer-zoom button{transition:none}.qr-photo-wrap{transition:none}}
 @media (max-width:600px){
@@ -10818,7 +10795,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 /* Step header */
 .step-hd{
   font-family:'Playfair Display','Noto Serif TC',serif;
-  font-size:13px;color:var(--ink);
+  font-size:16px;color:var(--ink);
   margin-bottom:12px;letter-spacing:0.06em;
   display:flex;align-items:center;gap:8px;
 }
@@ -10826,7 +10803,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   content:attr(data-step);
   width:22px;height:22px;border:1px solid var(--gold);
   display:flex;align-items:center;justify-content:center;
-  font-size:11px;color:var(--gold);flex-shrink:0;
+  font-size:14px;color:var(--gold);flex-shrink:0;
 }
 
 /* ── MOBILE BOTTOM NAV ──────────────────────────────────────────────── */
@@ -10843,12 +10820,12 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   flex:1;display:flex;flex-direction:column;align-items:center;
   justify-content:center;padding:8px 2px 6px;
   cursor:pointer;color:var(--ink-faint);
-  font-size:9px;letter-spacing:0.06em;
+  font-size:12px;letter-spacing:0.06em;
   border:none;background:none;font-family:'Noto Sans TC',sans-serif;
   position:relative;transition:color 0.15s;
   -webkit-tap-highlight-color:transparent;
 }
-.mob-nav-btn .ico{font-size:18px;margin-bottom:2px;line-height:1}
+.mob-nav-btn .ico{font-size:20px;margin-bottom:2px;line-height:1}
 .mob-nav-btn.on{color:var(--gold)}
 .mob-nav-btn.on::after{
   content:'';position:absolute;top:0;left:20%;right:20%;
@@ -10857,7 +10834,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .mob-topbar-menu{
   display:none;
   background:none;border:none;cursor:pointer;
-  padding:8px;color:var(--ink);font-size:20px;
+  padding:8px;color:var(--ink);font-size:22px;
   -webkit-tap-highlight-color:transparent;
 }
 
@@ -10888,18 +10865,18 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 
   .main{height:auto;min-height:calc(100dvh - 58px)}
   .topbar{padding:10px 14px}
-  .tb-t{font-size:14px}
+  .tb-t{font-size:16px}
   .srch-wrap input{width:100px}
 
   .body{padding:12px;padding-bottom:80px}
 
   /* stats 2-col on mobile */
   .sts{grid-template-columns:1fr 1fr;gap:8px}
-  .st-v{font-size:18px}
+  .st-v{font-size:20px}
 
   /* tables → scroll on mobile */
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;-webkit-overflow-scrolling:touch}
-  .tbl{min-width:680px;font-size:12px}
+  .tbl{min-width:680px;font-size:15px}
 
   /* forms full-width on mobile */
   .fr{grid-template-columns:1fr}
@@ -10938,7 +10915,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   background:#f3ead9;border:1px solid var(--gold);
   text-align:center;box-shadow:0 10px 30px rgba(0,0,0,0.28);
 }
-.cam-error-icon{font-size:28px;color:var(--gold);margin-bottom:8px}
+.cam-error-icon{font-size:30px;color:var(--gold);margin-bottom:8px}
 .cam-error-actions{display:flex;gap:8px;justify-content:center;margin-top:14px}
 .cam-error-actions .cam-close{margin-top:0;min-width:100px}
 .cam-retry{background:var(--gold);border-color:var(--gold);color:#fff}
@@ -10946,8 +10923,8 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   .cam-overlay{padding:calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom))}
   .cam-box{width:min(640px,calc(100vw - 20px))}
   .cam-box video{max-height:46dvh !important}
-  .cam-label{font-size:14px;margin-top:12px}
-  .cam-hint,.cam-result{font-size:11px}
+  .cam-label{font-size:16px;margin-top:12px}
+  .cam-hint,.cam-result{font-size:14px}
 }
 .cam-box{
   position:relative;width:min(320px,85vw);
@@ -10967,19 +10944,19 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 @keyframes scanline{0%{top:10%}50%{top:85%}100%{top:10%}}
 .cam-label{
   margin-top:14px;font-family:'Playfair Display','Noto Serif TC',serif;
-  font-size:13px;color:var(--paper);letter-spacing:0.12em;
+  font-size:16px;color:var(--paper);letter-spacing:0.12em;
   text-align:center;
 }
-.cam-hint{font-size:10px;color:var(--gold);margin-top:6px;letter-spacing:0.08em}
+.cam-hint{font-size:13px;color:var(--gold);margin-top:6px;letter-spacing:0.08em}
 .cam-close{
   margin-top:18px;padding:8px 28px;
-  font-size:12px;font-family:'Noto Sans TC',sans-serif;
+  font-size:15px;font-family:'Noto Sans TC',sans-serif;
   background:transparent;border:1px solid var(--border);
   color:var(--paper);cursor:pointer;letter-spacing:0.08em;
 }
 .cam-close:hover{background:var(--gold);border-color:var(--gold);color:#fff}
 .cam-result{
-  margin-top:12px;font-size:11px;color:var(--gold);
+  margin-top:12px;font-size:14px;color:var(--gold);
   letter-spacing:0.06em;min-height:18px;text-align:center;
 }
 
@@ -10989,10 +10966,10 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   padding:7px 20px;
   background:rgba(139,32,32,0.07);
   border-top:1px solid rgba(139,32,32,0.15);
-  font-size:10px;color:var(--red-seal);letter-spacing:0.06em;
+  font-size:13px;color:var(--red-seal);letter-spacing:0.06em;
 }
 .reset-bar button{
-  font-size:10px;padding:3px 10px;
+  font-size:13px;padding:3px 10px;
   border-color:rgba(139,32,32,0.4);color:var(--red-seal);
   margin-left:auto;
 }
@@ -11000,7 +10977,7 @@ button:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 /* storage badge */
 .stor-badge{
   display:inline-flex;align-items:center;gap:4px;
-  font-size:9px;color:var(--sage);letter-spacing:0.08em;
+  font-size:12px;color:var(--sage);letter-spacing:0.08em;
 }
 .stor-dot{width:6px;height:6px;border-radius:50%;background:var(--sage)}
 .spin-ico{display:inline-block;animation:pahome-spin 0.9s linear infinite}
@@ -11050,18 +11027,18 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
   border-radius:12px;padding:10px 12px;
   align-items:center;gap:10px;
   box-shadow:0 6px 18px rgba(0,0,0,0.25);
-  font-size:12px;letter-spacing:0.04em;
+  font-size:15px;letter-spacing:0.04em;
 }
 .install-bar.show{display:flex}
-.install-bar .ico{font-size:18px}
+.install-bar .ico{font-size:20px}
 .install-bar .txt{flex:1;line-height:1.4}
 .install-bar button{
-  font-size:11px;padding:6px 12px;border-radius:8px;
+  font-size:14px;padding:6px 12px;border-radius:8px;
   background:var(--gold);border:none;color:#2b2016;font-weight:700;
   cursor:pointer;-webkit-tap-highlight-color:transparent;
 }
 .install-bar .close{
-  background:none;color:var(--paper);font-size:16px;padding:4px 6px;font-weight:400;
+  background:none;color:var(--paper);font-size:18px;padding:4px 6px;font-weight:400;
 }
 @media (min-width:641px){.install-bar{left:auto;right:20px;bottom:20px;width:300px}}
 </style>
@@ -11097,10 +11074,10 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
       <div class="nav" id="drNav5" onclick="go('rep',this);closeDrawer()">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem();closeDrawer()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nav" onclick="doLogout();closeDrawer()" style="color:#6b1f2a">⏏ 登 出</div>
-      <div class="nsh admin-section" style="margin-top:8px">系 統</div>
+      <div class="nsh admin-section" style="margin-top:10px;padding-top:12px;border-top:1px solid var(--border-light)">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this);closeDrawer()" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav admin-section" onclick="go('catmanage',this);closeDrawer()" style="color:#5a7a9a">🏷 類 別 管 理</div>
-      <div class="nav sys-section" onclick="backupFirebaseToSheets();closeDrawer()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets<br><span id="backupLastDrawer" style="font-size:9px;letter-spacing:0.04em;color:#9a8465"></span></div>
+      <div class="nav sys-section" onclick="backupFirebaseToSheets();closeDrawer()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets<br><span id="backupLastDrawer" style="font-size:12px;letter-spacing:0.04em;color:#9a8465"></span></div>
       <div class="nav sys-section lock-btn" onclick="startInvLock();closeDrawer()" style="color:#6b1f2a">🔒 盤 點 鎖 定</div>
     </div>
     <div class="sb-foot">
@@ -11127,10 +11104,10 @@ button:active,.mob-nav-btn:active,.scan-btn:active,.nav:active{
       <div class="nav" onclick="go('rep',this)">異 動 紀 錄</div>
       <div class="nav" onclick="openAddItem()" style="color:var(--gold);border-left:2px solid var(--gold-light)">＋ 新 增 品 項</div>
       <div class="nav" onclick="doLogout()" style="color:#6b1f2a">⏏ 登 出</div>
-      <div class="nsh admin-section" style="margin-top:8px">系 統</div>
+      <div class="nsh admin-section" style="margin-top:10px;padding-top:12px;border-top:1px solid var(--border-light)">系 統</div>
       <div class="nav sys-section" onclick="go('loginlog',this)" style="color:#5a7a9a">👤 登 入 狀 況</div>
       <div class="nav admin-section" onclick="go('catmanage',this)" style="color:#5a7a9a">🏷 類 別 管 理</div>
-      <div class="nav sys-section" onclick="backupFirebaseToSheets()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets<br><span id="backupLastDesktop" style="font-size:9px;letter-spacing:0.04em;color:#9a8465"></span></div>
+      <div class="nav sys-section" onclick="backupFirebaseToSheets()" style="color:#5a7a9a">📤 備 份 Firebase → Sheets<br><span id="backupLastDesktop" style="font-size:12px;letter-spacing:0.04em;color:#9a8465"></span></div>
       <div class="nav sys-section lock-btn" onclick="startInvLock()" style="color:#6b1f2a">🔒 盤 點 鎖 定</div>
     </div>
     <div class="sb-foot">
@@ -11736,10 +11713,10 @@ function startAutoLogout(){
     overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px';
     overlay.innerHTML=`
       <div style="background:#f3ead9;border:1px solid #b39c6e;max-width:300px;width:100%;border-top:3px solid var(--gold);padding:20px;text-align:center">
-        <div style="font-size:28px;margin-bottom:10px">⏰</div>
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;letter-spacing:0.1em;margin-bottom:8px">即將自動登出</div>
-        <div style="font-size:11px;color:#7a6650;margin-bottom:16px">閒置超過 25 分鐘，將於 5 分鐘後自動登出</div>
-        <button onclick="extendSession()" class="btn-primary" style="padding:8px 24px;font-size:12px;letter-spacing:0.08em">繼 續 使 用</button>
+        <div style="font-size:30px;margin-bottom:10px">⏰</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.1em;margin-bottom:8px">即將自動登出</div>
+        <div style="font-size:14px;color:#7a6650;margin-bottom:16px">閒置超過 25 分鐘，將於 5 分鐘後自動登出</div>
+        <button onclick="extendSession()" class="btn-primary" style="padding:8px 24px;font-size:15px;letter-spacing:0.08em">繼 續 使 用</button>
       </div>`;
     document.body.appendChild(overlay);
   }, Math.max(0,remainWarn));
@@ -11779,31 +11756,31 @@ function showLoginScreen(){
   overlay.style.cssText='position:fixed;inset:0;background:#1a140d;z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px';
   const opts=USERS.map(u=>'<option value="'+u.nm+'">'+u.nm+'</option>').join('');
   overlay.innerHTML=`
-    <div style="background:#f3ead9;border:3px double #9c7a3c;width:100%;max-width:320px;position:relative">
-      <div style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#f3ead9;padding:0 10px;color:#9c7a3c;font-size:15px">❦</div>
-      <div style="padding:24px 20px 14px;border-bottom:1px solid #d8c49a;text-align:center">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:19px;color:#2b2016;letter-spacing:0.15em;margin-bottom:4px">平 安 家 園</div>
-        <div style="font-size:10px;color:#7a6650;letter-spacing:0.18em;font-style:italic">活 動 物 品 手 帳</div>
+    <div style="background:#f3ead9;border-top:5px solid #2b2016;box-shadow:0 3px 0 -1px #9c7a3c,0 18px 50px rgba(0,0,0,0.4);width:100%;max-width:320px;position:relative">
+      <div style="padding:28px 20px 16px;text-align:center">
+        <div style="font-size:12px;color:#9c7a3c;letter-spacing:0.28em;text-transform:uppercase;margin-bottom:8px">多 元 關 懷 協 會</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:28px;font-weight:900;color:#2b2016;letter-spacing:0.04em;margin-bottom:6px">平 安 家 園</div>
+        <div style="font-size:13px;color:#7a6650;letter-spacing:0.2em;text-transform:uppercase">活 動 物 品 手 帳</div>
       </div>
-      <div style="padding:20px">
+      <div style="padding:20px;border-top:1px solid #d8c49a">
         <div style="margin-bottom:14px">
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:5px">使 用 者</label>
-          <select id="loginName" style="width:100%;padding:9px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:5px">使 用 者</label>
+          <select id="loginName" style="width:100%;padding:9px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:15px;color:#2b2016">
             <option value="">— 請選擇 —</option>
             ${opts}
           </select>
         </div>
         <div style="margin-bottom:16px">
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:5px">密 碼</label>
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:5px">密 碼</label>
           <input id="loginPwd" type="password" maxlength="32" placeholder="請輸入個人密碼"
-            style="width:100%;padding:9px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:14px;color:#2b2016;letter-spacing:0.2em"
+            style="width:100%;padding:9px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:16px;color:#2b2016;letter-spacing:0.2em"
             onkeydown="if(event.key==='Enter')doLogin()">
         </div>
-        <div id="loginErr" style="font-size:11px;color:#6b1f2a;margin-bottom:12px;display:none;text-align:center"></div>
-        <button onclick="doLogin()" class="btn-primary" style="width:100%;padding:10px;font-size:13px;letter-spacing:0.1em">登 入</button>
+        <div id="loginErr" style="font-size:14px;color:#6b1f2a;margin-bottom:12px;display:none;text-align:center"></div>
+        <button onclick="doLogin()" class="btn-primary" style="width:100%;padding:10px;font-size:16px;letter-spacing:0.1em">登 入</button>
       </div>
       <div style="padding:10px;text-align:center;border-top:1px solid #e0d0a8">
-        <div style="font-size:9px;color:#8a7660">如忘記密碼請聯繫管理員</div>
+        <div style="font-size:12px;color:#8a7660">如忘記密碼請聯繫管理員</div>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -11890,10 +11867,10 @@ function applyInvLockUI(){
     if(!banner){
       banner=document.createElement('div');
       banner.id='invLockBanner';
-      banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:800;background:#6b1f2a;color:#fff;text-align:center;padding:7px 16px;font-size:11px;letter-spacing:0.08em;font-family:"Noto Serif TC",serif;display:flex;align-items:center;justify-content:center;gap:10px';
+      banner.style.cssText='position:fixed;top:0;left:0;right:0;z-index:800;background:#6b1f2a;color:#fff;text-align:center;padding:7px 16px;font-size:14px;letter-spacing:0.08em;font-family:"Noto Serif TC",serif;display:flex;align-items:center;justify-content:center;gap:10px';
       banner.innerHTML='<span>🔒 盤點模式進行中，操作已鎖定</span>'
-        +'<span style="opacity:0.7;font-size:9px">鎖定者：'+(_invLockInfo.by||'管理員')+'　'+(_invLockInfo.at||'')+'</span>'
-        +(canWrite()?'<button onclick="unlockInvWithAuth()" style="margin-left:12px;padding:3px 12px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;cursor:pointer;font-size:10px">解 除 鎖 定</button>':'');
+        +'<span style="opacity:0.7;font-size:12px">鎖定者：'+(_invLockInfo.by||'管理員')+'　'+(_invLockInfo.at||'')+'</span>'
+        +(canWrite()?'<button onclick="unlockInvWithAuth()" style="margin-left:12px;padding:3px 12px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:#fff;cursor:pointer;font-size:13px">解 除 鎖 定</button>':'');
       document.body.prepend(banner);
     }
   } else {
@@ -11907,13 +11884,13 @@ function showInvLockNotice(){
   overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;max-width:300px;width:100%;border-top:3px solid #6b1f2a;padding:20px;text-align:center">
-      <div style="font-size:28px;margin-bottom:10px">🔒</div>
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#6b1f2a;letter-spacing:0.1em;margin-bottom:8px">盤點進行中</div>
-      <div style="font-size:11px;color:#7a6650;line-height:1.8;margin-bottom:16px">
+      <div style="font-size:30px;margin-bottom:10px">🔒</div>
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#6b1f2a;letter-spacing:0.1em;margin-bottom:8px">盤點進行中</div>
+      <div style="font-size:14px;color:#7a6650;line-height:1.8;margin-bottom:16px">
         目前系統正在進行盤點，操作暫時鎖定。<br>
-        <span style="font-size:10px">鎖定者：${_invLockInfo.by||'管理員'}　${_invLockInfo.at||''}</span>
+        <span style="font-size:13px">鎖定者：${_invLockInfo.by||'管理員'}　${_invLockInfo.at||''}</span>
       </div>
-      <button onclick="this.closest('div[style]').remove()" style="padding:7px 20px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650">關 閉</button>
+      <button onclick="this.closest('div[style]').remove()" style="padding:7px 20px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650">關 閉</button>
     </div>`;
   document.body.appendChild(overlay);
 }
@@ -11967,12 +11944,12 @@ function addCategory(){
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.7);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:4px solid var(--gold);padding:22px 24px;max-width:340px;width:100%">
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:14px;letter-spacing:0.08em">＋ 新 增 類 別</div>
-      <input id="newCatInput" type="text" placeholder="輸入新類別名稱" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px;margin-bottom:6px">
-      <div id="newCatErr" style="display:none;color:#6b1f2a;font-size:11px;margin-bottom:6px"></div>
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;margin-bottom:14px;letter-spacing:0.08em">＋ 新 增 類 別</div>
+      <input id="newCatInput" type="text" placeholder="輸入新類別名稱" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:16px;margin-bottom:6px">
+      <div id="newCatErr" style="display:none;color:#6b1f2a;font-size:14px;margin-bottom:6px"></div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
-        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
-        <button onclick="confirmAddCategory()" style="font-size:11px;padding:7px 16px;background:var(--gold);color:#fff;border-color:var(--gold)">新 增</button>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:14px;padding:7px 16px">取 消</button>
+        <button onclick="confirmAddCategory()" style="font-size:14px;padding:7px 16px;background:var(--gold);color:#fff;border-color:var(--gold)">新 增</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -12001,14 +11978,14 @@ function renameCategory(oldName){
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.7);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:4px solid var(--gold);padding:22px 24px;max-width:340px;width:100%">
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:14px;letter-spacing:0.08em">✎ 類 別 改 名</div>
-      <div style="font-size:11px;color:#7a6650;margin-bottom:8px">原名稱：${oldName}</div>
-      <input id="renCatInput" type="text" value="${oldName}" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px;margin-bottom:6px">
-      <div id="renCatErr" style="display:none;color:#6b1f2a;font-size:11px;margin-bottom:6px"></div>
-      <div style="font-size:10px;color:#8a7660;margin-bottom:6px">改名後，此類別下的所有品項會自動更新為新名稱</div>
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;margin-bottom:14px;letter-spacing:0.08em">✎ 類 別 改 名</div>
+      <div style="font-size:14px;color:#7a6650;margin-bottom:8px">原名稱：${oldName}</div>
+      <input id="renCatInput" type="text" value="${oldName}" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:16px;margin-bottom:6px">
+      <div id="renCatErr" style="display:none;color:#6b1f2a;font-size:14px;margin-bottom:6px"></div>
+      <div style="font-size:13px;color:#8a7660;margin-bottom:6px">改名後，此類別下的所有品項會自動更新為新名稱</div>
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
-        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
-        <button onclick="confirmRenameCategory('${oldName.replace(/'/g,"\\'")}')" style="font-size:11px;padding:7px 16px;background:var(--gold);color:#fff;border-color:var(--gold)">確 認 改 名</button>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:14px;padding:7px 16px">取 消</button>
+        <button onclick="confirmRenameCategory('${oldName.replace(/'/g,"\\'")}')" style="font-size:14px;padding:7px 16px;background:var(--gold);color:#fff;border-color:var(--gold)">確 認 改 名</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -12045,16 +12022,16 @@ function deleteCategory(name){
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.7);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px';
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:4px solid #6b1f2a;padding:22px 24px;max-width:360px;width:100%">
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:10px;letter-spacing:0.08em">刪 除 類 別：${name}</div>
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;margin-bottom:10px;letter-spacing:0.08em">刪 除 類 別：${name}</div>
       ${affected.length?`
-        <div style="font-size:12px;color:#6b1f2a;line-height:1.7;margin-bottom:10px">此類別下還有 <b>${affected.length}</b> 筆品項，請先選擇要搬移到的類別：</div>
-        <select id="delCatTarget" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px;margin-bottom:10px">
+        <div style="font-size:15px;color:#6b1f2a;line-height:1.7;margin-bottom:10px">此類別下還有 <b>${affected.length}</b> 筆品項，請先選擇要搬移到的類別：</div>
+        <select id="delCatTarget" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:16px;margin-bottom:10px">
           ${others.map(c=>`<option value="${c}">${c}</option>`).join('')}
         </select>
-      `:`<div style="font-size:12px;color:#7a6650;margin-bottom:10px">此類別目前沒有品項使用，確定要刪除嗎？</div>`}
+      `:`<div style="font-size:15px;color:#7a6650;margin-bottom:10px">此類別目前沒有品項使用，確定要刪除嗎？</div>`}
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
-        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
-        <button onclick="confirmDeleteCategory('${name.replace(/'/g,"\\'")}')" style="font-size:11px;padding:7px 16px;background:#6b1f2a;color:#fff;border-color:#6b1f2a">確 認 刪 除</button>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="font-size:14px;padding:7px 16px">取 消</button>
+        <button onclick="confirmDeleteCategory('${name.replace(/'/g,"\\'")}')" style="font-size:14px;padding:7px 16px;background:#6b1f2a;color:#fff;border-color:#6b1f2a">確 認 刪 除</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -12086,7 +12063,7 @@ function confirmDeleteCategory(name){
 function pgCatManage(){
   const catKeys=Object.keys(CAT_META).sort((a,b)=>a.localeCompare(b,'zh-TW'));
   let h=`<div style="display:flex;justify-content:flex-end;margin-bottom:14px">
-    <button onclick="addCategory()" style="padding:7px 18px;border:1px solid var(--gold);border-radius:3px;background:var(--gold);color:#fff;font-size:12px;cursor:pointer;letter-spacing:0.06em">＋ 新 增 類 別</button>
+    <button onclick="addCategory()" style="padding:7px 18px;border:1px solid var(--gold);border-radius:3px;background:var(--gold);color:#fff;font-size:15px;cursor:pointer;letter-spacing:0.06em">＋ 新 增 類 別</button>
   </div>
   <div class="tbl-wrap"><table class="tbl"><thead><tr>
     <th style="width:15%">樣 式</th><th style="width:39%">類 別 名 稱</th>
@@ -12099,8 +12076,8 @@ function pgCatManage(){
       <td>${c}</td>
       <td style="color:#7a6650">${cnt} 筆</td>
       <td>
-        <button onclick="renameCategory('${c.replace(/'/g,"\\'")}')" style="padding:4px 10px;border:1px solid #b39c6e;border-radius:3px;background:transparent;color:#7a6650;font-size:11px;cursor:pointer;margin-right:6px">改 名</button>
-        <button onclick="deleteCategory('${c.replace(/'/g,"\\'")}')" style="padding:4px 10px;border:1px solid #6b1f2a;border-radius:3px;background:transparent;color:#6b1f2a;font-size:11px;cursor:pointer">刪 除</button>
+        <button onclick="renameCategory('${c.replace(/'/g,"\\'")}')" style="padding:4px 10px;border:1px solid #b39c6e;border-radius:3px;background:transparent;color:#7a6650;font-size:14px;cursor:pointer;margin-right:6px">改 名</button>
+        <button onclick="deleteCategory('${c.replace(/'/g,"\\'")}')" style="padding:4px 10px;border:1px solid #6b1f2a;border-radius:3px;background:transparent;color:#6b1f2a;font-size:14px;cursor:pointer">刪 除</button>
       </td>
     </tr>`;
   });
@@ -12126,21 +12103,21 @@ function withAuth(onSuccess, title='需要密碼驗證', hint=''){
   overlay.id='authOverlay';
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:4px solid var(--gold);padding:24px 28px;max-width:320px;width:90%">
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:6px;letter-spacing:0.1em">🔒 ${title}</div>
-      ${hint?`<div style="font-size:11px;color:#7a6650;margin-bottom:14px">${hint}</div>`:'<div style="margin-bottom:14px"></div>'}
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;margin-bottom:6px;letter-spacing:0.1em">🔒 ${title}</div>
+      ${hint?`<div style="font-size:14px;color:#7a6650;margin-bottom:14px">${hint}</div>`:'<div style="margin-bottom:14px"></div>'}
       <div style="margin-bottom:14px">
-        <label style="font-size:11px;color:#7a6650;letter-spacing:0.06em;display:block;margin-bottom:4px">請 輸 入 個 人 密 碼</label>
+        <label style="font-size:14px;color:#7a6650;letter-spacing:0.06em;display:block;margin-bottom:4px">請 輸 入 個 人 密 碼</label>
         <input id="authPwdInput" type="password" inputmode="numeric"
           placeholder="••••"
           style="width:100%;padding:9px 12px;border:1px solid #b39c6e;background:#fff;
-                 font-size:18px;letter-spacing:0.3em;text-align:center;color:#2b2016;
+                 font-size:20px;letter-spacing:0.3em;text-align:center;color:#2b2016;
                  font-family:'Playfair Display','Noto Serif TC',serif;outline:none"
           onkeydown="if(event.key==='Enter')authSubmit()">
       </div>
-      <div id="authErr" style="font-size:11px;color:#6b1f2a;min-height:16px;margin-bottom:10px;letter-spacing:0.04em"></div>
+      <div id="authErr" style="font-size:14px;color:#6b1f2a;min-height:16px;margin-bottom:10px;letter-spacing:0.04em"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button onclick="document.getElementById('authOverlay').remove()" style="font-size:11px;padding:7px 16px">取 消</button>
-        <button class="btn-primary" onclick="authSubmit()" style="font-size:11px;padding:7px 18px">確 認</button>
+        <button onclick="document.getElementById('authOverlay').remove()" style="font-size:14px;padding:7px 16px">取 消</button>
+        <button class="btn-primary" onclick="authSubmit()" style="font-size:14px;padding:7px 18px">確 認</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -12344,7 +12321,7 @@ function normalizeInventoryRow(row){
 const ntm=()=>new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
 const iso=()=>new Date().toISOString().slice(0,10);
 const ovd=d=>{if(!d)return false;const[y,mo,day]=String(d).slice(0,10).split('-').map(Number);const t=new Date();return new Date(y,mo-1,day)<new Date(t.getFullYear(),t.getMonth(),t.getDate());};
-const cb=cat=>{const m=CAT_META[cat];return m?`<span class="b ${m.cls}" style="font-size:10px;padding:1px 7px">${m.label}</span>`:cat};
+const cb=cat=>{const m=CAT_META[cat];return m?`<span class="b ${m.cls}" style="font-size:13px;padding:1px 7px">${m.label}</span>`:cat};
 
 let inv=[
   {id:1, nm:'永生花燈罩組：木頭燈座', con:false, cat:'佈置裝飾材料', u:'個', qty:50, min:1, loc:{r:'庫房二', k:'鐵架2', lv:'第1層'}},
@@ -12568,11 +12545,11 @@ function pgInv(){
       onmouseout="this.style.background=''"
       onclick="invQuickAction(${i.id})" title="點擊操作出入庫">
       <td style="font-family:'Playfair Display','Noto Serif TC',serif;padding-left:12px;border-left:3px solid ${catCol}">${i.nm}</td>
-      <td class="inv-col-nat"><span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></td>
+      <td class="inv-col-nat"><span class="b ${i.con?'b-c':'b-n'}" style="font-size:12px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></td>
       <td class="inv-qty" style="color:${qtyColor}">${i.qty}</td>
-      <td><span class="b ${stClass}" style="font-size:10px">${stl(i)}</span></td>
-      <td>${bq>0?`<span class="b b-br" style="cursor:pointer;font-size:10px" onclick="event.stopPropagation();invReturnAction(${i.id})" title="點擊歸還">${bq}↩</span>`:'—'}</td>
-      <td style="color:#7a6650;font-size:11px"><span class="lb" style="font-size:10px">${ls(i.loc)||'—'}</span></td>
+      <td><span class="b ${stClass}" style="font-size:13px">${stl(i)}</span></td>
+      <td>${bq>0?`<span class="b b-br" style="cursor:pointer;font-size:13px" onclick="event.stopPropagation();invReturnAction(${i.id})" title="點擊歸還">${bq}↩</span>`:'—'}</td>
+      <td style="color:#7a6650;font-size:14px"><span class="lb" style="font-size:13px">${ls(i.loc)||'—'}</span></td>
     </tr>`;
   }).join('')}
 
@@ -12583,15 +12560,15 @@ function pgInv(){
     <div class="st"><div class="st-l">逾 期 未 還</div><div class="st-v danger">${od2}</div></div>
   </div>`;
   if(od2>0)h+=`<div class="oa">⚠ 注意：${od2} 筆借用已逾期未歸還，請查看「借用管理」頁面。</div>`;
-  h+=`<div style="font-size:10px;color:#b5832a;letter-spacing:0.06em;margin-bottom:14px;padding:5px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>`;
+  h+=`<div style="font-size:13px;color:#b5832a;letter-spacing:0.06em;margin-bottom:14px;padding:5px 10px;background:rgba(181,131,42,0.07);border-left:2px solid var(--gold)">◈ 點擊任意品項列可快速進行出入庫或歸還操作</div>`;
 
   // 類別群組
   const cats=Object.keys(CAT_META).filter(cat=>items.some(i=>i.cat===cat));
   h+=`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
-    ${isDesigner()?`<button onclick="printInventoryCountSheet()" class="btn-primary" style="font-size:10px;padding:5px 12px;letter-spacing:0.04em">列 印 盤 點 表 ↗</button>`:''}
-    <button onclick="toggleInventoryDetail()" style="font-size:10px;padding:5px 12px;border:1px solid var(--gold);background:var(--gold-pale);color:#5e3a25;cursor:pointer;letter-spacing:0.04em;font-weight:700">${_inventoryDetailOpen?'隱 藏 品 項 明 細':'顯 示 品 項 明 細'}</button>
-    <button onclick="toggleAllCat(true)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 展 開</button>
-    <button onclick="toggleAllCat(false)" style="font-size:10px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 收 合</button>
+    ${isDesigner()?`<button onclick="printInventoryCountSheet()" class="btn-primary" style="font-size:13px;padding:5px 12px;letter-spacing:0.04em">列 印 盤 點 表 ↗</button>`:''}
+    <button onclick="toggleInventoryDetail()" style="font-size:13px;padding:5px 12px;border:1px solid var(--gold);background:var(--gold-pale);color:#5e3a25;cursor:pointer;letter-spacing:0.04em;font-weight:700">${_inventoryDetailOpen?'隱 藏 品 項 明 細':'顯 示 品 項 明 細'}</button>
+    <button onclick="toggleAllCat(true)" style="font-size:13px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 展 開</button>
+    <button onclick="toggleAllCat(false)" style="font-size:13px;padding:3px 10px;border:1px solid var(--border);background:transparent;color:#7a6650;cursor:pointer;letter-spacing:0.04em">全 部 收 合</button>
   </div>`;
 
   if(_inventoryDetailOpen){
@@ -12608,7 +12585,7 @@ function pgInv(){
     h+=`<section class="inv-detail-panel" aria-label="品項明細">
       <div class="inv-detail-head"><span>品 項 明 細（目前篩選 ${items.length} 項）</span><strong>${items.length}</strong></div>
       <div style="overflow-x:auto"><table class="inv-detail-table"><thead><tr><th class="detail-id">ID</th><th class="detail-name">品項</th><th class="detail-cat">類別</th><th class="detail-num">庫存數</th><th class="detail-num">在途數</th></tr></thead><tbody>${detailRows||'<tr><td colspan="5" class="detail-empty">目前沒有符合的品項</td></tr>'}</tbody></table></div>
-      <div style="padding:7px 10px;color:#7a6650;font-size:10px;border-top:1px solid var(--border)">在途數＝目前尚未歸還的借用數量；點擊品項列可進行出入庫或歸還操作。</div>
+      <div style="padding:7px 10px;color:#7a6650;font-size:13px;border-top:1px solid var(--border)">在途數＝目前尚未歸還的借用數量；點擊品項列可進行出入庫或歸還操作。</div>
     </section>`;
   }
 
@@ -12624,12 +12601,12 @@ function pgInv(){
       <div style="background:${catCol};padding:8px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none"
            onclick="toggleCat('${catId}')">
         <div style="display:flex;align-items:center;gap:7px">
-          <span style="font-size:16px;line-height:1">${icon}</span>
-          <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:12px;color:#fff;letter-spacing:0.08em;font-weight:500">${cat}</span>
+          <span style="font-size:18px;line-height:1">${icon}</span>
+          <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:15px;color:#fff;letter-spacing:0.08em;font-weight:500">${cat}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="cat-count">${ci.length} 項</span>
-          <span id="${catId}_arrow" style="font-size:10px;color:#fff;transition:transform 0.2s">▼</span>
+          <span id="${catId}_arrow" style="font-size:13px;color:#fff;transition:transform 0.2s">▼</span>
         </div>
       </div>
       <div id="${catId}" style="background:#fff;border:1px solid rgba(0,0,0,0.07);border-top:none;overflow-x:auto;-webkit-overflow-scrolling:touch">
@@ -12672,20 +12649,20 @@ function pgBorrow(){
   let h='';
   if(od2.length)h+=`<div class="oa">⚠ 逾期未還：${od2.length} 筆，請盡快聯絡借用人員。</div>`;
   h+=`<div class="sep"><div class="sep-line"></div>借用中（${act.length} 筆）<div class="sep-line"></div></div>`;
-  if(!act.length)h+='<div style="font-size:12px;color:#7a6650;padding:16px 0;text-align:center;letter-spacing:0.08em">目 前 無 借 用 紀 錄</div>';
+  if(!act.length)h+='<div style="font-size:15px;color:#7a6650;padding:16px 0;text-align:center;letter-spacing:0.08em">目 前 無 借 用 紀 錄</div>';
   else{
-    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:620px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">預定歸還</th><th style="width:25%">操 作</th></tr></thead><tbody>`;
+    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:620px;font-size:clamp(14px,2.8vw,16px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">預定歸還</th><th style="width:25%">操 作</th></tr></thead><tbody>`;
     act.forEach(b=>{const it=inv.find(i=>i.id===b.iid),isOD=ovd(b.due);h+=`<tr>
       <td style="font-family:'Playfair Display','Noto Serif TC',serif">${b.nm}</td>
       <td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td>
       <td><span class="${isOD?'b b-od':''}" style="${isOD?'':'color:#7a6650'}">${b.due||'—'}${isOD?' ⚠':''}</span></td>
-      <td><button onclick="doRet(${b.id})" style="font-size:10px;padding:4px 10px">歸 還</button></td>
+      <td><button onclick="doRet(${b.id})" style="font-size:13px;padding:4px 10px">歸 還</button></td>
     </tr>`;});
     h+='</tbody></table>';
   }
   if(done.length){
     h+=`<div class="sep" style="margin-top:20px"><div class="sep-line"></div>已歸還（${done.length} 筆）<div class="sep-line"></div></div>
-    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:580px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">歸 還 日</th><th style="width:25%">狀 態</th></tr></thead><tbody>`;
+    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:580px;font-size:clamp(14px,2.8vw,16px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">歸 還 日</th><th style="width:25%">狀 態</th></tr></thead><tbody>`;
     [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);const retQtyTxt=(b.retQty!=null&&b.retQty!==b.qty)?`${b.retQty}${it?it.u:''}（借 ${b.qty}）`:`${b.qty}${it?it.u:''}`;h+=`<tr><td style="font-family:'Playfair Display','Noto Serif TC',serif">${b.nm}</td><td style="white-space:nowrap">${retQtyTxt}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
     h+='</tbody></table>';
   }
@@ -12697,7 +12674,7 @@ function pgBorrow(){
     const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+    }catch(e){ el.innerHTML='<span style="font-size:11px;color:#999">QR錯誤</span>'; }
   });
 }
 
@@ -12726,20 +12703,20 @@ function openReturnQtyModal(id){
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:320px;border-left:4px solid #2a6b5e">
       <div style="padding:14px 18px;border-bottom:1px solid #d8c49a">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">↩ 歸 還</div>
-        <div style="font-size:11px;color:#7a6650;margin-top:3px">${b.nm}　・　借用人：${b.user}</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">↩ 歸 還</div>
+        <div style="font-size:14px;color:#7a6650;margin-top:3px">${b.nm}　・　借用人：${b.user}</div>
       </div>
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
-        <div style="font-size:11px;color:#7a6650">借用數量：<b style="color:#2b2016">${b.qty}</b> ${it?it.u:''}</div>
+        <div style="font-size:14px;color:#7a6650">借用數量：<b style="color:#2b2016">${b.qty}</b> ${it?it.u:''}</div>
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">實 際 歸 還 數 量（可輸入小數點後 1 位）</label>
-          <input id="rtQtyInput" type="number" value="${b.qty}" min="0.1" max="${b.qty}" step="0.1" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:16px;color:#2b2016;text-align:center;font-family:'Playfair Display','Noto Serif TC',serif">
-          <div style="font-size:9px;color:#9a8465;margin-top:5px">若實際歸還量少於借用量（例如已使用掉一部分），差額不會計回庫存。</div>
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">實 際 歸 還 數 量（可輸入小數點後 1 位）</label>
+          <input id="rtQtyInput" type="number" value="${b.qty}" min="0.1" max="${b.qty}" step="0.1" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:18px;color:#2b2016;text-align:center;font-family:'Playfair Display','Noto Serif TC',serif">
+          <div style="font-size:12px;color:#9a8465;margin-top:5px">若實際歸還量少於借用量（例如已使用掉一部分），差額不會計回庫存。</div>
         </div>
-        <div id="rtQtyErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+        <div id="rtQtyErr" style="font-size:14px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="document.getElementById('returnQtyOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
-          <button onclick="confirmReturnQty(${id})" class="btn-primary" style="padding:7px 20px;font-size:12px">確 認 歸 還</button>
+          <button onclick="document.getElementById('returnQtyOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
+          <button onclick="confirmReturnQty(${id})" class="btn-primary" style="padding:7px 20px;font-size:15px">確 認 歸 還</button>
         </div>
       </div>
     </div>`;
@@ -12773,13 +12750,13 @@ function step(){
       const ci=inv.filter(i=>i.cat===cat);if(!ci.length)return;
       const m=CAT_META[cat];
       grid+=`<div style="margin-bottom:14px">
-        <div style="font-size:10px;color:#7a6650;letter-spacing:0.12em;margin-bottom:6px;display:flex;align-items:center;gap:6px">
-          <span class="b ${m.cls}" style="font-size:9px;padding:1px 6px">${m.label}</span>${cat}
+        <div style="font-size:13px;color:#7a6650;letter-spacing:0.12em;margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <span class="b ${m.cls}" style="font-size:12px;padding:1px 6px">${m.label}</span>${cat}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
           ${ci.map(i=>`<div onclick="selI(${i.id})" class="item-card">
-            <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:12px;color:#2b2016;margin-bottom:2px">${i.nm}</div>
-            <div style="font-size:10px;color:#7a6650">庫存：<span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016">${i.qty}</span> ${i.u}　<span class="b ${i.con?'b-c':'b-n'}" style="font-size:9px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></div>
+            <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:15px;color:#2b2016;margin-bottom:2px">${i.nm}</div>
+            <div style="font-size:13px;color:#7a6650">庫存：<span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016">${i.qty}</span> ${i.u}　<span class="b ${i.con?'b-c':'b-n'}" style="font-size:12px;padding:1px 5px">${i.con?'消耗':'非消耗'}</span></div>
           </div>`).join('')}
         </div>
       </div>`;
@@ -12787,11 +12764,11 @@ function step(){
     pg.innerHTML=`
       <div class="step-hd" data-step="一">選 擇 品 項</div>
       <div class="ss" onclick="openCam()" style="border-color:var(--gold);background:var(--gold-pale)">
-        <div style="font-size:22px;margin-bottom:6px">📷</div>
-        <div style="font-size:13px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016;margin-bottom:3px;letter-spacing:0.08em">點 擊 開 啟 相 機 掃 描</div>
-        <div style="font-size:10px;color:#7a6650;letter-spacing:0.04em">對準品項上的 QR Code 即可自動辨識</div>
+        <div style="font-size:24px;margin-bottom:6px">📷</div>
+        <div style="font-size:16px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016;margin-bottom:3px;letter-spacing:0.08em">點 擊 開 啟 相 機 掃 描</div>
+        <div style="font-size:13px;color:#7a6650;letter-spacing:0.04em">對準品項上的 QR Code 即可自動辨識</div>
       </div>
-      <div style="font-size:10px;color:#b5832a;letter-spacing:0.1em;margin-bottom:8px">或 依 類 別 選 擇</div>
+      <div style="font-size:13px;color:#b5832a;letter-spacing:0.1em;margin-bottom:8px">或 依 類 別 選 擇</div>
       <div style="max-height:340px;overflow-y:auto">${grid}</div>`;
   } else if(ss===1){
     const i=sd.item;
@@ -12808,15 +12785,15 @@ function step(){
       <div class="cb">
         <div class="ci"><span>品 項</span><span style="font-family:'Playfair Display','Noto Serif TC',serif">${i.nm}</span></div>
         <div class="ci"><span>性 質</span><span><span class="b ${i.con?'b-c':'b-n'}">${i.con?'消耗品':'非消耗品'}</span></span></div>
-        <div class="ci"><span>目前庫存</span><span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px">${i.qty} ${i.u}</span></div>
+        <div class="ci"><span>目前庫存</span><span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px">${i.qty} ${i.u}</span></div>
         <div class="ci"><span>位 置</span><span><span class="lb">${ls(i.loc)}</span></span></div>
       </div>
       <div class="tg">${ops.map(o=>`<div class="tc" onclick="selO('${o.op}')">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:28px;color:#b5832a;margin-bottom:6px">${o.ic}</div>
-        <div style="font-size:14px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016;letter-spacing:0.1em">${o.op}</div>
-        <div style="font-size:10px;color:#7a6650;margin-top:3px">${o.sub}</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:30px;color:#b5832a;margin-bottom:6px">${o.ic}</div>
+        <div style="font-size:16px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016;letter-spacing:0.1em">${o.op}</div>
+        <div style="font-size:13px;color:#7a6650;margin-top:3px">${o.sub}</div>
       </div>`).join('')}</div>
-      <button onclick="ss=0;step()" style="font-size:11px">← 重 新 選 擇</button>`;
+      <button onclick="ss=0;step()" style="font-size:14px">← 重 新 選 擇</button>`;
   } else if(ss===2){
     const i=sd.item,isBr=sd.op==='借用',isIn=sd.op==='入庫',pList=i.con?PC:PN;
     const dDue=new Date();dDue.setDate(dDue.getDate()+7);
@@ -12825,7 +12802,7 @@ function step(){
       <div class="cb">
         <div class="ci"><span>品 項</span><span style="font-family:'Playfair Display','Noto Serif TC',serif">${i.nm}</span></div>
         <div class="ci"><span>操 作</span><span><span class="b ${isBr?'b-br':isIn?'b-in':'b-u'}">${sd.op}</span></span></div>
-        <div class="ci"><span>目前庫存</span><span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px">${i.qty} ${i.u}</span></div>
+        <div class="ci"><span>目前庫存</span><span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px">${i.qty} ${i.u}</span></div>
         <div class="ci"><span>位 置</span><span><span class="lb">${ls(i.loc)}</span></span></div>
       </div>
       <div class="fr">
@@ -12841,18 +12818,18 @@ function step(){
         <button onclick="ss=1;step()">← 上 一 步</button>
         <button class="btn-primary" onclick="cfm()">確 認 ${sd.op}</button>
       </div>
-      <div id="er" style="font-size:11px;color:#6b1f2a;margin-top:8px;letter-spacing:0.04em"></div>`;
+      <div id="er" style="font-size:14px;color:#6b1f2a;margin-top:8px;letter-spacing:0.04em"></div>`;
   } else if(ss===3){
     const i=sd.item,isBr=sd.op==='借用';
     pg.innerHTML=`<div class="success-wrap">
       <div class="success-stamp">✓</div>
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:18px;letter-spacing:0.15em;color:#2b2016;margin-bottom:8px">${sd.op} 完 成</div>
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:20px;letter-spacing:0.15em;color:#2b2016;margin-bottom:8px">${sd.op} 完 成</div>
       <div style="width:40px;height:1px;background:#b5832a;margin:0 auto 12px"></div>
-      <div style="font-size:12px;color:#7a6650;line-height:2;letter-spacing:0.05em">
+      <div style="font-size:15px;color:#7a6650;line-height:2;letter-spacing:0.05em">
         ${i.nm}　×　${sd.qty} ${i.u}<br>
         ${isBr?'借用':'領用'}人：${sd.user}　用途：${sd.pur}<br>
         ${isBr?`預定歸還日：${sd.due}<br>`:''}
-        目前庫存：<span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016">${i.qty}</span> ${i.u}
+        目前庫存：<span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016">${i.qty}</span> ${i.u}
       </div>
       <div style="display:flex;gap:10px;justify-content:center;margin-top:20px">
         <button onclick="pgScan()">繼 續 掃 描</button>
@@ -13056,73 +13033,73 @@ function openAddItem(){
     overlay.innerHTML=`
       <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;border-left:4px solid var(--gold)">
         <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a;background:var(--paper-warm)">
-          <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;letter-spacing:0.1em">＋ 新 增 品 項</span>
-          <button onclick="document.getElementById('addItemOverlay').remove()" style="border:none;background:none;font-size:18px;color:#7a6650;cursor:pointer">✕</button>
+          <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.1em">＋ 新 增 品 項</span>
+          <button onclick="document.getElementById('addItemOverlay').remove()" style="border:none;background:none;font-size:20px;color:#7a6650;cursor:pointer">✕</button>
         </div>
         <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
           <div>
-            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">品 項 名 稱 <span style="color:#6b1f2a">*</span></label>
-            <input id="aiNm" type="text" placeholder="請輸入品項名稱" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:13px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">
+            <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">品 項 名 稱 <span style="color:#6b1f2a">*</span></label>
+            <input id="aiNm" type="text" placeholder="請輸入品項名稱" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:16px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">
           </div>
           <div>
-            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">類 別 <span style="color:#6b1f2a">*</span></label>
-            <select id="aiCat" onchange="syncAddItemUnitForCat()" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+            <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">類 別 <span style="color:#6b1f2a">*</span></label>
+            <select id="aiCat" onchange="syncAddItemUnitForCat()" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:15px;color:#2b2016">
               <option value="">請選擇類別</option>
               ${catOpts}
             </select>
           </div>
           <div>
-            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">計 量 單 位</label>
-            <select id="aiUnit" onchange="this.dataset.userTouched='1'" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+            <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">計 量 單 位</label>
+            <select id="aiUnit" onchange="this.dataset.userTouched='1'" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:15px;color:#2b2016">
               ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u==='個'?'selected':''}>${u}</option>`).join('')}
             </select>
-            <div id="aiUnitHint" style="font-size:9px;color:#9a8465;margin-top:4px;display:none">精油品項預設帶入 ml，若此品項並非液態（例如容器、貼紙），可自行改選其他單位</div>
+            <div id="aiUnitHint" style="font-size:12px;color:#9a8465;margin-top:4px;display:none">精油品項預設帶入 ml，若此品項並非液態（例如容器、貼紙），可自行改選其他單位</div>
           </div>
           <div>
-            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">性 質 <span style="color:#6b1f2a">*</span></label>
+            <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">性 質 <span style="color:#6b1f2a">*</span></label>
             <div style="display:flex;gap:12px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+              <label style="display:flex;align-items:center;gap:6px;font-size:15px;cursor:pointer">
                 <input type="radio" name="aiCon" value="false" checked> 非消耗品（借用）
               </label>
-              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
+              <label style="display:flex;align-items:center;gap:6px;font-size:15px;cursor:pointer">
                 <input type="radio" name="aiCon" value="true"> 消耗品（領用）
               </label>
             </div>
           </div>
           <div>
-            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量<span id="aiQtyHint" style="font-size:9px;color:#9a8465;display:none">（可輸入小數點後 1 位）</span></label>
-            <input id="aiQty" type="number" value="0" min="0" step="1" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:13px;color:#2b2016">
+            <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">初始數量<span id="aiQtyHint" style="font-size:12px;color:#9a8465;display:none">（可輸入小數點後 1 位）</span></label>
+            <input id="aiQty" type="number" value="0" min="0" step="1" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:16px;color:#2b2016">
           </div>
           <div>
-            <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">存 放 位 置</label>
+            <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">存 放 位 置</label>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
               <div>
-                <div style="font-size:10px;color:#7a6650;margin-bottom:3px">庫 房</div>
-                <select id="aiR" style="width:100%;padding:6px 8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+                <div style="font-size:13px;color:#7a6650;margin-bottom:3px">庫 房</div>
+                <select id="aiR" style="width:100%;padding:6px 8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:15px;color:#2b2016">
                   <option value="">—</option>
                   ${ROOMS.map(r=>`<option value="${r}">${r}</option>`).join('')}
                 </select>
               </div>
               <div>
-                <div style="font-size:10px;color:#7a6650;margin-bottom:3px">鐵 架</div>
-                <select id="aiK" style="width:100%;padding:6px 8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+                <div style="font-size:13px;color:#7a6650;margin-bottom:3px">鐵 架</div>
+                <select id="aiK" style="width:100%;padding:6px 8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:15px;color:#2b2016">
                   <option value="">—</option>
                   ${RACKS.map(r=>`<option value="${r}">${r}</option>`).join('')}
                 </select>
               </div>
               <div>
-                <div style="font-size:10px;color:#7a6650;margin-bottom:3px">層 別</div>
-                <select id="aiLv" style="width:100%;padding:6px 8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+                <div style="font-size:13px;color:#7a6650;margin-bottom:3px">層 別</div>
+                <select id="aiLv" style="width:100%;padding:6px 8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:15px;color:#2b2016">
                   <option value="">—</option>
                   ${LEVS.map(r=>`<option value="${r}">${r}</option>`).join('')}
                 </select>
               </div>
             </div>
           </div>
-          <div id="aiErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+          <div id="aiErr" style="font-size:14px;color:#6b1f2a;display:none"></div>
           <div style="display:flex;gap:8px;justify-content:flex-end;padding-top:4px">
-            <button onclick="document.getElementById('addItemOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650">取 消</button>
-            <button onclick="confirmAddItem()" class="btn-primary" style="padding:7px 20px;font-size:12px">確 認 新 增</button>
+            <button onclick="document.getElementById('addItemOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650">取 消</button>
+            <button onclick="confirmAddItem()" class="btn-primary" style="padding:7px 20px;font-size:15px">確 認 新 增</button>
           </div>
         </div>
       </div>`;
@@ -13211,30 +13188,30 @@ function editQty(id){
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:320px;border-left:4px solid var(--gold)">
       <div style="padding:14px 18px;border-bottom:1px solid #d8c49a">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">✏ 修 改 數 量</div>
-        <div style="font-size:11px;color:#7a6650;margin-top:3px">${item.nm}</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">✏ 修 改 數 量</div>
+        <div style="font-size:14px;color:#7a6650;margin-top:3px">${item.nm}</div>
       </div>
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
         <div style="text-align:center">
-          <div style="font-size:11px;color:#7a6650;margin-bottom:6px;letter-spacing:0.06em">目 前 數 量</div>
-          <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:32px;color:#2b2016;font-weight:700">${isMl?Number(item.qty).toFixed(1):item.qty} <span style="font-size:14px;font-weight:400;color:#7a6650">${item.u}</span></div>
+          <div style="font-size:14px;color:#7a6650;margin-bottom:6px;letter-spacing:0.06em">目 前 數 量</div>
+          <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:34px;color:#2b2016;font-weight:700">${isMl?Number(item.qty).toFixed(1):item.qty} <span style="font-size:16px;font-weight:400;color:#7a6650">${item.u}</span></div>
         </div>
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">修 改 為${isMl?'（可輸入小數點後 1 位）':''}</label>
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">修 改 為${isMl?'（可輸入小數點後 1 位）':''}</label>
           <div style="display:flex;align-items:center;gap:8px">
-            <button onclick="stepQty(${isMl?-0.1:-1})" style="width:36px;height:36px;font-size:20px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">−</button>
-            <input id="eqInput" type="number" value="${displayQty}" min="0" step="${stepAttr}" style="flex:1;text-align:center;padding:8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:18px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">
-            <button onclick="stepQty(${isMl?0.1:1})" style="width:36px;height:36px;font-size:20px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">＋</button>
+            <button onclick="stepQty(${isMl?-0.1:-1})" style="width:36px;height:36px;font-size:22px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">−</button>
+            <input id="eqInput" type="number" value="${displayQty}" min="0" step="${stepAttr}" style="flex:1;text-align:center;padding:8px;border:1px solid #b39c6e;background:#f8f0dc;font-size:20px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">
+            <button onclick="stepQty(${isMl?0.1:1})" style="width:36px;height:36px;font-size:22px;border:1px solid #b39c6e;background:#fff;cursor:pointer;line-height:1;color:#7a6650">＋</button>
           </div>
         </div>
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">修 改 原 因</label>
-          <input id="eqNote" type="text" placeholder="例：盤點更正、損耗調整…" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:12px;color:#2b2016">
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">修 改 原 因</label>
+          <input id="eqNote" type="text" placeholder="例：盤點更正、損耗調整…" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;background:#f8f0dc;font-size:15px;color:#2b2016">
         </div>
-        <div id="eqErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+        <div id="eqErr" style="font-size:14px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="document.getElementById('editQtyOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
-          <button onclick="confirmEditQty(${id})" class="btn-primary" style="padding:7px 20px;font-size:12px">確 認 修 改</button>
+          <button onclick="document.getElementById('editQtyOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
+          <button onclick="confirmEditQty(${id})" class="btn-primary" style="padding:7px 20px;font-size:15px">確 認 修 改</button>
         </div>
       </div>
     </div>`;
@@ -13290,24 +13267,24 @@ function changeItemCat(id){
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:340px;border-left:4px solid #5a7a9a">
       <div style="padding:14px 18px;border-bottom:1px solid #d8c49a">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">🏷 變 更 類 別</div>
-        <div style="font-size:11px;color:#7a6650;margin-top:3px">${item.nm}</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">🏷 變 更 類 別</div>
+        <div style="font-size:14px;color:#7a6650;margin-top:3px">${item.nm}</div>
       </div>
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">目 前 類 別</label>
-          <div style="font-size:12px;color:#7a6650">${item.cat}</div>
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">目 前 類 別</label>
+          <div style="font-size:15px;color:#7a6650">${item.cat}</div>
         </div>
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">變 更 為</label>
-          <select id="ccSel" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px">
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">變 更 為</label>
+          <select id="ccSel" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:16px">
             ${cats.map(c=>`<option value="${c}" ${c===item.cat?'selected':''}>${c}</option>`).join('')}
           </select>
         </div>
-        <div id="ccErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+        <div id="ccErr" style="font-size:14px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="document.getElementById('changeCatOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
-          <button onclick="confirmChangeItemCat(${id})" style="padding:7px 20px;font-size:12px;background:#5a7a9a;color:#fff;border:1px solid #5a7a9a;cursor:pointer;letter-spacing:0.04em">確 認 變 更</button>
+          <button onclick="document.getElementById('changeCatOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
+          <button onclick="confirmChangeItemCat(${id})" style="padding:7px 20px;font-size:15px;background:#5a7a9a;color:#fff;border:1px solid #5a7a9a;cursor:pointer;letter-spacing:0.04em">確 認 變 更</button>
         </div>
       </div>
     </div>`;
@@ -13354,25 +13331,25 @@ function changeItemUnit(id){
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:320px;border-left:4px solid #7a3a1e">
       <div style="padding:14px 18px;border-bottom:1px solid #d8c49a">
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">📏 變 更 計 量 單 位</div>
-        <div style="font-size:11px;color:#7a6650;margin-top:3px">${item.nm}</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">📏 變 更 計 量 單 位</div>
+        <div style="font-size:14px;color:#7a6650;margin-top:3px">${item.nm}</div>
       </div>
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">目 前 單 位</label>
-          <div style="font-size:12px;color:#7a6650">${item.u}</div>
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:4px">目 前 單 位</label>
+          <div style="font-size:15px;color:#7a6650">${item.u}</div>
         </div>
         <div>
-          <label style="font-size:11px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">變 更 為</label>
-          <select id="cuSel" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:13px">
+          <label style="font-size:14px;color:#7a6650;letter-spacing:0.08em;display:block;margin-bottom:6px">變 更 為</label>
+          <select id="cuSel" style="width:100%;padding:8px 10px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:16px">
             ${UNIT_OPTIONS.map(u=>`<option value="${u}" ${u===item.u?'selected':''}>${u}</option>`).join('')}
           </select>
-          ${isOil?`<div style="font-size:9px;color:#9a8465;margin-top:5px">精油品項預設建議使用 ml；若此品項並非液態（例如容器、貼紙），可自行改選其他單位。</div>`:''}
+          ${isOil?`<div style="font-size:12px;color:#9a8465;margin-top:5px">精油品項預設建議使用 ml；若此品項並非液態（例如容器、貼紙），可自行改選其他單位。</div>`:''}
         </div>
-        <div id="cuErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+        <div id="cuErr" style="font-size:14px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
-          <button onclick="document.getElementById('changeUnitOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
-          <button onclick="confirmChangeItemUnit(${id})" style="padding:7px 20px;font-size:12px;background:#7a3a1e;color:#fff;border:1px solid #7a3a1e;cursor:pointer;letter-spacing:0.04em">確 認 變 更</button>
+          <button onclick="document.getElementById('changeUnitOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650;letter-spacing:0.04em">取 消</button>
+          <button onclick="confirmChangeItemUnit(${id})" style="padding:7px 20px;font-size:15px;background:#7a3a1e;color:#fff;border:1px solid #7a3a1e;cursor:pointer;letter-spacing:0.04em">確 認 變 更</button>
         </div>
       </div>
     </div>`;
@@ -13420,17 +13397,17 @@ function deleteItem(id){
     overlay.innerHTML=`
       <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:360px;border-left:4px solid var(--red-seal)">
         <div style="padding:16px 20px;border-bottom:1px solid #d8c49a">
-          <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#6b1f2a;letter-spacing:0.08em">🗑 確認刪除品項</div>
+          <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#6b1f2a;letter-spacing:0.08em">🗑 確認刪除品項</div>
         </div>
         <div style="padding:16px 20px">
-          <div style="font-size:12px;color:#2b2016;font-family:'Playfair Display','Noto Serif TC',serif;margin-bottom:8px">「${item.nm}」</div>
-          <div style="font-size:11px;color:#7a6650;margin-bottom:4px">類別：${item.cat}　·　目前庫存：${item.qty} ${item.u}</div>
-          ${activeBrws.length>0?`<div style="font-size:11px;color:#6b1f2a;margin-top:8px;padding:6px 10px;background:rgba(139,32,32,0.06);border-left:3px solid var(--red-seal)">⚠ 此品項有 ${activeBrws.length} 筆借用尚未歸還，刪除後借用紀錄將保留但品項不再可用。</div>`:''}
-          <div style="font-size:11px;color:#6b1f2a;margin-top:10px">此操作無法復原，確定要刪除嗎？</div>
+          <div style="font-size:15px;color:#2b2016;font-family:'Playfair Display','Noto Serif TC',serif;margin-bottom:8px">「${item.nm}」</div>
+          <div style="font-size:14px;color:#7a6650;margin-bottom:4px">類別：${item.cat}　·　目前庫存：${item.qty} ${item.u}</div>
+          ${activeBrws.length>0?`<div style="font-size:14px;color:#6b1f2a;margin-top:8px;padding:6px 10px;background:rgba(139,32,32,0.06);border-left:3px solid var(--red-seal)">⚠ 此品項有 ${activeBrws.length} 筆借用尚未歸還，刪除後借用紀錄將保留但品項不再可用。</div>`:''}
+          <div style="font-size:14px;color:#6b1f2a;margin-top:10px">此操作無法復原，確定要刪除嗎？</div>
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 20px;border-top:1px solid #d8c49a">
-          <button onclick="document.getElementById('deleteConfirmOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650">取 消</button>
-          <button onclick="confirmDeleteItem(${id})" style="padding:7px 18px;border:none;background:#6b1f2a;color:#fff;font-size:12px;cursor:pointer;letter-spacing:0.06em">確 認 刪 除</button>
+          <button onclick="document.getElementById('deleteConfirmOverlay').remove()" style="padding:7px 18px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650">取 消</button>
+          <button onclick="confirmDeleteItem(${id})" style="padding:7px 18px;border:none;background:#6b1f2a;color:#fff;font-size:15px;cursor:pointer;letter-spacing:0.06em">確 認 刪 除</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -13489,39 +13466,39 @@ function invQuickAction(id){
   <div style="background:#f3ead9;border:1px solid #b39c6e;width:min(360px,92vw);box-shadow:0 12px 40px rgba(43,32,22,0.22);border-top:3px solid ${catCol}">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #d8c49a">
       <div>
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;letter-spacing:0.08em">${item.nm}</div>
-        <div style="font-size:10px;color:#7a6650;margin-top:2px">${item.cat}　·　庫存 <b style="font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">${item.qty}</b> ${item.u}　·　<span class="lb" style="font-size:9px">${ls(item.loc)}</span></div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">${item.nm}</div>
+        <div style="font-size:13px;color:#7a6650;margin-top:2px">${item.cat}　·　庫存 <b style="font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">${item.qty}</b> ${item.u}　·　<span class="lb" style="font-size:12px">${ls(item.loc)}</span></div>
       </div>
-      <button onclick="document.getElementById('invActionModal').remove()" style="border:none;background:none;font-size:18px;color:#7a6650;cursor:pointer;padding:0 4px;line-height:1">✕</button>
+      <button onclick="document.getElementById('invActionModal').remove()" style="border:none;background:none;font-size:20px;color:#7a6650;cursor:pointer;padding:0 4px;line-height:1">✕</button>
     </div>
     <div style="padding:14px 16px;display:grid;grid-template-columns:repeat(${ops.length},1fr);gap:8px">
       ${ops.map(o=>`
       <div onclick="invDoOp(${id},'${o.op}')" style="cursor:pointer;text-align:center;padding:14px 8px;border:1px solid #d8c49a;border-radius:3px;transition:all 0.15s;background:#fff"
         onmouseover="this.style.borderColor='${catCol}';this.style.background='rgba(181,131,42,0.06)'"
         onmouseout="this.style.borderColor='#d8c49a';this.style.background='#fff'">
-        <div style="font-size:24px;color:${catCol};margin-bottom:5px">${o.ic}</div>
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em;margin-bottom:3px">${o.op}</div>
-        <div style="font-size:9px;color:#7a6650">${o.sub}</div>
+        <div style="font-size:26px;color:${catCol};margin-bottom:5px">${o.ic}</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em;margin-bottom:3px">${o.op}</div>
+        <div style="font-size:12px;color:#7a6650">${o.sub}</div>
       </div>`).join('')}
     </div>
     <div style="padding:10px 16px 14px 16px;border-top:1px solid #e0d0a8;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button onclick="editQty(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
+      <button onclick="editQty(${id})" style="padding:7px;font-size:14px;background:transparent;border:1px solid rgba(181,131,42,0.4);color:var(--gold);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(181,131,42,0.08)'" onmouseout="this.style.background='transparent'">
         ✏ 修 改 數 量
       </button>
-      <button onclick="changeItemCat(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(90,122,154,0.4);color:#5a7a9a;cursor:pointer;letter-spacing:0.06em"
+      <button onclick="changeItemCat(${id})" style="padding:7px;font-size:14px;background:transparent;border:1px solid rgba(90,122,154,0.4);color:#5a7a9a;cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(90,122,154,0.08)'" onmouseout="this.style.background='transparent'">
         🏷 變 更 類 別
       </button>
-      <button onclick="toggleItemCon(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(42,107,94,0.4);color:#2a6b5e;cursor:pointer;letter-spacing:0.06em"
+      <button onclick="toggleItemCon(${id})" style="padding:7px;font-size:14px;background:transparent;border:1px solid rgba(42,107,94,0.4);color:#2a6b5e;cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(42,107,94,0.08)'" onmouseout="this.style.background='transparent'">
         🔁 ${item.con?'改 為 非 消 耗':'改 為 消 耗 品'}
       </button>
-      ${isAdminPlus()?`<button onclick="changeItemUnit(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px solid rgba(122,58,30,0.4);color:#7a3a1e;cursor:pointer;letter-spacing:0.06em"
+      ${isAdminPlus()?`<button onclick="changeItemUnit(${id})" style="padding:7px;font-size:14px;background:transparent;border:1px solid rgba(122,58,30,0.4);color:#7a3a1e;cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(122,58,30,0.08)'" onmouseout="this.style.background='transparent'">
         📏 變 更 計 量 單 位
       </button>`:''}
-      <button onclick="deleteItem(${id})" style="padding:7px;font-size:11px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
+      <button onclick="deleteItem(${id})" style="padding:7px;font-size:14px;background:transparent;border:1px dashed rgba(139,32,32,0.35);color:var(--red-seal);cursor:pointer;letter-spacing:0.06em"
         onmouseover="this.style.background='rgba(139,32,32,0.06)'" onmouseout="this.style.background='transparent'">
         🗑 刪 除 品 項
       </button>
@@ -13608,7 +13585,7 @@ function doRetById(bid){
   pgInv();
   // Flash toast
   const t=document.createElement('div');
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2a6b5e;color:#fff;padding:10px 24px;font-size:12px;letter-spacing:0.08em;z-index:4000;border-radius:2px;font-family:\'Noto Serif TC\',serif;white-space:nowrap';
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2a6b5e;color:#fff;padding:10px 24px;font-size:15px;letter-spacing:0.08em;z-index:4000;border-radius:2px;font-family:\'Noto Serif TC\',serif;white-space:nowrap';
   t.textContent='✓ 歸還完成：'+b.nm+' × '+b.qty;
   document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
 }
@@ -13620,16 +13597,16 @@ function showReturnPicker(activeBrws){
   overlay.innerHTML=`
   <div style="background:#f3ead9;border:1px solid #b39c6e;width:min(340px,92vw);box-shadow:0 12px 40px rgba(43,32,22,0.22)">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #d8c49a">
-      <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">選擇歸還哪一筆</span>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="border:none;background:none;font-size:18px;color:#7a6650;cursor:pointer">✕</button>
+      <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">選擇歸還哪一筆</span>
+      <button onclick="this.closest('[style*=fixed]').remove()" style="border:none;background:none;font-size:20px;color:#7a6650;cursor:pointer">✕</button>
     </div>
     <div style="padding:10px 14px;max-height:320px;overflow-y:auto">
       ${activeBrws.map(b=>`
       <div style="padding:10px 12px;margin-bottom:6px;border:1px solid #d8c49a;background:#fff;cursor:pointer;border-radius:2px"
         onmouseover="this.style.borderColor='#b5832a'" onmouseout="this.style.borderColor='#d8c49a'"
         onclick="this.closest('[style*=fixed]').remove();doRetById(${b.id})">
-        <div style="font-size:12px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">${b.user}　×　${b.qty}</div>
-        <div style="font-size:10px;color:#7a6650;margin-top:2px">借出日：${b.date}　預還：${b.due||'—'}</div>
+        <div style="font-size:15px;font-family:'Playfair Display','Noto Serif TC',serif;color:#2b2016">${b.user}　×　${b.qty}</div>
+        <div style="font-size:13px;color:#7a6650;margin-top:2px">借出日：${b.date}　預還：${b.due||'—'}</div>
       </div>`).join('')}
     </div>
   </div>`;
@@ -13773,8 +13750,8 @@ function pgQR(){
   </div>
   <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px">
     ${isDesigner()?`<div id="qrSelBar" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-right:auto"></div>`:''}
-    ${isDesigner()?`<button onclick="printInventoryCountSheet()" style="font-size:11px;padding:6px 14px;white-space:nowrap">列 印 盤 點 表 ↗</button>`:''}
-    <button class="btn-primary" onclick="printAllQR()" style="font-size:11px;padding:6px 16px;white-space:nowrap">
+    ${isDesigner()?`<button onclick="printInventoryCountSheet()" style="font-size:14px;padding:6px 14px;white-space:nowrap">列 印 盤 點 表 ↗</button>`:''}
+    <button class="btn-primary" onclick="printAllQR()" style="font-size:14px;padding:6px 16px;white-space:nowrap">
       列 印 全 部 ${inv.length} 張 ↗
     </button>
   </div>
@@ -13788,10 +13765,10 @@ function updateQRSelBar(){
   if(!bar)return;
   const n=_qrSelected.size;
   bar.innerHTML=n
-    ?`<span style="font-size:11px;color:#7a6650">已選 <b style="color:#2b2016">${n}</b> 項</span>
-       <button type="button" onclick="qrClearSelection()" style="font-size:11px;padding:5px 12px;white-space:nowrap">清 除 選 取</button>
-       <button type="button" class="btn-primary" onclick="openA5PosterOptionsBatch()" style="font-size:11px;padding:5px 14px;white-space:nowrap">批 次 生 成 A5 PDF ↗</button>`
-    :`<span style="font-size:10px;color:#9a8465">勾選卡片左上角可複選，批次生成 A5 張貼圖 PDF</span>`;
+    ?`<span style="font-size:14px;color:#7a6650">已選 <b style="color:#2b2016">${n}</b> 項</span>
+       <button type="button" onclick="qrClearSelection()" style="font-size:14px;padding:5px 12px;white-space:nowrap">清 除 選 取</button>
+       <button type="button" class="btn-primary" onclick="openA5PosterOptionsBatch()" style="font-size:14px;padding:5px 14px;white-space:nowrap">批 次 生 成 A5 PDF ↗</button>`
+    :`<span style="font-size:13px;color:#9a8465">勾選卡片左上角可複選，批次生成 A5 張貼圖 PDF</span>`;
 }
 function toggleQRSelect(id,checked){
   if(checked)_qrSelected.add(id);else _qrSelected.delete(id);
@@ -13828,7 +13805,7 @@ function renderQRResults(){
   Object.keys(CAT_META).forEach(cat=>{
     const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
-    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
+    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:13px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px" class="qr-grid-mobile">`;
     ci.forEach(i=>{
       const catCol=catHex(cat);
@@ -13839,18 +13816,18 @@ function renderQRResults(){
       h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(43,32,22,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         ${selectCb}
         <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
-          <span style="font-size:9px;color:#fff;letter-spacing:0.1em">${cat}</span>
+          <span style="font-size:12px;color:#fff;letter-spacing:0.1em">${cat}</span>
         </div>
         <div class="qr-photo-wrap${hasPhoto?' has-photo':''}" ${photoAction?`onclick="${photoAction}"`:''} title="${photoTitle}" style="width:44px;height:44px;margin:0 auto 4px;border-radius:50%;overflow:hidden;border:1px solid ${hasPhoto?'var(--border-light)':'#d8c49a'};background:${hasPhoto?'#fff':'#f8f0dc'};display:flex;align-items:center;justify-content:center;cursor:${hasPhoto||isAdminPlus()?'pointer':'default'}">
-          ${hasPhoto?`<img src="${i.img}" alt="${qrEscapeAttr(i.nm)} 照片" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:14px;color:#b39c6e">📷</span>`}
+          ${hasPhoto?`<img src="${i.img}" alt="${qrEscapeAttr(i.nm)} 照片" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:16px;color:#b39c6e">📷</span>`}
         </div>
         <div style="margin:0 auto 6px;width:64px;height:64px;display:flex;align-items:center;justify-content:center">
           <div id="qrc-${i.id}" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center"></div>
         </div>
-        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:11px;color:#2b2016;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${i.nm}</div>
-        <div style="font-size:9px;color:#7a6650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${ls(i.loc)}</div>
+        <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#2b2016;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${i.nm}</div>
+        <div style="font-size:12px;color:#7a6650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center">${ls(i.loc)}</div>
         <div style="text-align:center;margin-top:5px">
-          <span style="font-size:9px;background:${catLightBg(cat)};color:${catCol};padding:1px 6px;border-radius:10px;border:1px solid ${catCol}40">${i.con?'消耗品':'非消耗品'}</span>
+          <span style="font-size:12px;background:${catLightBg(cat)};color:${catCol};padding:1px 6px;border-radius:10px;border:1px solid ${catCol}40">${i.con?'消耗品':'非消耗品'}</span>
         </div>
       </div>`;
     });
@@ -13867,7 +13844,7 @@ function renderQRResults(){
     const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+    }catch(e){ el.innerHTML='<span style="font-size:11px;color:#999">QR錯誤</span>'; }
   });
 }
 
@@ -13967,19 +13944,19 @@ function openPhotoUpload(id){
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;width:100%;max-width:320px;border-left:4px solid var(--gold)">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a">
-        <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">📷 品項照片 ── ${item.nm}</span>
-        <button onclick="closePhotoUpload()" style="border:none;background:none;font-size:18px;color:#7a6650;cursor:pointer">✕</button>
+        <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">📷 品項照片 ── ${item.nm}</span>
+        <button onclick="closePhotoUpload()" style="border:none;background:none;font-size:20px;color:#7a6650;cursor:pointer">✕</button>
       </div>
       <div style="padding:18px 20px;display:flex;flex-direction:column;gap:12px;align-items:center">
         <div id="photoPreviewBox" style="width:140px;height:140px;border-radius:6px;overflow:hidden;border:1px solid #d8c49a;background:#f8f0dc;display:flex;align-items:center;justify-content:center">
-          ${item.img?`<img id="photoPreviewImg" src="${item.img}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:28px;color:#b39c6e">📷</span>`}
+          ${item.img?`<img id="photoPreviewImg" src="${item.img}" style="width:100%;height:100%;object-fit:cover">`:`<span style="font-size:30px;color:#b39c6e">📷</span>`}
         </div>
-        <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="font-size:11px" onchange="handlePhotoFile(event)">
-        <div id="photoErr" style="font-size:11px;color:#6b1f2a;display:none"></div>
+        <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="font-size:14px" onchange="handlePhotoFile(event)">
+        <div id="photoErr" style="font-size:14px;color:#6b1f2a;display:none"></div>
         <div style="display:flex;gap:8px;justify-content:flex-end;width:100%;padding-top:4px">
-          ${item.img?`<button onclick="removePhoto(${id})" style="padding:7px 14px;border:1px dashed rgba(139,32,32,0.35);background:transparent;font-size:11px;cursor:pointer;color:var(--red-seal)">移 除 照 片</button>`:''}
-          <button onclick="closePhotoUpload()" style="padding:7px 14px;border:1px solid #b39c6e;background:transparent;font-size:12px;cursor:pointer;color:#7a6650">取 消</button>
-          <button id="photoSaveBtn" onclick="savePhoto(${id})" class="btn-primary" style="padding:7px 18px;font-size:12px" ${item.img?'':'disabled'}>儲 存</button>
+          ${item.img?`<button onclick="removePhoto(${id})" style="padding:7px 14px;border:1px dashed rgba(139,32,32,0.35);background:transparent;font-size:14px;cursor:pointer;color:var(--red-seal)">移 除 照 片</button>`:''}
+          <button onclick="closePhotoUpload()" style="padding:7px 14px;border:1px solid #b39c6e;background:transparent;font-size:15px;cursor:pointer;color:#7a6650">取 消</button>
+          <button id="photoSaveBtn" onclick="savePhoto(${id})" class="btn-primary" style="padding:7px 18px;font-size:15px" ${item.img?'':'disabled'}>儲 存</button>
         </div>
       </div>
     </div>`;
@@ -14080,8 +14057,8 @@ function previewCard(id){
   <div style="background:#f3ead9;border:1px solid #b39c6e;width:320px;box-shadow:0 12px 40px rgba(43,32,22,0.25)">
     <!-- Modal header -->
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #d8c49a">
-      <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;letter-spacing:0.08em">標 籤 卡 預 覽</span>
-      <button onclick="document.getElementById('qrModal').remove()" style="border:none;background:none;font-size:16px;color:#7a6650;cursor:pointer;padding:0 4px">✕</button>
+      <span style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;letter-spacing:0.08em">標 籤 卡 預 覽</span>
+      <button onclick="document.getElementById('qrModal').remove()" style="border:none;background:none;font-size:18px;color:#7a6650;cursor:pointer;padding:0 4px">✕</button>
     </div>
 
     <!-- Card preview -->
@@ -14089,7 +14066,7 @@ function previewCard(id){
       <div id="printCardWrap" style="width:200px;background:#f3ead9;border:1px solid #b39c6e;border-radius:4px;overflow:hidden;box-shadow:0 2px 8px rgba(43,32,22,0.1)">
         <!-- colour bar -->
         <div style="background:${catCol};padding:8px 0;text-align:center">
-          <span style="font-size:11px;color:#fff;letter-spacing:0.12em">${item.cat}</span>
+          <span style="font-size:14px;color:#fff;letter-spacing:0.12em">${item.cat}</span>
         </div>
         <!-- QR -->
         <div style="display:flex;justify-content:center;padding:14px 14px 8px">
@@ -14098,23 +14075,23 @@ function previewCard(id){
         <!-- gold rule -->
         <div style="height:1px;background:linear-gradient(90deg,transparent,${catCol},transparent);margin:0 16px 10px"></div>
         <!-- name -->
-        <div style="text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;margin-bottom:6px;letter-spacing:0.06em">${item.nm}</div>
+        <div style="text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:18px;color:#2b2016;margin-bottom:6px;letter-spacing:0.06em">${item.nm}</div>
         <!-- nature badge -->
         <div style="text-align:center;margin-bottom:8px">
-          <span style="font-size:10px;background:${catLight};color:${catCol};padding:2px 10px;border-radius:10px;border:1px solid ${catCol}50">${nature}</span>
+          <span style="font-size:13px;background:${catLight};color:${catCol};padding:2px 10px;border-radius:10px;border:1px solid ${catCol}50">${nature}</span>
         </div>
         <!-- location -->
-        <div style="text-align:center;font-size:10px;color:#7a6650;margin-bottom:10px;padding:0 10px;line-height:1.5">${ls(item.loc)}</div>
+        <div style="text-align:center;font-size:13px;color:#7a6650;margin-bottom:10px;padding:0 10px;line-height:1.5">${ls(item.loc)}</div>
         <!-- id -->
-        <div style="text-align:right;padding:0 10px 8px;font-size:10px;color:${catCol}">#${String(item.id).padStart(2,'0')}</div>
+        <div style="text-align:right;padding:0 10px 8px;font-size:13px;color:${catCol}">#${String(item.id).padStart(2,'0')}</div>
       </div>
     </div>
 
     <!-- Actions -->
     <div style="padding:10px 14px 14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #d8c49a">
-      <button onclick="document.getElementById('qrModal').remove()" style="font-size:11px;padding:6px 14px">取 消</button>
-      ${isDesigner()?`<button onclick="openA5PosterOptions(${item.id})" style="font-size:11px;padding:6px 14px">A5 張 貼 圖 ↗</button>`:''}
-      <button class="btn-primary" onclick="printSingleCard(${item.id})" style="font-size:11px;padding:6px 16px">列 印 此 張 ↗</button>
+      <button onclick="document.getElementById('qrModal').remove()" style="font-size:14px;padding:6px 14px">取 消</button>
+      ${isDesigner()?`<button onclick="openA5PosterOptions(${item.id})" style="font-size:14px;padding:6px 14px">A5 張 貼 圖 ↗</button>`:''}
+      <button class="btn-primary" onclick="printSingleCard(${item.id})" style="font-size:14px;padding:6px 16px">列 印 此 張 ↗</button>
     </div>
   </div>`;
 
@@ -14126,7 +14103,7 @@ function previewCard(id){
     const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:120,height:120,correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){ el.innerHTML='<span style="font-size:10px;color:#999">QR產生失敗</span>'; }
+    }catch(e){ el.innerHTML='<span style="font-size:13px;color:#999">QR產生失敗</span>'; }
   }
 }
 
@@ -14165,14 +14142,14 @@ async function printSingleCard(id){
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#fff;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:'Noto Sans TC',sans-serif}
     .card{width:220px;background:#f3ead9;border:1px solid #b39c6e;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.1)}
-    .bar{background:${catCol};padding:10px 0;text-align:center;color:#fff;font-size:13px;letter-spacing:0.12em}
+    .bar{background:${catCol};padding:10px 0;text-align:center;color:#fff;font-size:16px;letter-spacing:0.12em}
     .qr{display:flex;justify-content:center;padding:16px 16px 10px}
     .rule{height:1px;background:linear-gradient(90deg,transparent,${catCol},transparent);margin:0 18px 12px}
-    .name{text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:18px;color:#2b2016;margin-bottom:8px;letter-spacing:0.06em}
-    .badge{display:inline-block;font-size:11px;background:${catLight};color:${catCol};padding:2px 12px;border-radius:10px;border:1px solid ${catCol}50}
+    .name{text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:20px;color:#2b2016;margin-bottom:8px;letter-spacing:0.06em}
+    .badge{display:inline-block;font-size:14px;background:${catLight};color:${catCol};padding:2px 12px;border-radius:10px;border:1px solid ${catCol}50}
     .badge-wrap{text-align:center;margin-bottom:10px}
-    .loc{text-align:center;font-size:11px;color:#7a6650;margin-bottom:10px;padding:0 14px;line-height:1.6}
-    .id{text-align:right;padding:0 12px 10px;font-size:11px;color:${catCol}}
+    .loc{text-align:center;font-size:14px;color:#7a6650;margin-bottom:10px;padding:0 14px;line-height:1.6}
+    .id{text-align:right;padding:0 12px 10px;font-size:14px;color:${catCol}}
     @media print{body{background:#fff}.card{box-shadow:none;border:1px solid #ccc}}
   </style></head><body>
   <div class="card">
@@ -14213,14 +14190,14 @@ function printInventoryCountSheet(){
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
     <style>
       /* Style note: 盤點表沿用紙本手帳的米白、酒紅與金色，優先確保 A4 黑白列印的欄位清晰與書寫空間。 */
-      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#ece8df;color:#2b2016;font-family:'Noto Sans TC',sans-serif;font-size:10px}
+      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#ece8df;color:#2b2016;font-family:'Noto Sans TC',sans-serif;font-size:13px}
       .sheet{width:100%;max-width:190mm;margin:12mm auto;background:#fffdf7;padding:10mm;border:1px solid #d8c49a}
       .mast{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:2px solid #6b1f2a;padding-bottom:7px;margin-bottom:8px;gap:18px}
-      h1{margin:0;font:700 19px 'Noto Serif TC',serif;letter-spacing:.12em;color:#6b1f2a} .sub{margin-top:4px;color:#7a6650;font-size:9px;letter-spacing:.08em}
-      .meta{display:grid;grid-template-columns:repeat(3,auto);gap:14px;color:#7a6650;font-size:9px;white-space:nowrap}.meta b{display:inline-block;min-width:38px;color:#2b2016;border-bottom:1px solid #7a6650;text-align:center;font-weight:400}
-      table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #b9aa8d;padding:5px 4px;vertical-align:middle;line-height:1.35}th{background:#f1e5cf;color:#6b1f2a;font-size:9px;font-weight:700;letter-spacing:.04em}td{font-size:9px}td.no{width:5%;text-align:center;color:#7a6650}td.name{width:24%;font:11px 'Noto Serif TC',serif}td.qty{font-weight:700;text-align:center;font-variant-numeric:tabular-nums}.write-cell{height:24px;background:#fffef9}
+      h1{margin:0;font:700 21px 'Noto Serif TC',serif;letter-spacing:.12em;color:#6b1f2a} .sub{margin-top:4px;color:#7a6650;font-size:12px;letter-spacing:.08em}
+      .meta{display:grid;grid-template-columns:repeat(3,auto);gap:14px;color:#7a6650;font-size:12px;white-space:nowrap}.meta b{display:inline-block;min-width:38px;color:#2b2016;border-bottom:1px solid #7a6650;text-align:center;font-weight:400}
+      table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #b9aa8d;padding:5px 4px;vertical-align:middle;line-height:1.35}th{background:#f1e5cf;color:#6b1f2a;font-size:12px;font-weight:700;letter-spacing:.04em}td{font-size:12px}td.no{width:5%;text-align:center;color:#7a6650}td.name{width:24%;font:14px 'Noto Serif TC',serif}td.qty{font-weight:700;text-align:center;font-variant-numeric:tabular-nums}.write-cell{height:24px;background:#fffef9}
       th:nth-child(1){width:5%}th:nth-child(2){width:24%}th:nth-child(3){width:17%}th:nth-child(4){width:9%}th:nth-child(5){width:8%}th:nth-child(6){width:6%}th:nth-child(7){width:16%}th:nth-child(8){width:8%}th:nth-child(9){width:7%}
-      .foot{display:flex;justify-content:space-between;margin-top:8px;color:#7a6650;font-size:9px}.legend{color:#6b1f2a;font-weight:700}
+      .foot{display:flex;justify-content:space-between;margin-top:8px;color:#7a6650;font-size:12px}.legend{color:#6b1f2a;font-weight:700}
       @media print{html,body{background:#fff}.sheet{max-width:none;margin:0;border:0;padding:0}.mast{padding-top:0} @page{size:A4 portrait;margin:10mm}}
     </style></head><body><main class="sheet">
       <header class="mast"><div><h1>既 有 品 項 盤 點 表</h1><div class="sub">平安家園・活動物品手帳　｜　共 ${inv.length} 項</div></div><div class="meta"><span>盤點日 <b>${tdy()}</b></span><span>盤點人 <b></b></span><span>頁次 <b></b></span></div></header>
@@ -14232,11 +14209,11 @@ function printInventoryCountSheet(){
 function closeA5PosterOptions(){document.getElementById('a5PosterOptions')?.remove();}
 function a5PosterOptionsModalHTML(brand,headerNote,submitAttr){
   return `<div style="width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fffaf0;border:1px solid #b39c6e;box-shadow:0 18px 60px rgba(43,32,22,.28)">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a"><div><div style="font:700 15px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em">A5 橫式張貼圖設定</div><div style="font-size:10px;color:#7a6650;margin-top:3px">${headerNote}</div></div><button type="button" onclick="closeA5PosterOptions()" aria-label="關閉 A5 張貼圖設定" style="border:0;background:transparent;color:#7a6650;font-size:20px;padding:2px 6px">✕</button></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a"><div><div style="font:700 17px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em">A5 橫式張貼圖設定</div><div style="font-size:13px;color:#7a6650;margin-top:3px">${headerNote}</div></div><button type="button" onclick="closeA5PosterOptions()" aria-label="關閉 A5 張貼圖設定" style="border:0;background:transparent;color:#7a6650;font-size:22px;padding:2px 6px">✕</button></div>
     <style>.a5-options-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:18px;padding:18px}@media(max-width:620px){.a5-options-grid{grid-template-columns:1fr}.a5-options-preview{order:-1}.a5-options-preview #a5BrandPreview{height:150px!important}}</style><div class="a5-options-grid">
-      <div style="display:grid;gap:12px;align-content:start"><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">張 貼 圖 標 題<input id="a5BrandTitle" maxlength="30" value="${printEsc(brand.title)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font:700 15px 'Noto Serif TC',serif"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">副 標／識別文字<input id="a5BrandSubtitle" maxlength="48" value="${printEsc(brand.subtitle)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司／單位名稱<input id="a5BrandLogoText" maxlength="24" value="${printEsc(brand.logoText)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:12px"></label><label style="font-size:10px;color:#7a6650;letter-spacing:.08em">公司 Logo 圖檔<input id="a5BrandLogoFile" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:5px;padding:8px;border:1px dashed #b39c6e;background:#fffdf7;color:#2b2016;font-size:11px"><span style="display:block;margin-top:5px;font-size:9px;color:#9a8465;line-height:1.5">支援 PNG、JPG、WebP；建議使用透明背景方形 Logo，檔案上限 600KB。</span></label></div>
-      <div class="a5-options-preview"><div style="font-size:10px;color:#7a6650;letter-spacing:.08em;margin-bottom:7px">即 時 預 覽</div><div id="a5BrandPreview" style="height:176px"></div></div>
-    </div><div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #d8c49a"><button type="button" onclick="closeA5PosterOptions()" style="font-size:11px;padding:7px 15px">取 消</button><button type="button" class="btn-primary" onclick="${submitAttr}" style="font-size:11px;padding:7px 17px">生成 A5 張 貼 圖 ↗</button></div>
+      <div style="display:grid;gap:12px;align-content:start"><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">張 貼 圖 標 題<input id="a5BrandTitle" maxlength="30" value="${printEsc(brand.title)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font:700 17px 'Noto Serif TC',serif"></label><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">副 標／識別文字<input id="a5BrandSubtitle" maxlength="48" value="${printEsc(brand.subtitle)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:15px"></label><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">公司／單位名稱<input id="a5BrandLogoText" maxlength="24" value="${printEsc(brand.logoText)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:15px"></label><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">公司 Logo 圖檔<input id="a5BrandLogoFile" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:5px;padding:8px;border:1px dashed #b39c6e;background:#fffdf7;color:#2b2016;font-size:14px"><span style="display:block;margin-top:5px;font-size:12px;color:#9a8465;line-height:1.5">支援 PNG、JPG、WebP；建議使用透明背景方形 Logo，檔案上限 600KB。</span></label></div>
+      <div class="a5-options-preview"><div style="font-size:13px;color:#7a6650;letter-spacing:.08em;margin-bottom:7px">即 時 預 覽</div><div id="a5BrandPreview" style="height:176px"></div></div>
+    </div><div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #d8c49a"><button type="button" onclick="closeA5PosterOptions()" style="font-size:14px;padding:7px 15px">取 消</button><button type="button" class="btn-primary" onclick="${submitAttr}" style="font-size:14px;padding:7px 17px">生成 A5 張 貼 圖 ↗</button></div>
   </div>`;
 }
 function bindA5LogoFileInput(){
@@ -14249,7 +14226,7 @@ function updateA5BrandPreview(){
   const title=document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title;
   const subtitle=document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle;
   const logoText=document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText;
-  preview.innerHTML=`<div style="height:100%;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:18px;background:#f3ead9;border:1px solid #b39c6e;box-shadow:0 8px 18px rgba(43,32,22,.10)"><div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none">${_a5DraftLogoData?`<img src="${_a5DraftLogoData}" alt="" style="width:100%;height:100%;object-fit:contain">`:'<span style="font:700 13px Georgia;color:#6b1f2a">P</span>'}</div><div style="min-width:0"><div style="font:700 13px 'Noto Serif TC',serif;color:#6b1f2a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(logoText)}</div><div style="font-size:8px;color:#7a6650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(subtitle)}</div></div></div><div style="height:1px;background:#b5832a"></div><div style="font:700 18px 'Noto Serif TC',serif;color:#2b2016;letter-spacing:.08em">${printEsc(title)}</div><div style="font-size:8px;color:#7a6650">A5 橫式版面預覽</div></div>`;
+  preview.innerHTML=`<div style="height:100%;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:18px;background:#f3ead9;border:1px solid #b39c6e;box-shadow:0 8px 18px rgba(43,32,22,.10)"><div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none">${_a5DraftLogoData?`<img src="${_a5DraftLogoData}" alt="" style="width:100%;height:100%;object-fit:contain">`:'<span style="font:700 16px Georgia;color:#6b1f2a">P</span>'}</div><div style="min-width:0"><div style="font:700 16px 'Noto Serif TC',serif;color:#6b1f2a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(logoText)}</div><div style="font-size:11px;color:#7a6650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(subtitle)}</div></div></div><div style="height:1px;background:#b5832a"></div><div style="font:700 20px 'Noto Serif TC',serif;color:#2b2016;letter-spacing:.08em">${printEsc(title)}</div><div style="font-size:11px;color:#7a6650">A5 橫式版面預覽</div></div>`;
 }
 function openA5PosterOptions(id){
   if(!isDesigner()){ alert('⚠ A5 張貼圖設定僅設計師可操作'); return; }
@@ -14296,7 +14273,7 @@ async function printA5PosterBatch(ids,customBrand){
   if(!items.length){ alert('⚠ 找不到選取的品項，請重新勾選。'); return; }
   const bar=document.getElementById('qrSelBar');
   const barBak=bar?bar.innerHTML:'';
-  if(bar)bar.innerHTML=`<span style="font-size:11px;color:#7a6650">正 在 產 生 ${items.length} 張 A5 張 貼 圖…</span>`;
+  if(bar)bar.innerHTML=`<span style="font-size:14px;color:#7a6650">正 在 產 生 ${items.length} 張 A5 張 貼 圖…</span>`;
 
   const brand={...getA5Brand(),...(customBrand&&typeof customBrand==='object'?customBrand:{})};
   const posterTitle=String(brand.title||A5_BRAND_DEFAULT.title).trim()||A5_BRAND_DEFAULT.title;
@@ -14335,33 +14312,33 @@ async function printA5PosterBatch(ids,customBrand){
       .header{display:grid;grid-template-columns:18mm minmax(0,1fr) minmax(44mm,auto);align-items:center;gap:5mm;padding-bottom:5mm;border-bottom:1px solid #d2bf98}
       .logo{width:16mm;height:16mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}
       .logo img{width:100%;height:100%;object-fit:contain}
-      .logo-mark{font:700 17px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}
-      .brand-name{font:700 15px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .brand-sub{font-size:9px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .poster-kicker{text-align:right;color:#6b1f2a;font:700 13px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .logo-mark{font:700 19px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}
+      .brand-name{font:700 17px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .brand-sub{font-size:12px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .poster-kicker{text-align:right;color:#6b1f2a;font:700 16px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       .accent{height:2px;background:var(--cat);margin:4mm 0 5mm}
       .content{display:grid;grid-template-columns:50mm 66mm minmax(0,1fr);gap:6mm;align-items:center;flex:1;min-height:0}
       .qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:7mm}
-      .qr-label,.photo-label{font-size:10px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}
+      .qr-label,.photo-label{font-size:13px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}
       .qr{width:50mm;height:50mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2mm}
       .qr img{width:45mm;height:45mm;image-rendering:auto}
-      .qr-code{font-size:10px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}
+      .qr-code{font-size:13px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}
       .photo-frame{width:66mm;height:78mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.5mm;overflow:hidden}
       .photo-frame img{width:100%;height:100%;object-fit:contain;image-rendering:auto}
-      .photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;color:#b39c6e;font-size:10px;letter-spacing:.08em;text-align:center}
-      .photo-empty-mark{font-size:26px;opacity:.75}
-      .photo-hint{font-size:9px;color:#9a8465;margin-top:3mm;text-align:center;line-height:1.4}
+      .photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;color:#b39c6e;font-size:13px;letter-spacing:.08em;text-align:center}
+      .photo-empty-mark{font-size:28px;opacity:.75}
+      .photo-hint{font-size:12px;color:#9a8465;margin-top:3mm;text-align:center;line-height:1.4}
       .info{min-width:0;display:flex;flex-direction:column;justify-content:center}
-      .cat{align-self:flex-start;color:#fff;background:var(--cat);padding:2.2mm 6mm;font-size:13px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .name{font:900 30px/1.18 'Noto Serif TC',serif;color:#20150f;margin:4mm 0 2.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .2mm 0 rgba(43,32,22,.12)}
-      .nature{align-self:flex-start;background:var(--catlight);border:1.5px solid var(--cat);color:var(--cat);padding:1.5mm 5mm;border-radius:99px;font-size:12px;font-weight:700}
-      .details{margin-top:5mm;border-top:1.5px solid #b39c6e;border-bottom:1.5px solid #b39c6e;padding:4mm 0;display:grid;grid-template-columns:24mm minmax(0,1fr);gap:2.5mm 3mm;font-size:13.5px;line-height:1.35}
+      .cat{align-self:flex-start;color:#fff;background:var(--cat);padding:2.2mm 6mm;font-size:16px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .name{font:900 32px/1.18 'Noto Serif TC',serif;color:#20150f;margin:4mm 0 2.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .2mm 0 rgba(43,32,22,.12)}
+      .nature{align-self:flex-start;background:var(--catlight);border:1.5px solid var(--cat);color:var(--cat);padding:1.5mm 5mm;border-radius:99px;font-size:15px;font-weight:700}
+      .details{margin-top:5mm;border-top:1.5px solid #b39c6e;border-bottom:1.5px solid #b39c6e;padding:4mm 0;display:grid;grid-template-columns:24mm minmax(0,1fr);gap:2.5mm 3mm;font-size:15.5px;line-height:1.35}
       .label{color:#6b5744;font-weight:700;letter-spacing:.05em}
       .value{font-family:'Noto Serif TC',serif;font-weight:700;word-break:break-word}
       .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:5mm;margin-top:4mm}
-      .note{color:#7a6650;font-size:8.5px;line-height:1.4}
+      .note{color:#7a6650;font-size:11.5px;line-height:1.4}
       .note b{color:#6b1f2a;font-weight:800}
-      .id{color:var(--cat);font-size:11px;font-weight:800;white-space:nowrap}
+      .id{color:var(--cat);font-size:14px;font-weight:800;white-space:nowrap}
       @media print{html,body{background:#fff}.poster{margin:0;border:1.5px solid #b39c6e;box-shadow:none}.poster+.poster{margin-top:0}@page{size:A5 landscape;margin:0}}
     </style></head><body>${postersHtml}
     <script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);
@@ -14387,7 +14364,7 @@ async function printA5Poster(id,customBrand){
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
     <style>
       /* Style note: A5 張貼圖採 210mm × 148mm 橫式紙本識別卡，左側建立品牌與 QR 導視，右側突出品項與位置資訊。 */
-      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#d9d4ca;color:#2b2016;font-family:'Noto Sans TC',sans-serif}.poster{width:210mm;height:148mm;margin:12mm auto;background:#f3ead9;border:1.5px solid #b39c6e;position:relative;overflow:hidden;padding:10mm 12mm 9mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(43,32,22,.16)}.header{display:grid;grid-template-columns:18mm minmax(0,1fr) minmax(44mm,auto);align-items:center;gap:5mm;padding-bottom:5mm;border-bottom:1px solid #d2bf98}.logo{width:16mm;height:16mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}.logo img{width:100%;height:100%;object-fit:contain}.logo-mark{font:700 17px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}.brand-name{font:700 15px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-sub{font-size:9px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.poster-kicker{text-align:right;color:#6b1f2a;font:700 13px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accent{height:2px;background:${catCol};margin:4mm 0 5mm}.content{display:grid;grid-template-columns:50mm 66mm minmax(0,1fr);gap:6mm;align-items:center;flex:1;min-height:0}.qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:7mm}.qr-label,.photo-label{font-size:10px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}.qr{width:50mm;height:50mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2mm}.qr img{width:45mm;height:45mm;image-rendering:auto}.qr-code{font-size:10px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}.photo-frame{width:66mm;height:78mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.5mm;overflow:hidden}.photo-frame img{width:100%;height:100%;object-fit:contain;image-rendering:auto}.photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;color:#b39c6e;font-size:10px;letter-spacing:.08em;text-align:center}.photo-empty-mark{font-size:26px;opacity:.75}.photo-hint{font-size:9px;color:#9a8465;margin-top:3mm;text-align:center;line-height:1.4}.info{min-width:0;display:flex;flex-direction:column;justify-content:center}.cat{align-self:flex-start;color:#fff;background:${catCol};padding:2.2mm 6mm;font-size:13px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.name{font:900 30px/1.18 'Noto Serif TC',serif;color:#20150f;margin:4mm 0 2.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .2mm 0 rgba(43,32,22,.12)}.nature{align-self:flex-start;background:${catLight};border:1.5px solid ${catCol}80;color:${catCol};padding:1.5mm 5mm;border-radius:99px;font-size:12px;font-weight:700}.details{margin-top:5mm;border-top:1.5px solid #b39c6e;border-bottom:1.5px solid #b39c6e;padding:4mm 0;display:grid;grid-template-columns:24mm minmax(0,1fr);gap:2.5mm 3mm;font-size:13.5px;line-height:1.35}.label{color:#6b5744;font-weight:700;letter-spacing:.05em}.value{font-family:'Noto Serif TC',serif;font-weight:700;word-break:break-word}.qty{font-size:18px;font-weight:900;color:${catCol}}.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:5mm;margin-top:4mm}.note{color:#7a6650;font-size:8.5px;line-height:1.4}.note b{color:#6b1f2a;font-weight:800}.id{color:${catCol};font-size:11px;font-weight:800;white-space:nowrap}@media print{html,body{background:#fff}.poster{margin:0;border:1.5px solid #b39c6e;box-shadow:none}@page{size:A5 landscape;margin:0}}
+      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#d9d4ca;color:#2b2016;font-family:'Noto Sans TC',sans-serif}.poster{width:210mm;height:148mm;margin:12mm auto;background:#f3ead9;border:1.5px solid #b39c6e;position:relative;overflow:hidden;padding:10mm 12mm 9mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(43,32,22,.16)}.header{display:grid;grid-template-columns:18mm minmax(0,1fr) minmax(44mm,auto);align-items:center;gap:5mm;padding-bottom:5mm;border-bottom:1px solid #d2bf98}.logo{width:16mm;height:16mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}.logo img{width:100%;height:100%;object-fit:contain}.logo-mark{font:700 19px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}.brand-name{font:700 17px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-sub{font-size:12px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.poster-kicker{text-align:right;color:#6b1f2a;font:700 16px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accent{height:2px;background:${catCol};margin:4mm 0 5mm}.content{display:grid;grid-template-columns:50mm 66mm minmax(0,1fr);gap:6mm;align-items:center;flex:1;min-height:0}.qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:7mm}.qr-label,.photo-label{font-size:13px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}.qr{width:50mm;height:50mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2mm}.qr img{width:45mm;height:45mm;image-rendering:auto}.qr-code{font-size:13px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}.photo-frame{width:66mm;height:78mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.5mm;overflow:hidden}.photo-frame img{width:100%;height:100%;object-fit:contain;image-rendering:auto}.photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;color:#b39c6e;font-size:13px;letter-spacing:.08em;text-align:center}.photo-empty-mark{font-size:28px;opacity:.75}.photo-hint{font-size:12px;color:#9a8465;margin-top:3mm;text-align:center;line-height:1.4}.info{min-width:0;display:flex;flex-direction:column;justify-content:center}.cat{align-self:flex-start;color:#fff;background:${catCol};padding:2.2mm 6mm;font-size:16px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.name{font:900 32px/1.18 'Noto Serif TC',serif;color:#20150f;margin:4mm 0 2.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .2mm 0 rgba(43,32,22,.12)}.nature{align-self:flex-start;background:${catLight};border:1.5px solid ${catCol}80;color:${catCol};padding:1.5mm 5mm;border-radius:99px;font-size:15px;font-weight:700}.details{margin-top:5mm;border-top:1.5px solid #b39c6e;border-bottom:1.5px solid #b39c6e;padding:4mm 0;display:grid;grid-template-columns:24mm minmax(0,1fr);gap:2.5mm 3mm;font-size:15.5px;line-height:1.35}.label{color:#6b5744;font-weight:700;letter-spacing:.05em}.value{font-family:'Noto Serif TC',serif;font-weight:700;word-break:break-word}.qty{font-size:20px;font-weight:900;color:${catCol}}.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:5mm;margin-top:4mm}.note{color:#7a6650;font-size:11.5px;line-height:1.4}.note b{color:#6b1f2a;font-weight:800}.id{color:${catCol};font-size:14px;font-weight:800;white-space:nowrap}@media print{html,body{background:#fff}.poster{margin:0;border:1.5px solid #b39c6e;box-shadow:none}@page{size:A5 landscape;margin:0}}
     </style></head><body><main class="poster">
       <header class="header"><div class="logo">${logoData?`<img src="${printEsc(logoData)}" alt="${printEsc(logoText)} Logo">`:'<span class="logo-mark">PH</span>'}</div><div><div class="brand-name">${printEsc(logoText)}</div><div class="brand-sub">${printEsc(posterSubtitle)}</div></div><div class="poster-kicker">${printEsc(posterTitle)}</div></header>
       <div class="accent"></div><section class="content"><div class="qr-panel"><div class="qr-label">掃 描 查 詢 品 項</div><div class="qr"><img src="${url}" alt="${printEsc(item.nm)} QR Code"></div><div class="qr-code">ITEM #${String(item.id).padStart(2,'0')}</div></div><div class="photo-panel"><div class="photo-label">品 項 照 片</div><div class="photo-frame">${photoData?`<img src="${printEsc(photoData)}" alt="${printEsc(item.nm)} 品項照片">`:'<div class="photo-empty"><span class="photo-empty-mark">▧</span><span>尚未上傳照片</span></div>'}</div><div class="photo-hint">${photoData?'現場實物參照':'請由管理員以上上傳照片'}</div></div><div class="info"><div class="cat">${printEsc(item.cat)}</div><div class="name">${printEsc(item.nm)}</div><div class="nature">${nature}</div><div class="details"><div class="label">儲存位置</div><div class="value">${printEsc(ls(item.loc)||'尚未設定位置')}</div><div class="label">庫存狀態</div><div class="value">${printEsc(stl(item))}</div></div><div class="bottom"><div class="note"><b>掃描 QR Code</b> 查看品項資料　｜　張貼前請確認現場位置與盤點數量</div><div class="id">品項編號　#${String(item.id).padStart(2,'0')}</div></div></div></section>
@@ -14427,17 +14404,17 @@ async function printAllQR(){
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#f5f5f0;font-family:'Noto Sans TC',sans-serif;padding:14mm}
-    h1{font-family:'Playfair Display','Noto Serif TC',serif;font-size:14px;color:#b5832a;letter-spacing:0.12em;margin-bottom:10px;border-bottom:1px solid #b5832a;padding-bottom:6px}
+    h1{font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#b5832a;letter-spacing:0.12em;margin-bottom:10px;border-bottom:1px solid #b5832a;padding-bottom:6px}
     .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
     .card{background:#f3ead9;border:1px solid #b39c6e;border-radius:3px;overflow:hidden;break-inside:avoid}
-    .bar{padding:6px 0;text-align:center;color:#fff;font-size:10px;letter-spacing:0.1em}
+    .bar{padding:6px 0;text-align:center;color:#fff;font-size:13px;letter-spacing:0.1em}
     .qr{display:flex;justify-content:center;padding:10px 10px 6px}
     .rule{height:1px;margin:0 12px 7px}
-    .name{text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;margin-bottom:5px}
+    .name{text-align:center;font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;margin-bottom:5px}
     .bwrap{text-align:center;margin-bottom:5px}
-    .badge{display:inline-block;font-size:9px;padding:1px 8px;border-radius:10px}
-    .loc{text-align:center;font-size:8.5px;color:#7a6650;margin-bottom:6px;padding:0 8px;line-height:1.5}
-    .id{text-align:right;padding:0 8px 6px;font-size:9px}
+    .badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px}
+    .loc{text-align:center;font-size:11.5px;color:#7a6650;margin-bottom:6px;padding:0 8px;line-height:1.5}
+    .id{text-align:right;padding:0 8px 6px;font-size:12px}
     @media print{
       body{background:#fff;padding:10mm}
       .grid{gap:5px}
@@ -14448,8 +14425,8 @@ async function printAllQR(){
 @media(max-width:600px){
   .body{padding:10px}
   .sts{grid-template-columns:repeat(2,1fr)}
-  .tbl th,.tbl td{padding:5px 6px;font-size:10px}
-  .st-v{font-size:28px}.inv-qty{font-size:18px}.cat-count{font-size:14px;min-width:44px}
+  .tbl th,.tbl td{padding:5px 6px;font-size:13px}
+  .st-v{font-size:30px}.inv-qty{font-size:20px}.cat-count{font-size:16px;min-width:44px}
 }
 </style></head><body>
   <h1>平安家園 ── 活動物品庫存管理系統　品項 QR Code 標籤卡（共 ${inv.length} 張）</h1>
@@ -14462,13 +14439,13 @@ async function printAllQR(){
 function locBld(px,loc){
   const rv=loc&&loc.r?loc.r:'',rkv=loc&&loc.k?loc.k:'',lv=loc&&loc.lv?loc.lv:'';
   return `<div class="loc-box">
-    <div style="font-size:10px;color:#b5832a;letter-spacing:0.12em;margin-bottom:8px">儲 存 位 置</div>
+    <div style="font-size:13px;color:#b5832a;letter-spacing:0.12em;margin-bottom:8px">儲 存 位 置</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
       <div><label class="fl">場 所</label><select id="${px}R" onchange="upP('${px}')"><option value="">選擇</option>${ROOMS.map(r=>`<option${rv===r?' selected':''}>${r}</option>`).join('')}</select></div>
       <div><label class="fl">架 位</label><select id="${px}K" onchange="upP('${px}')"><option value="">選擇</option>${RACKS.map(r=>`<option${rkv===r?' selected':''}>${r}</option>`).join('')}</select></div>
       <div><label class="fl">層 數</label><select id="${px}L" onchange="upP('${px}')"><option value="">選擇</option>${LEVS.map(r=>`<option${lv===r?' selected':''}>${r}</option>`).join('')}</select></div>
     </div>
-    <div style="font-size:11px;color:#2b2016;margin-top:8px;padding:5px 8px;background:#f3ead9;border:1px solid #d8c49a;letter-spacing:0.04em" id="${px}Pv">${ls(loc)||'尚 未 設 定'}</div>
+    <div style="font-size:14px;color:#2b2016;margin-top:8px;padding:5px 8px;background:#f3ead9;border:1px solid #d8c49a;letter-spacing:0.04em" id="${px}Pv">${ls(loc)||'尚 未 設 定'}</div>
   </div>`;
 }
 function upP(p){const r=document.getElementById(p+'R').value,k=document.getElementById(p+'K').value,lv=document.getElementById(p+'L').value;document.getElementById(p+'Pv').textContent=[r,k,lv].filter(Boolean).join(' › ')||'尚未設定';}
@@ -14477,16 +14454,16 @@ function gLoc(p){return{r:document.getElementById(p+'R').value,k:document.getEle
 function pgLoc(){
   const q=(document.getElementById('srch').value||'').toLowerCase();
   const items=q?inv.filter(i=>i.nm.toLowerCase().includes(q)||i.cat.includes(q)||ls(i.loc).includes(q)):inv;
-  let h=`<div style="font-size:11px;color:#7a6650;letter-spacing:0.06em;margin-bottom:16px">點擊品項名稱、儲存位置或「編輯位置」即可修改該品項的儲存位置設定。</div>`;
-  if(q)h+=`<div style="font-size:10px;color:#7a6650;margin-bottom:12px">⌕ 顯示 ${items.length} / ${inv.length} 項　・　搜尋「${printEsc(q)}」</div>`;
+  let h=`<div style="font-size:14px;color:#7a6650;letter-spacing:0.06em;margin-bottom:16px">點擊品項名稱、儲存位置或「編輯位置」即可修改該品項的儲存位置設定。</div>`;
+  if(q)h+=`<div style="font-size:13px;color:#7a6650;margin-bottom:12px">⌕ 顯示 ${items.length} / ${inv.length} 項　・　搜尋「${printEsc(q)}」</div>`;
   if(q&&!items.length)h+='<div class="qr-empty">找不到符合條件的品項，請換一個關鍵字。</div>';
   Object.keys(CAT_META).forEach(cat=>{
     const ci=items.filter(i=>i.cat===cat);if(!ci.length)return;
     const m=CAT_META[cat];
-    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:10px">${m.label}</span>${cat}<div class="sep-line"></div></div>
+    h+=`<div class="sep"><span class="b ${m.cls}" style="font-size:13px">${m.label}</span>${cat}<div class="sep-line"></div></div>
     <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:10px">
-    <table class="tbl" style="min-width:480px;font-size:clamp(11px,2.8vw,13px)"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
-    ${ci.map(i=>`<tr><td onclick="oLE(${i.id})" title="點擊編輯位置" style="font-family:'Playfair Display','Noto Serif TC',serif;cursor:pointer">${i.nm}</td><td onclick="oLE(${i.id})" title="點擊編輯位置" style="cursor:pointer"><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:10px;padding:4px 10px;white-space:nowrap">編 輯 位 置</button></td></tr>`).join('')}
+    <table class="tbl" style="min-width:480px;font-size:clamp(14px,2.8vw,16px)"><thead><tr><th style="width:25%">品 項</th><th style="width:42%">儲 存 位 置</th><th style="width:33%">操 作</th></tr></thead><tbody>
+    ${ci.map(i=>`<tr><td onclick="oLE(${i.id})" title="點擊編輯位置" style="font-family:'Playfair Display','Noto Serif TC',serif;cursor:pointer">${i.nm}</td><td onclick="oLE(${i.id})" title="點擊編輯位置" style="cursor:pointer"><span class="lb">${ls(i.loc)}</span></td><td><button onclick="oLE(${i.id})" style="font-size:13px;padding:4px 10px;white-space:nowrap">編 輯 位 置</button></td></tr>`).join('')}
     </tbody></table></div>`;
   });
   document.getElementById('pg').innerHTML=h;
@@ -14497,7 +14474,7 @@ function pgLoc(){
     const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+    }catch(e){ el.innerHTML='<span style="font-size:11px;color:#999">QR錯誤</span>'; }
   });
 }
 function closeLocEditor(){
@@ -14517,7 +14494,7 @@ function oLE(id){
   overlay.style.cssText='position:fixed;inset:0;background:rgba(43,32,22,0.72);z-index:3600;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
   overlay.innerHTML=`
     <div style="background:#f3ead9;border:1px solid #b39c6e;border-left:3px solid #b5832a;padding:14px;width:100%;max-width:760px;max-height:calc(100vh - 32px);overflow-y:auto;box-shadow:0 8px 28px rgba(43,32,22,0.28)">
-      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:13px;color:#2b2016;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
+      <div style="font-family:'Playfair Display','Noto Serif TC',serif;font-size:16px;color:#2b2016;margin-bottom:10px;letter-spacing:0.08em">編 輯 位 置 ── ${it.nm}</div>
       ${locBld('e',it.loc)}
       <div class="row-btn" style="margin-top:8px">
         <button onclick="closeLocEditor()">取 消</button>
@@ -14614,13 +14591,13 @@ function pgRep(){
 
   let h=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:14px;padding:12px 14px;background:rgba(180,150,100,0.08);border-radius:4px;border:1px solid rgba(180,150,100,0.2)">
     <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;flex:1">
-      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">品　項</label>
-      <select id="repNm" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
+      <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">品　項</label>
+      <select id="repNm" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:15px">
         ${nms.map(n=>`<option value="${n==='（全部品項）'?'':n}" ${(curNm===''&&n==='（全部品項）')||(curNm===n)?'selected':''}>${n}</option>`).join('')}
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
-      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">操　作（可複選）</label>
+      <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">操　作（可複選）</label>
       <div style="display:flex;flex-wrap:wrap;gap:5px;max-width:240px">
         ${actionOpts.map(op=>{
           const active=curOps.includes(op);
@@ -14631,18 +14608,18 @@ function pgRep(){
           return `<button type="button" onclick="toggleRepOp('${op}')" class="rep-op-pill" style="${style}">${active?'✓ ':''}${op}</button>`;
         }).join('')}
       </div>
-      <span style="font-size:9px;color:#8a7359">點選可複選切換；全部取消代表顯示所有操作</span>
+      <span style="font-size:12px;color:#8a7359">點選可複選切換；全部取消代表顯示所有操作</span>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
-      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">起始日期</label>
-      <input type="date" id="repFrom" value="${curFrom}" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
+      <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">起始日期</label>
+      <input type="date" id="repFrom" value="${curFrom}" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:15px">
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
-      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">結束日期</label>
-      <input type="date" id="repTo" value="${curTo}" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
+      <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">結束日期</label>
+      <input type="date" id="repTo" value="${curTo}" onchange="repFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:15px">
     </div>
-    <button onclick="printMovementReport()" style="padding:5px 14px;border:1px solid #6b1f2a;border-radius:3px;background:#6b1f2a;color:#fff;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">⇩ 匯出 PDF</button>
-    <button onclick="repClear()" style="padding:5px 14px;border:1px solid #b39c6e;border-radius:3px;background:transparent;color:#7a6650;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
+    <button onclick="printMovementReport()" style="padding:5px 14px;border:1px solid #6b1f2a;border-radius:3px;background:#6b1f2a;color:#fff;font-size:14px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">⇩ 匯出 PDF</button>
+    <button onclick="repClear()" style="padding:5px 14px;border:1px solid #b39c6e;border-radius:3px;background:transparent;color:#7a6650;font-size:14px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
   const rows=getRepRows();
@@ -14652,7 +14629,7 @@ function pgRep(){
     const inQ =rows.filter(l=>l.type==='入庫').reduce((s,l)=>s+Number(l.qty),0);
     const outQ=rows.filter(l=>l.type==='出庫'||l.type==='領用').reduce((s,l)=>s+Number(l.qty),0);
     const brQ =rows.filter(l=>l.type==='借用').reduce((s,l)=>s+Number(l.qty),0);
-    h+=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:#7a6650">
+    h+=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:14px;color:#7a6650">
       <span>共 <b style="color:#2b2016">${total}</b> 筆</span>
       ${inQ ?`<span>入庫 <b style="color:#2a6b5e">${inQ}</b></span>`:''}
       ${outQ?`<span>領用 <b style="color:#8b6914">${outQ}</b></span>`:''}
@@ -14681,8 +14658,8 @@ function pgRep(){
         <td><span class="b ${cls}">${l.type}</span></td>
         <td style="font-family:'Playfair Display','Noto Serif TC',serif">${l.nm}</td>
         <td style="font-variant-numeric:tabular-nums;text-align:right;padding-right:8px">${l.qty}</td>
-        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:9px;color:#7a6650">（'+l.operator+'操作）</span>':''}</td><td>${l.pur||'—'}</td>
-        <td style="font-size:10px;line-height:1.45"><span style="color:#8b4513">${l.before||'—'}</span><br><span style="color:#2a6b5e">${l.after||'—'}</span></td>
+        <td>${l.user||'—'}${l.operator&&l.operator.trim()&&l.operator!==l.user?' <span style="font-size:12px;color:#7a6650">（'+l.operator+'操作）</span>':''}</td><td>${l.pur||'—'}</td>
+        <td style="font-size:13px;line-height:1.45"><span style="color:#8b4513">${l.before||'—'}</span><br><span style="color:#2a6b5e">${l.after||'—'}</span></td>
         <td>${dueOnly||'—'}</td>
         <td><span class="lb">${l.loc||'—'}</span></td></tr>`;
     });
@@ -14696,7 +14673,7 @@ function pgRep(){
     const payload=String(item.id);
     try{
       new QRCode(el,{text:payload,width:64,height:64,correctLevel:QRCode.CorrectLevel.M});
-    }catch(e){ el.innerHTML='<span style="font-size:8px;color:#999">QR錯誤</span>'; }
+    }catch(e){ el.innerHTML='<span style="font-size:11px;color:#999">QR錯誤</span>'; }
   });
 }
 function repFilter(){
@@ -14731,7 +14708,7 @@ function printMovementReport(){
   }).join(''):`<tr><td colspan="10" class="empty">查 無 符 合 紀 錄</td></tr>`;
   w.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><title>異動紀錄｜${printEsc(itemFilter)}</title><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"><style>
     /* Style note: 稽核報表沿用平安家園紙本手帳的米白、酒紅與金色，採 A4 橫式並優先確保欄位可追溯與可閱讀。 */
-    *{box-sizing:border-box}html,body{margin:0;padding:0;background:#eee9df;color:#2b2016;font-family:'Noto Sans TC',sans-serif;font-size:9px}.sheet{max-width:285mm;margin:10mm auto;background:#fffdf7;padding:9mm;border:1px solid #d8c49a}.mast{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;border-bottom:2px solid #6b1f2a;padding-bottom:7px;margin-bottom:7px}.brand{font:700 18px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.14em}.sub{margin-top:4px;color:#7a6650;font-size:9px;letter-spacing:.06em}.meta{text-align:right;color:#7a6650;line-height:1.8}.meta b{color:#2b2016;font-weight:500}.summary{display:flex;gap:18px;margin-bottom:7px;color:#7a6650}.summary b{color:#2b2016}table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #b9aa8d;padding:4px 5px;vertical-align:top;line-height:1.35;word-break:break-word}th{background:#f1e5cf;color:#6b1f2a;font-size:8px;font-weight:700;letter-spacing:.04em}td{font-size:8px}td:first-child{width:3%;text-align:center;color:#7a6650}td.num{text-align:right;font-variant-numeric:tabular-nums}td.empty{text-align:center;padding:24px;color:#7a6650}th:nth-child(2){width:9%}th:nth-child(3){width:7%}th:nth-child(4){width:15%}th:nth-child(5){width:6%}th:nth-child(6){width:14%}th:nth-child(7){width:19%}th:nth-child(8){width:10%}th:nth-child(9){width:10%}th:nth-child(10){width:11%}.foot{display:flex;justify-content:space-between;margin-top:7px;color:#7a6650;font-size:8px}@media print{html,body{background:#fff}.sheet{max-width:none;margin:0;border:0;padding:0}@page{size:A4 landscape;margin:8mm}}
+    *{box-sizing:border-box}html,body{margin:0;padding:0;background:#eee9df;color:#2b2016;font-family:'Noto Sans TC',sans-serif;font-size:12px}.sheet{max-width:285mm;margin:10mm auto;background:#fffdf7;padding:9mm;border:1px solid #d8c49a}.mast{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;border-bottom:2px solid #6b1f2a;padding-bottom:7px;margin-bottom:7px}.brand{font:700 20px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.14em}.sub{margin-top:4px;color:#7a6650;font-size:12px;letter-spacing:.06em}.meta{text-align:right;color:#7a6650;line-height:1.8}.meta b{color:#2b2016;font-weight:500}.summary{display:flex;gap:18px;margin-bottom:7px;color:#7a6650}.summary b{color:#2b2016}table{width:100%;border-collapse:collapse;table-layout:fixed}thead{display:table-header-group}tr{break-inside:avoid}th,td{border:1px solid #b9aa8d;padding:4px 5px;vertical-align:top;line-height:1.35;word-break:break-word}th{background:#f1e5cf;color:#6b1f2a;font-size:11px;font-weight:700;letter-spacing:.04em}td{font-size:11px}td:first-child{width:3%;text-align:center;color:#7a6650}td.num{text-align:right;font-variant-numeric:tabular-nums}td.empty{text-align:center;padding:24px;color:#7a6650}th:nth-child(2){width:9%}th:nth-child(3){width:7%}th:nth-child(4){width:15%}th:nth-child(5){width:6%}th:nth-child(6){width:14%}th:nth-child(7){width:19%}th:nth-child(8){width:10%}th:nth-child(9){width:10%}th:nth-child(10){width:11%}.foot{display:flex;justify-content:space-between;margin-top:7px;color:#7a6650;font-size:11px}@media print{html,body{background:#fff}.sheet{max-width:none;margin:0;border:0;padding:0}@page{size:A4 landscape;margin:8mm}}
   </style></head><body><main class="sheet"><header class="mast"><div><div class="brand">異 動 紀 錄</div><div class="sub">平安家園・活動物品手帳　｜　完整稽核報表</div></div><div class="meta">匯出日期：<b>${tdy()}</b><br>篩選品項：<b>${printEsc(itemFilter)}</b><br>篩選操作：<b>${printEsc(opFilter)}</b><br>日期範圍：<b>${printEsc(dateFilter)}</b></div></header><div class="summary">紀錄筆數：<b>${rows.length}</b><span>操作者欄位：登入者／實際操作人</span></div><table><thead><tr><th>序</th><th>日期時間</th><th>動作</th><th>品項</th><th>數量</th><th>人員／操作者</th><th>異動說明</th><th>異動前</th><th>異動後</th><th>位置</th></tr></thead><tbody>${body}</tbody></table><footer class="foot"><span>本報表依目前異動紀錄頁篩選條件產生；登入／登出紀錄請至登入紀錄頁查閱。</span><span>列印後可選擇「另存為 PDF」</span></footer></main><script>window.onload=()=>setTimeout(()=>window.print(),350)<\/script></body></html>`);
   w.document.close();
 }
@@ -14745,20 +14722,20 @@ function pgLoginlog(){
 
   let h=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:14px;padding:12px 14px;background:rgba(180,150,100,0.08);border-radius:4px;border:1px solid rgba(180,150,100,0.2)">
     <div style="display:flex;flex-direction:column;gap:3px;min-width:110px;flex:1">
-      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">人　員</label>
-      <select id="loginNmSel" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
+      <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">人　員</label>
+      <select id="loginNmSel" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:15px">
         ${nms.map(n=>`<option value="${n==='（全部人員）'?'':n}" ${(curNm===''&&n==='（全部人員）')||(curNm===n)?'selected':''}>${n}</option>`).join('')}
       </select>
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
-      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">起始日期</label>
-      <input type="date" id="loginFromSel" value="${curFrom}" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
+      <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">起始日期</label>
+      <input type="date" id="loginFromSel" value="${curFrom}" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:15px">
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
-      <label style="font-size:10px;color:#7a6650;letter-spacing:0.08em">結束日期</label>
-      <input type="date" id="loginToSel" value="${curTo}" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:12px">
+      <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">結束日期</label>
+      <input type="date" id="loginToSel" value="${curTo}" onchange="loginFilter()" style="padding:5px 8px;border:1px solid #b39c6e;border-radius:3px;background:#f8f0dc;color:#2b2016;font-size:15px">
     </div>
-    <button onclick="loginFilterClear()" style="padding:5px 14px;border:1px solid #b39c6e;border-radius:3px;background:transparent;color:#7a6650;font-size:11px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
+    <button onclick="loginFilterClear()" style="padding:5px 14px;border:1px solid #b39c6e;border-radius:3px;background:transparent;color:#7a6650;font-size:14px;cursor:pointer;letter-spacing:0.06em;white-space:nowrap">清 除</button>
   </div>`;
 
   let rows=logs.filter(l=>l.type==='登入'||l.type==='登出');
@@ -14770,7 +14747,7 @@ function pgLoginlog(){
     const total=rows.length;
     const inQ =rows.filter(l=>l.type==='登入').length;
     const outQ=rows.filter(l=>l.type==='登出').length;
-    h+=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:#7a6650">
+    h+=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:14px;color:#7a6650">
       <span>共 <b style="color:#2b2016">${total}</b> 筆</span>
       <span>登入 <b style="color:#2a6b5e">${inQ}</b></span>
       <span>登出 <b style="color:#8b6914">${outQ}</b></span>
