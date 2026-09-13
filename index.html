@@ -13771,8 +13771,8 @@ function updateQRSelBar(){
   bar.innerHTML=n
     ?`<span style="font-size:14px;color:#7a6650">已選 <b style="color:#2b2016">${n}</b> 項</span>
        <button type="button" onclick="qrClearSelection()" style="font-size:14px;padding:5px 12px;white-space:nowrap">清 除 選 取</button>
-       <button type="button" class="btn-primary" onclick="openA5PosterOptionsBatch()" style="font-size:14px;padding:5px 14px;white-space:nowrap">批 次 生 成 A5 PDF ↗</button>`
-    :`<span style="font-size:13px;color:#9a8465">勾選卡片左上角可複選，批次生成 A5 張貼圖 PDF</span>`;
+       <button type="button" class="btn-primary" onclick="openA5PosterOptionsBatch()" style="font-size:14px;padding:5px 14px;white-space:nowrap">批 次 生 成 A4 PDF ↗</button>`
+    :`<span style="font-size:13px;color:#9a8465">勾選卡片左上角可複選，批次生成 A4 張貼圖 PDF</span>`;
 }
 function toggleQRSelect(id,checked){
   if(checked)_qrSelected.add(id);else _qrSelected.delete(id);
@@ -13816,7 +13816,7 @@ function renderQRResults(){
       const hasPhoto=!!i.img;
       const photoAction=hasPhoto?`event.stopPropagation();openPhotoViewer(${i.id})`:(isAdminPlus()?`event.stopPropagation();openPhotoUpload(${i.id})`:'');
       const photoTitle=hasPhoto?'點擊檢視完整照片':(isAdminPlus()?'點擊上傳照片（管理員以上）':'尚未上傳照片');
-      const selectCb=isDesigner()?`<label class="qr-select-cb" onclick="event.stopPropagation()" title="選取此品項，供批次生成 A5 張貼圖 PDF"><input type="checkbox" ${_qrSelected.has(i.id)?'checked':''} onchange="toggleQRSelect(${i.id},this.checked)"></label>`:'';
+      const selectCb=isDesigner()?`<label class="qr-select-cb" onclick="event.stopPropagation()" title="選取此品項，供批次生成 A4 張貼圖 PDF"><input type="checkbox" ${_qrSelected.has(i.id)?'checked':''} onchange="toggleQRSelect(${i.id},this.checked)"></label>`:'';
       h+=`<div class="qr-card" onclick="previewCard(${i.id})" title="點擊預覽列印" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(43,32,22,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         ${selectCb}
         <div style="background:${catCol};margin:-12px -12px 8px;padding:5px 0;border-radius:2px 2px 0 0;text-align:center">
@@ -14094,7 +14094,7 @@ function previewCard(id){
     <!-- Actions -->
     <div style="padding:10px 14px 14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;border-top:1px solid #d8c49a">
       <button onclick="document.getElementById('qrModal').remove()" style="font-size:14px;padding:6px 14px">取 消</button>
-      ${isDesigner()?`<button onclick="openA5PosterOptions(${item.id})" style="font-size:14px;padding:6px 14px">A5 張 貼 圖 ↗</button>`:''}
+      ${isDesigner()?`<button onclick="openA5PosterOptions(${item.id})" style="font-size:14px;padding:6px 14px">A4 張 貼 圖 ↗</button>`:''}
       <button class="btn-primary" onclick="printSingleCard(${item.id})" style="font-size:14px;padding:6px 16px">列 印 此 張 ↗</button>
     </div>
   </div>`;
@@ -14213,11 +14213,11 @@ function printInventoryCountSheet(){
 function closeA5PosterOptions(){document.getElementById('a5PosterOptions')?.remove();}
 function a5PosterOptionsModalHTML(brand,headerNote,submitAttr){
   return `<div style="width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fffaf0;border:1px solid #b39c6e;box-shadow:0 18px 60px rgba(43,32,22,.28)">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a"><div><div style="font:700 17px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em">A5 橫式張貼圖設定</div><div style="font-size:13px;color:#7a6650;margin-top:3px">${headerNote}</div></div><button type="button" onclick="closeA5PosterOptions()" aria-label="關閉 A5 張貼圖設定" style="border:0;background:transparent;color:#7a6650;font-size:22px;padding:2px 6px">✕</button></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #d8c49a"><div><div style="font:700 17px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em">A4 橫式張貼圖設定</div><div style="font-size:13px;color:#7a6650;margin-top:3px">${headerNote}</div></div><button type="button" onclick="closeA5PosterOptions()" aria-label="關閉 A4 張貼圖設定" style="border:0;background:transparent;color:#7a6650;font-size:22px;padding:2px 6px">✕</button></div>
     <style>.a5-options-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:18px;padding:18px}@media(max-width:620px){.a5-options-grid{grid-template-columns:1fr}.a5-options-preview{order:-1}.a5-options-preview #a5BrandPreview{height:150px!important}}</style><div class="a5-options-grid">
       <div style="display:grid;gap:12px;align-content:start"><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">張 貼 圖 標 題<input id="a5BrandTitle" maxlength="30" value="${printEsc(brand.title)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font:700 17px 'Noto Serif TC',serif"></label><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">副 標／識別文字<input id="a5BrandSubtitle" maxlength="48" value="${printEsc(brand.subtitle)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:15px"></label><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">公司／單位名稱<input id="a5BrandLogoText" maxlength="24" value="${printEsc(brand.logoText)}" oninput="updateA5BrandPreview()" style="display:block;width:100%;margin-top:5px;padding:9px 10px;border:1px solid #b39c6e;background:#fffdf7;color:#2b2016;font-size:15px"></label><label style="font-size:13px;color:#7a6650;letter-spacing:.08em">公司 Logo 圖檔<input id="a5BrandLogoFile" type="file" accept="image/png,image/jpeg,image/webp" style="display:block;width:100%;margin-top:5px;padding:8px;border:1px dashed #b39c6e;background:#fffdf7;color:#2b2016;font-size:14px"><span style="display:block;margin-top:5px;font-size:12px;color:#9a8465;line-height:1.5">支援 PNG、JPG、WebP；建議使用透明背景方形 Logo，檔案上限 600KB。</span></label></div>
       <div class="a5-options-preview"><div style="font-size:13px;color:#7a6650;letter-spacing:.08em;margin-bottom:7px">即 時 預 覽</div><div id="a5BrandPreview" style="height:176px"></div></div>
-    </div><div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #d8c49a"><button type="button" onclick="closeA5PosterOptions()" style="font-size:14px;padding:7px 15px">取 消</button><button type="button" class="btn-primary" onclick="${submitAttr}" style="font-size:14px;padding:7px 17px">生成 A5 張 貼 圖 ↗</button></div>
+    </div><div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px 16px;border-top:1px solid #d8c49a"><button type="button" onclick="closeA5PosterOptions()" style="font-size:14px;padding:7px 15px">取 消</button><button type="button" class="btn-primary" onclick="${submitAttr}" style="font-size:14px;padding:7px 17px">生成 A4 張 貼 圖 ↗</button></div>
   </div>`;
 }
 function bindA5LogoFileInput(){
@@ -14230,10 +14230,10 @@ function updateA5BrandPreview(){
   const title=document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title;
   const subtitle=document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle;
   const logoText=document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText;
-  preview.innerHTML=`<div style="height:100%;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:18px;background:#f3ead9;border:1px solid #b39c6e;box-shadow:0 8px 18px rgba(43,32,22,.10)"><div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none">${_a5DraftLogoData?`<img src="${_a5DraftLogoData}" alt="" style="width:100%;height:100%;object-fit:contain">`:'<span style="font:700 16px Georgia;color:#6b1f2a">P</span>'}</div><div style="min-width:0"><div style="font:700 16px 'Noto Serif TC',serif;color:#6b1f2a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(logoText)}</div><div style="font-size:11px;color:#7a6650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(subtitle)}</div></div></div><div style="height:1px;background:#b5832a"></div><div style="font:700 20px 'Noto Serif TC',serif;color:#2b2016;letter-spacing:.08em">${printEsc(title)}</div><div style="font-size:11px;color:#7a6650">A5 橫式版面預覽</div></div>`;
+  preview.innerHTML=`<div style="height:100%;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:18px;background:#f3ead9;border:1px solid #b39c6e;box-shadow:0 8px 18px rgba(43,32,22,.10)"><div style="display:flex;align-items:center;gap:10px"><div style="width:34px;height:34px;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none">${_a5DraftLogoData?`<img src="${_a5DraftLogoData}" alt="" style="width:100%;height:100%;object-fit:contain">`:'<span style="font:700 16px Georgia;color:#6b1f2a">P</span>'}</div><div style="min-width:0"><div style="font:700 16px 'Noto Serif TC',serif;color:#6b1f2a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(logoText)}</div><div style="font-size:11px;color:#7a6650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${printEsc(subtitle)}</div></div></div><div style="height:1px;background:#b5832a"></div><div style="font:700 20px 'Noto Serif TC',serif;color:#2b2016;letter-spacing:.08em">${printEsc(title)}</div><div style="font-size:11px;color:#7a6650">A4 橫式版面預覽</div></div>`;
 }
 function openA5PosterOptions(id){
-  if(!isDesigner()){ alert('⚠ A5 張貼圖設定僅設計師可操作'); return; }
+  if(!isDesigner()){ alert('⚠ A4 張貼圖設定僅設計師可操作'); return; }
   const item=inv.find(i=>i.id===id);if(!item)return;
   const brand=getA5Brand();_a5DraftLogoData=brand.logoData||'';
   const overlay=document.createElement('div');overlay.id='a5PosterOptions';
@@ -14245,13 +14245,13 @@ function openA5PosterOptions(id){
   updateA5BrandPreview();
 }
 function submitA5PosterOptions(id){
-  if(!isDesigner()){alert('⚠ A5 張貼圖列印僅設計師可操作');return;}
+  if(!isDesigner()){alert('⚠ A4 張貼圖列印僅設計師可操作');return;}
   const brand=saveA5Brand({title:document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title,subtitle:document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle,logoText:document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText,logoData:_a5DraftLogoData||''});
   closeA5PosterOptions();printA5Poster(id,brand);
 }
 // ── 批次 A5 張貼圖（勾選複數品項，合併成一份可列印／另存 PDF 的文件）──────────
 function openA5PosterOptionsBatch(){
-  if(!isDesigner()){ alert('⚠ A5 張貼圖設定僅設計師可操作'); return; }
+  if(!isDesigner()){ alert('⚠ A4 張貼圖設定僅設計師可操作'); return; }
   const ids=Array.from(_qrSelected);
   if(!ids.length){ alert('⚠ 請先在卡片左上角勾選至少一項品項'); return; }
   const brand=getA5Brand();_a5DraftLogoData=brand.logoData||'';
@@ -14264,7 +14264,7 @@ function openA5PosterOptionsBatch(){
   updateA5BrandPreview();
 }
 function submitA5PosterOptionsBatch(){
-  if(!isDesigner()){alert('⚠ A5 張貼圖列印僅設計師可操作');return;}
+  if(!isDesigner()){alert('⚠ A4 張貼圖列印僅設計師可操作');return;}
   const ids=Array.from(_qrSelected);
   if(!ids.length){alert('⚠ 請先勾選至少一項品項');closeA5PosterOptions();return;}
   const brand=saveA5Brand({title:document.getElementById('a5BrandTitle')?.value.trim()||A5_BRAND_DEFAULT.title,subtitle:document.getElementById('a5BrandSubtitle')?.value.trim()||A5_BRAND_DEFAULT.subtitle,logoText:document.getElementById('a5BrandLogoText')?.value.trim()||A5_BRAND_DEFAULT.logoText,logoData:_a5DraftLogoData||''});
@@ -14272,12 +14272,12 @@ function submitA5PosterOptionsBatch(){
   printA5PosterBatch(ids,brand);
 }
 async function printA5PosterBatch(ids,customBrand){
-  if(!isDesigner()){ alert('⚠ A5 張貼圖列印僅設計師可操作'); return; }
+  if(!isDesigner()){ alert('⚠ A4 張貼圖列印僅設計師可操作'); return; }
   const items=ids.map(id=>inv.find(i=>i.id===id)).filter(Boolean);
   if(!items.length){ alert('⚠ 找不到選取的品項，請重新勾選。'); return; }
   const bar=document.getElementById('qrSelBar');
   const barBak=bar?bar.innerHTML:'';
-  if(bar)bar.innerHTML=`<span style="font-size:14px;color:#7a6650">正 在 產 生 ${items.length} 張 A5 張 貼 圖…</span>`;
+  if(bar)bar.innerHTML=`<span style="font-size:14px;color:#7a6650">正 在 產 生 ${items.length} 張 A4 張 貼 圖…</span>`;
 
   const brand={...getA5Brand(),...(customBrand&&typeof customBrand==='object'?customBrand:{})};
   const posterTitle=String(brand.title||A5_BRAND_DEFAULT.title).trim()||A5_BRAND_DEFAULT.title;
@@ -14306,50 +14306,50 @@ async function printA5PosterBatch(ids,customBrand){
   const w=window.open('','_blank','width=960,height=720');
   if(!w){alert('⚠ 瀏覽器封鎖了列印視窗，請允許此網站開啟彈出視窗。');return;}
   w.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
-    <title>${printEsc(posterTitle)}｜批次 A5 張貼圖（共 ${items.length} 張）</title>
+    <title>${printEsc(posterTitle)}｜批次 A4 張貼圖（共 ${items.length} 張）</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
     <style>
-      /* Style note: 批次 A5 張貼圖，每品項各佔一頁 210mm × 148mm 橫式紙本，色彩以 CSS 變數 --cat/--catlight 依品項類別套色，供一次列印或另存為多頁 PDF。 */
+      /* Style note: 批次 A4 張貼圖，每品項各佔一頁 297mm × 210mm 橫式紙本，色彩以 CSS 變數 --cat/--catlight 依品項類別套色，供一次列印或另存為多頁 PDF。 */
       *{box-sizing:border-box}html,body{margin:0;padding:0;background:#d9d4ca;color:#2b2016;font-family:'Noto Sans TC',sans-serif}
-      .poster{width:210mm;height:148mm;margin:12mm auto;background:#f3ead9;border:1.5px solid #b39c6e;position:relative;overflow:hidden;padding:10mm 12mm 9mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(43,32,22,.16)}
-      .poster+.poster{page-break-before:always;margin-top:12mm}
-      .header{display:grid;grid-template-columns:18mm minmax(0,1fr) minmax(44mm,auto);align-items:center;gap:5mm;padding-bottom:5mm;border-bottom:1px solid #d2bf98}
-      .logo{width:16mm;height:16mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+      .poster{width:297mm;height:210mm;margin:17mm auto;background:#f3ead9;border:2px solid #b39c6e;position:relative;overflow:hidden;padding:14.1mm 17mm 12.7mm;display:flex;flex-direction:column;box-shadow:0 14px 42px rgba(43,32,22,.16)}
+      .poster+.poster{page-break-before:always;margin-top:17mm}
+      .header{display:grid;grid-template-columns:25.5mm minmax(0,1fr) minmax(62.2mm,auto);align-items:center;gap:7.1mm;padding-bottom:7.1mm;border-bottom:1px solid #d2bf98}
+      .logo{width:22.6mm;height:22.6mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}
       .logo img{width:100%;height:100%;object-fit:contain}
-      .logo-mark{font:700 19px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}
-      .brand-name{font:700 17px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .brand-sub{font-size:12px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .poster-kicker{text-align:right;color:#6b1f2a;font:700 16px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .accent{height:2px;background:var(--cat);margin:4mm 0 5mm}
-      .content{display:grid;grid-template-columns:50mm 66mm minmax(0,1fr);gap:6mm;align-items:center;flex:1;min-height:0}
-      .qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:7mm}
-      .qr-label,.photo-label{font-size:13px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}
-      .qr{width:50mm;height:50mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2mm}
-      .qr img{width:45mm;height:45mm;image-rendering:auto}
-      .qr-code{font-size:13px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}
-      .photo-frame{width:66mm;height:78mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.5mm;overflow:hidden}
+      .logo-mark{font:700 27px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}
+      .brand-name{font:700 24px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .brand-sub{font-size:17px;color:#7a6650;letter-spacing:.08em;margin-top:2.1mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .poster-kicker{text-align:right;color:#6b1f2a;font:700 23px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .accent{height:3px;background:var(--cat);margin:5.7mm 0 7.1mm}
+      .content{display:grid;grid-template-columns:70.7mm 93.3mm minmax(0,1fr);gap:8.5mm;align-items:center;flex:1;min-height:0}
+      .qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:9.9mm}
+      .qr-label,.photo-label{font-size:18px;color:#7a6650;letter-spacing:.18em;margin-bottom:4.2mm}
+      .qr{width:70.7mm;height:70.7mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.8mm}
+      .qr img{width:63.6mm;height:63.6mm;image-rendering:auto}
+      .qr-code{font-size:18px;color:#7a6650;letter-spacing:.14em;margin-top:4.2mm}
+      .photo-frame{width:93.3mm;height:110.3mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:3.5mm;overflow:hidden}
       .photo-frame img{width:100%;height:100%;object-fit:contain;image-rendering:auto}
-      .photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;color:#b39c6e;font-size:13px;letter-spacing:.08em;text-align:center}
-      .photo-empty-mark{font-size:28px;opacity:.75}
-      .photo-hint{font-size:12px;color:#9a8465;margin-top:3mm;text-align:center;line-height:1.4}
+      .photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4.2mm;color:#b39c6e;font-size:18px;letter-spacing:.08em;text-align:center}
+      .photo-empty-mark{font-size:40px;opacity:.75}
+      .photo-hint{font-size:17px;color:#9a8465;margin-top:4.2mm;text-align:center;line-height:1.4}
       .info{min-width:0;display:flex;flex-direction:column;justify-content:center}
-      .cat{align-self:flex-start;color:#fff;background:var(--cat);padding:2.2mm 6mm;font-size:16px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .name{font:900 32px/1.18 'Noto Serif TC',serif;color:#20150f;margin:4mm 0 2.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .2mm 0 rgba(43,32,22,.12)}
-      .nature{align-self:flex-start;background:var(--catlight);border:1.5px solid var(--cat);color:var(--cat);padding:1.5mm 5mm;border-radius:99px;font-size:15px;font-weight:700}
-      .details{margin-top:5mm;border-top:1.5px solid #b39c6e;border-bottom:1.5px solid #b39c6e;padding:4mm 0;display:grid;grid-template-columns:24mm minmax(0,1fr);gap:2.5mm 3mm;font-size:15.5px;line-height:1.35}
+      .cat{align-self:flex-start;color:#fff;background:var(--cat);padding:3.1mm 8.5mm;font-size:23px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .name{font:900 45px/1.18 'Noto Serif TC',serif;color:#20150f;margin:5.7mm 0 3.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .3mm 0 rgba(43,32,22,.12)}
+      .nature{align-self:flex-start;background:var(--catlight);border:2px solid var(--cat);color:var(--cat);padding:2.1mm 7.1mm;border-radius:140px;font-size:21px;font-weight:700}
+      .details{margin-top:7.1mm;border-top:2px solid #b39c6e;border-bottom:2px solid #b39c6e;padding:5.7mm 0;display:grid;grid-template-columns:33.9mm minmax(0,1fr);gap:3.5mm 4.2mm;font-size:22px;line-height:1.35}
       .label{color:#6b5744;font-weight:700;letter-spacing:.05em}
       .value{font-family:'Noto Serif TC',serif;font-weight:700;word-break:break-word}
-      .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:5mm;margin-top:4mm}
-      .note{color:#7a6650;font-size:11.5px;line-height:1.4}
+      .bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:7.1mm;margin-top:5.7mm}
+      .note{color:#7a6650;font-size:16px;line-height:1.4}
       .note b{color:#6b1f2a;font-weight:800}
-      .id{color:var(--cat);font-size:14px;font-weight:800;white-space:nowrap}
-      @media print{html,body{background:#fff}.poster{margin:0;border:1.5px solid #b39c6e;box-shadow:none}.poster+.poster{margin-top:0}@page{size:A5 landscape;margin:0}}
+      .id{color:var(--cat);font-size:20px;font-weight:800;white-space:nowrap}
+      @media print{html,body{background:#fff}.poster{margin:0;border:2px solid #b39c6e;box-shadow:none}.poster+.poster{margin-top:0}@page{size:A4 landscape;margin:0}}
     </style></head><body>${postersHtml}
     <script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);
   w.document.close();
 }
 async function printA5Poster(id,customBrand){
-  if(!isDesigner()){ alert('⚠ A5 張貼圖列印僅設計師可操作'); return; }
+  if(!isDesigner()){ alert('⚠ A4 張貼圖列印僅設計師可操作'); return; }
   const item=inv.find(i=>i.id===id);if(!item)return;
   const brand={...getA5Brand(),...(customBrand&&typeof customBrand==='object'?customBrand:{})};
   const posterTitle=String(brand.title||A5_BRAND_DEFAULT.title).trim()||A5_BRAND_DEFAULT.title;
@@ -14367,8 +14367,8 @@ async function printA5Poster(id,customBrand){
     <title>${printEsc(item.nm)}｜${printEsc(posterTitle)}</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500&display=swap" rel="stylesheet">
     <style>
-      /* Style note: A5 張貼圖採 210mm × 148mm 橫式紙本識別卡，左側建立品牌與 QR 導視，右側突出品項與位置資訊。 */
-      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#d9d4ca;color:#2b2016;font-family:'Noto Sans TC',sans-serif}.poster{width:210mm;height:148mm;margin:12mm auto;background:#f3ead9;border:1.5px solid #b39c6e;position:relative;overflow:hidden;padding:10mm 12mm 9mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(43,32,22,.16)}.header{display:grid;grid-template-columns:18mm minmax(0,1fr) minmax(44mm,auto);align-items:center;gap:5mm;padding-bottom:5mm;border-bottom:1px solid #d2bf98}.logo{width:16mm;height:16mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}.logo img{width:100%;height:100%;object-fit:contain}.logo-mark{font:700 19px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}.brand-name{font:700 17px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-sub{font-size:12px;color:#7a6650;letter-spacing:.08em;margin-top:1.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.poster-kicker{text-align:right;color:#6b1f2a;font:700 16px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accent{height:2px;background:${catCol};margin:4mm 0 5mm}.content{display:grid;grid-template-columns:50mm 66mm minmax(0,1fr);gap:6mm;align-items:center;flex:1;min-height:0}.qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:7mm}.qr-label,.photo-label{font-size:13px;color:#7a6650;letter-spacing:.18em;margin-bottom:3mm}.qr{width:50mm;height:50mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2mm}.qr img{width:45mm;height:45mm;image-rendering:auto}.qr-code{font-size:13px;color:#7a6650;letter-spacing:.14em;margin-top:3mm}.photo-frame{width:66mm;height:78mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.5mm;overflow:hidden}.photo-frame img{width:100%;height:100%;object-fit:contain;image-rendering:auto}.photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;color:#b39c6e;font-size:13px;letter-spacing:.08em;text-align:center}.photo-empty-mark{font-size:28px;opacity:.75}.photo-hint{font-size:12px;color:#9a8465;margin-top:3mm;text-align:center;line-height:1.4}.info{min-width:0;display:flex;flex-direction:column;justify-content:center}.cat{align-self:flex-start;color:#fff;background:${catCol};padding:2.2mm 6mm;font-size:16px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.name{font:900 32px/1.18 'Noto Serif TC',serif;color:#20150f;margin:4mm 0 2.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .2mm 0 rgba(43,32,22,.12)}.nature{align-self:flex-start;background:${catLight};border:1.5px solid ${catCol}80;color:${catCol};padding:1.5mm 5mm;border-radius:99px;font-size:15px;font-weight:700}.details{margin-top:5mm;border-top:1.5px solid #b39c6e;border-bottom:1.5px solid #b39c6e;padding:4mm 0;display:grid;grid-template-columns:24mm minmax(0,1fr);gap:2.5mm 3mm;font-size:15.5px;line-height:1.35}.label{color:#6b5744;font-weight:700;letter-spacing:.05em}.value{font-family:'Noto Serif TC',serif;font-weight:700;word-break:break-word}.qty{font-size:20px;font-weight:900;color:${catCol}}.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:5mm;margin-top:4mm}.note{color:#7a6650;font-size:11.5px;line-height:1.4}.note b{color:#6b1f2a;font-weight:800}.id{color:${catCol};font-size:14px;font-weight:800;white-space:nowrap}@media print{html,body{background:#fff}.poster{margin:0;border:1.5px solid #b39c6e;box-shadow:none}@page{size:A5 landscape;margin:0}}
+      /* Style note: A4 張貼圖採 297mm × 210mm 橫式紙本識別卡，左側建立品牌與 QR 導視，右側突出品項與位置資訊。 */
+      *{box-sizing:border-box}html,body{margin:0;padding:0;background:#d9d4ca;color:#2b2016;font-family:'Noto Sans TC',sans-serif}.poster{width:297mm;height:210mm;margin:17mm auto;background:#f3ead9;border:2px solid #b39c6e;position:relative;overflow:hidden;padding:14.1mm 17mm 12.7mm;display:flex;flex-direction:column;box-shadow:0 14px 42px rgba(43,32,22,.16)}.header{display:grid;grid-template-columns:25.5mm minmax(0,1fr) minmax(62.2mm,auto);align-items:center;gap:7.1mm;padding-bottom:7.1mm;border-bottom:1px solid #d2bf98}.logo{width:22.6mm;height:22.6mm;border:1px solid #b39c6e;background:#fffaf0;display:flex;align-items:center;justify-content:center;overflow:hidden}.logo img{width:100%;height:100%;object-fit:contain}.logo-mark{font:700 27px Georgia,serif;color:#6b1f2a;letter-spacing:-.08em}.brand-name{font:700 24px 'Noto Serif TC',serif;color:#6b1f2a;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.brand-sub{font-size:17px;color:#7a6650;letter-spacing:.08em;margin-top:2.1mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.poster-kicker{text-align:right;color:#6b1f2a;font:700 23px 'Noto Serif TC',serif;letter-spacing:.12em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accent{height:3px;background:${catCol};margin:5.7mm 0 7.1mm}.content{display:grid;grid-template-columns:70.7mm 93.3mm minmax(0,1fr);gap:8.5mm;align-items:center;flex:1;min-height:0}.qr-panel,.photo-panel{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #d2bf98;padding-right:9.9mm}.qr-label,.photo-label{font-size:18px;color:#7a6650;letter-spacing:.18em;margin-bottom:4.2mm}.qr{width:70.7mm;height:70.7mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:2.8mm}.qr img{width:63.6mm;height:63.6mm;image-rendering:auto}.qr-code{font-size:18px;color:#7a6650;letter-spacing:.14em;margin-top:4.2mm}.photo-frame{width:93.3mm;height:110.3mm;background:#fffdf7;border:1px solid #d8c49a;display:flex;align-items:center;justify-content:center;padding:3.5mm;overflow:hidden}.photo-frame img{width:100%;height:100%;object-fit:contain;image-rendering:auto}.photo-empty{height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4.2mm;color:#b39c6e;font-size:18px;letter-spacing:.08em;text-align:center}.photo-empty-mark{font-size:40px;opacity:.75}.photo-hint{font-size:17px;color:#9a8465;margin-top:4.2mm;text-align:center;line-height:1.4}.info{min-width:0;display:flex;flex-direction:column;justify-content:center}.cat{align-self:flex-start;color:#fff;background:${catCol};padding:3.1mm 8.5mm;font-size:23px;font-weight:800;letter-spacing:.08em;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.name{font:900 45px/1.18 'Noto Serif TC',serif;color:#20150f;margin:5.7mm 0 3.5mm;max-width:100%;word-break:break-word;letter-spacing:.02em;text-shadow:0 .3mm 0 rgba(43,32,22,.12)}.nature{align-self:flex-start;background:${catLight};border:2px solid ${catCol}80;color:${catCol};padding:2.1mm 7.1mm;border-radius:140px;font-size:21px;font-weight:700}.details{margin-top:7.1mm;border-top:2px solid #b39c6e;border-bottom:2px solid #b39c6e;padding:5.7mm 0;display:grid;grid-template-columns:33.9mm minmax(0,1fr);gap:3.5mm 4.2mm;font-size:22px;line-height:1.35}.label{color:#6b5744;font-weight:700;letter-spacing:.05em}.value{font-family:'Noto Serif TC',serif;font-weight:700;word-break:break-word}.qty{font-size:28px;font-weight:900;color:${catCol}}.bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:7.1mm;margin-top:5.7mm}.note{color:#7a6650;font-size:16px;line-height:1.4}.note b{color:#6b1f2a;font-weight:800}.id{color:${catCol};font-size:20px;font-weight:800;white-space:nowrap}@media print{html,body{background:#fff}.poster{margin:0;border:2px solid #b39c6e;box-shadow:none}@page{size:A4 landscape;margin:0}}
     </style></head><body><main class="poster">
       <header class="header"><div class="logo">${logoData?`<img src="${printEsc(logoData)}" alt="${printEsc(logoText)} Logo">`:'<span class="logo-mark">PH</span>'}</div><div><div class="brand-name">${printEsc(logoText)}</div><div class="brand-sub">${printEsc(posterSubtitle)}</div></div><div class="poster-kicker">${printEsc(posterTitle)}</div></header>
       <div class="accent"></div><section class="content"><div class="qr-panel"><div class="qr-label">掃 描 查 詢 品 項</div><div class="qr"><img src="${url}" alt="${printEsc(item.nm)} QR Code"></div><div class="qr-code">ITEM #${String(item.id).padStart(2,'0')}</div></div><div class="photo-panel"><div class="photo-label">品 項 照 片</div><div class="photo-frame">${photoData?`<img src="${printEsc(photoData)}" alt="${printEsc(item.nm)} 品項照片">`:'<div class="photo-empty"><span class="photo-empty-mark">▧</span><span>尚未上傳照片</span></div>'}</div><div class="photo-hint">${photoData?'現場實物參照':'請由管理員以上上傳照片'}</div></div><div class="info"><div class="cat">${printEsc(item.cat)}</div><div class="name">${printEsc(item.nm)}</div><div class="nature">${nature}</div><div class="details"><div class="label">儲存位置</div><div class="value">${printEsc(ls(item.loc)||'尚未設定位置')}</div><div class="label">庫存狀態</div><div class="value">${printEsc(stl(item))}</div></div><div class="bottom"><div class="note"><b>掃描 QR Code</b> 查看品項資料　｜　張貼前請確認現場位置與盤點數量</div><div class="id">品項編號　#${String(item.id).padStart(2,'0')}</div></div></div></section>
