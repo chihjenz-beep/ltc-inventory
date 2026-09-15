@@ -11432,53 +11432,38 @@ function _startRealtimeListeners(){
   });
 }
 
-// ── 手動單向備份：Firebase → Google Sheets ────────────────────────────────
-// 需由 GAS Web App 提供 action=backupFirebaseToSheets 的 JSONP 端點。
-const LS_BACKUP_TS='pahome_last_backup_sheets';
-let _backupRunning=false;
-function fmtBackupTs(ts){
-  const n=Number(ts);
-  if(!n)return'尚 未 備 份 過（此裝置）';
-  const d=new Date(n);
-  if(isNaN(d))return'尚 未 備 份 過（此裝置）';
-  const p=v=>String(v).padStart(2,'0');
-  return `上次備份：${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-function updateBackupBtnLabel(text){
-  const label=text!==undefined?text:fmtBackupTs(localStorage.getItem(LS_BACKUP_TS));
-  ['backupLastDrawer','backupLastDesktop'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.textContent=label;
-  });
-}
-document.addEventListener('DOMContentLoaded',()=>updateBackupBtnLabel());
-async function backupFirebaseToSheets(){
-  if(_backupRunning)return; // 防止重複點擊，重疊送出多次備份請求
-  if(!confirm('確定要將 Firebase 目前資料備份到 Google Sheets 嗎？\n此動作只會從 Firebase 複製到 Sheets，不會修改 Firebase。'))return;
-  _backupRunning=true;
-  updateBackupBtnLabel('備 份 中… 請 稍 候');
-  showSaving();
+// ── 匯出品項清單為 XLSX ─────────────────────────────────────────────────────
+// 欄位順序與格式對齊資料庫原始結構：id, nm, con, cat, u, qty, min, loc（loc 存成 JSON 字串）。
+async function exportInventoryXlsx(){
+  if(typeof XLSX==='undefined'){
+    alert('⚠ 匯出元件尚未載入，請檢查網路連線後重新整理頁面再試一次');
+    return;
+  }
   try{
-    const user=fbAuth.currentUser||await ensureFirebaseAuth();
-    const token=await user.getIdToken();
-    const result=await jsonpGetWithRetry(GAS_URL+'?action=backupFirebaseToSheets&authToken='+encodeURIComponent(token),1,15000);
-    if(!result||result.ok!==true)throw new Error(result?.error||'Google Sheets 備份失敗');
-    showSaved();
-    localStorage.setItem(LS_BACKUP_TS,String(Date.now()));
-    updateBackupBtnLabel();
-    alert(`✓ 備份完成！庫存 ${result.inventory||0} 筆、借用 ${result.borrowings||0} 筆、異動紀錄 ${result.logs||0} 筆`);
+    const rows=[['id','nm','con','cat','u','qty','min','loc']];
+    inv.forEach(i=>{
+      rows.push([
+        i.id,
+        i.nm,
+        i.con===true, // 布林值直接存，跟資料庫欄位一致
+        i.cat,
+        i.u,
+        i.qty,
+        i.min,
+        JSON.stringify(i.loc||{r:'',k:'',lv:''})
+      ]);
+    });
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:6},{wch:28},{wch:7},{wch:14},{wch:6},{wch:8},{wch:6},{wch:36}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'inv');
+    const p=v=>String(v).padStart(2,'0');
+    const d=new Date();
+    const fname=`平安家園品項清單_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.xlsx`;
+    XLSX.writeFile(wb,fname);
   }catch(e){
-    console.error('backupFirebaseToSheets 失敗',e);
-    showSaveErr();
-    updateBackupBtnLabel();
-    const msg=String(e?.message||e||'');
-    if(/未知的\s*action|unknown\s*action/i.test(msg)){
-      alert('⚠ 備份失敗：後端 Google Apps Script 尚未提供 backupFirebaseToSheets 這個動作，需請開發者在對應的 GAS 專案補上匯出程式碼後，此按鈕才能運作。\n（原始錯誤：'+msg+'）');
-    }else{
-      alert('⚠ 備份失敗：'+msg);
-    }
-  }finally{
-    _backupRunning=false;
+    console.error('匯出 XLSX 失敗',e);
+    alert('⚠ 匯出失敗：'+(e?.message||e));
   }
 }
 
@@ -12655,7 +12640,7 @@ function pgBorrow(){
   h+=`<div class="sep"><div class="sep-line"></div>借用中（${act.length} 筆）<div class="sep-line"></div></div>`;
   if(!act.length)h+='<div style="font-size:15px;color:#7a6650;padding:16px 0;text-align:center;letter-spacing:0.08em">目 前 無 借 用 紀 錄</div>';
   else{
-    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:620px;font-size:clamp(14px,2.8vw,16px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">預定歸還</th><th style="width:25%">操 作</th></tr></thead><tbody>`;
+    h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:680px;font-size:clamp(14px,2.8vw,16px)"><thead><tr><th style="width:19%">品 項</th><th style="width:7%">數量</th><th style="width:9%">借用人</th><th style="width:9%">用途</th><th style="width:16%">借 出 日</th><th style="width:16%">預定歸還</th><th style="width:24%">操 作</th></tr></thead><tbody>`;
     act.forEach(b=>{const it=inv.find(i=>i.id===b.iid),isOD=ovd(b.due);h+=`<tr>
       <td style="font-family:'Space Mono','Noto Serif TC',serif">${b.nm}</td>
       <td style="white-space:nowrap">${b.qty}${it?it.u:''}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td>
@@ -12666,7 +12651,7 @@ function pgBorrow(){
   }
   if(done.length){
     h+=`<div class="sep" style="margin-top:20px"><div class="sep-line"></div>已歸還（${done.length} 筆）<div class="sep-line"></div></div>
-    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:580px;font-size:clamp(14px,2.8vw,16px)"><thead><tr><th style="width:22%">品 項</th><th style="width:7%">數量</th><th style="width:10%">借用人</th><th style="width:10%">用途</th><th style="width:13%">借 出 日</th><th style="width:13%">歸 還 日</th><th style="width:25%">狀 態</th></tr></thead><tbody>`;
+    <div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:640px;font-size:clamp(14px,2.8vw,16px)"><thead><tr><th style="width:19%">品 項</th><th style="width:7%">數量</th><th style="width:9%">借用人</th><th style="width:9%">用途</th><th style="width:16%">借 出 日</th><th style="width:16%">歸 還 日</th><th style="width:24%">狀 態</th></tr></thead><tbody>`;
     [...done].reverse().forEach(b=>{const it=inv.find(i=>i.id===b.iid);const retQtyTxt=(b.retQty!=null&&b.retQty!==b.qty)?`${b.retQty}${it?it.u:''}（借 ${b.qty}）`:`${b.qty}${it?it.u:''}`;h+=`<tr><td style="font-family:'Space Mono','Noto Serif TC',serif">${b.nm}</td><td style="white-space:nowrap">${retQtyTxt}</td><td>${b.user}</td><td>${b.pur||'—'}</td><td style="white-space:nowrap">${b.date}</td><td>${b.retD||'—'}</td><td><span class="b b-rt">已 歸 還</span></td></tr>`;});
     h+='</tbody></table>';
   }
@@ -14641,11 +14626,11 @@ function pgRep(){
     </div>`;
   }
 
-  h+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>
-    <th style="width:11%">時 間</th><th style="width:8%">操 作</th>
-    <th style="width:15%">品 項</th><th style="width:6%">數 量</th>
-    <th style="width:16%">人 員</th><th style="width:12%">用 途</th>
-    <th style="width:10%">異 動 前／後</th><th style="width:9%">歸 還 日</th><th style="width:13%">位 置</th>
+  h+=`<div class="tbl-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table class="tbl" style="min-width:920px;font-size:clamp(14px,2.6vw,16px)"><thead><tr>
+    <th style="width:13%">時 間</th><th style="width:8%">操 作</th>
+    <th style="width:14%">品 項</th><th style="width:6%">數 量</th>
+    <th style="width:13%">人 員</th><th style="width:11%">用 途</th>
+    <th style="width:9%">異 動 前／後</th><th style="width:12%">歸 還 日</th><th style="width:14%">位 置</th>
   </tr></thead><tbody>`;
 
   if(!rows.length){
