@@ -10599,7 +10599,7 @@ body{
 .b-in{background:var(--sage-light);color:var(--sage);border:1px solid rgba(90,122,94,0.25)}
 .b-rt{background:var(--paper-deep);color:var(--ink-faint);border:1px solid var(--border-light)}
 .b-od{background:rgba(139,32,32,0.1);color:var(--red-seal);border:1px solid rgba(139,32,32,0.3)}
-.rep-op-pill{border-radius:999px;padding:4px 12px;font-size:14px;letter-spacing:0.02em;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;white-space:nowrap}
+.rep-op-pill{border-radius:999px;padding:4px 8px;font-size:14px;letter-spacing:0.02em;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;white-space:nowrap;width:100%;text-align:center;box-sizing:border-box}
 .rep-op-pill:hover{opacity:.82}
 .rep-op-pill:active{transform:scale(.96)}
 .lb{
@@ -14587,7 +14587,7 @@ function pgRep(){
     </div>
     <div style="display:flex;flex-direction:column;gap:3px">
       <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">操　作（可複選）</label>
-      <div style="display:flex;flex-wrap:wrap;gap:5px;max-width:240px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:260px">
         ${actionOpts.map(op=>{
           const active=curOps.includes(op);
           const c=repOpColor(op);
