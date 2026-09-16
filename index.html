@@ -12136,7 +12136,7 @@ const ROOMS=['庫房一','庫房二','庫房三','庫房四','庫房五','庫房
 const RACKS=['鐵架1','鐵架2','鐵架3','鐵架4'];
 const LEVS=['第一層','第二層','第三層'];
 // 品項計量單位選項；精油品項預設建議用 ml，但管理者可個別覆寫（見 changeItemUnit）。
-const UNIT_OPTIONS=['瓶','個','套','ml'];
+const UNIT_OPTIONS=['瓶','個','套','ml','克'];
 // 業務規則：只有「精油」這個類別的品項，才允許數量計到小數點第 1 位
 // （新增品項初始數量、修改數量、掃描出入庫的借用／領用／入庫、借用歸還數量）。
 // 其餘類別一律維持整數。
@@ -14585,9 +14585,9 @@ function pgRep(){
         ${nms.map(n=>`<option value="${n==='（全部品項）'?'':n}" ${(curNm===''&&n==='（全部品項）')||(curNm===n)?'selected':''}>${n}</option>`).join('')}
       </select>
     </div>
-    <div style="display:flex;flex-direction:column;gap:3px">
+    <div style="display:flex;flex-direction:column;gap:3px;flex:1 1 260px;min-width:220px">
       <label style="font-size:13px;color:#7a6650;letter-spacing:0.08em">操　作（可複選）</label>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:260px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%">
         ${actionOpts.map(op=>{
           const active=curOps.includes(op);
           const c=repOpColor(op);
