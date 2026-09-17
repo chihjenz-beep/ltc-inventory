@@ -11384,6 +11384,7 @@ async function gasLoad(){
     }
 
     _gasLoaded=true;
+    _gasLoadSettled=true;
     showSaved();
     go(window._curPage||'inv', null);
 
@@ -11392,10 +11393,12 @@ async function gasLoad(){
 
   }catch(e){
     console.error('gasLoad error',e);
+    _gasLoadSettled=true;
     _setBadge('📴 離線模式','#7a6650');
     document.querySelectorAll('[id="syncBadge"]').forEach(el=>{
       el.title='無法連線到 Firebase，目前使用本機資料，功能不受影響';
     });
+    go(window._curPage||'inv', null);
   }
 }
 
@@ -12861,6 +12864,16 @@ function toggleInventoryDetail(){
 }
 
 function pgInv(){
+  // Firebase 讀取結果出來之前，畫面上的 inv 還是內建的離線備用種子資料（筆數與分類都是舊的）。
+  // 先顯示「同步中」佔位畫面，避免使用者看到錯誤的舊品項總數；
+  // 不論 gasLoad() 最後是成功還是失敗（離線改用本機資料），結果一出來就會重新呼叫 go() 換上正確畫面。
+  if(!_gasLoadSettled){
+    document.getElementById('pg').innerHTML=`<div style="padding:60px 10px;text-align:center;color:#8a7660;font-size:15px;letter-spacing:0.06em">
+      <span class="spin-ico" style="font-size:22px;display:inline-block;margin-bottom:10px">⟳</span><br>
+      資料同步中，請稍候…
+    </div>`;
+    return;
+  }
   const q=(document.getElementById('srch').value||'').toLowerCase();
   const items=inv.filter(i=>i.nm.toLowerCase().includes(q)||i.cat.includes(q)||ls(i.loc).includes(q));
   const low=inv.filter(i=>stc(i)!=='b-ok').length;
@@ -15244,6 +15257,7 @@ function checkURLItem(){
 
 // ── 全域旗標 ──────────────────────────────────────────────────────────────
 let _gasLoaded=false;
+let _gasLoadSettled=false; // Firebase 讀取「已有結果」（成功或失敗皆算），用來判斷是否還要顯示同步中佔位畫面
 let _invLock=false;
 let _invLockInfo={by:'',at:''};
 
